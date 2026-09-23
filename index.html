@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes and Demonstrations for Physicists</title>
+<meta name="description" content="Interactive, equation-first notes on statistical and computational methods for physicists: Monte Carlo samplers, time-series analysis, and more.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="page">
+
+<header class="hero">
+  <p class="kicker">Dipak Munshi &middot; interactive notes</p>
+  <h1>Notes and demonstrations<br><span class="hl">for physicists</span></h1>
+  <p class="lead">Short, self-contained sets of pages on the statistical and computational methods that turn up
+  again and again in physics &mdash; written from the equations outward, for readers who know physics but not
+  necessarily the statistics jargon.</p>
+  <p class="sub">Every page runs in the browser with no server, no framework and no network: the equations are
+  pre-rendered text and every figure is <em>computed live</em> in JavaScript, so each reload is a fresh
+  realisation rather than a stored picture.</p>
+</header>
+
+<!-- =====================================================================
+     TOPICS
+     To add a new topic later: copy one <a class="tcard"> block, change the
+     href to the new folder, bump the number, swap the colour class
+     (c-blue / c-green / c-orange / c-purple / c-pink), and edit the text.
+     Nothing else on this page needs to change.
+     ===================================================================== -->
+<section class="sec">
+  <h2>Topics</h2>
+  <p class="note">Each one is a complete set of pages. Start at its front page and follow the links across the top.</p>
+
+  <div class="topics">
+
+    <a class="tcard c-blue" href="mcmc/">
+      <div class="mnum">1</div>
+      <h3>Monte Carlo samplers</h3>
+      <p>How the standard MCMC algorithms actually work, starting from detailed balance and ending with
+      nested sampling. Hamiltonian Monte Carlo is derived from classical mechanics rather than asserted.</p>
+      <ul class="pages">
+        <li>Metropolis&ndash;Hastings</li><li>Gibbs</li><li>HMC</li><li>NUTS</li><li>Nested sampling</li>
+      </ul>
+      <p class="meta">Five decks + an introduction &middot; interactive sampling demonstrations &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-green" href="time-series/">
+      <div class="mnum">2</div>
+      <h3>Time-series analysis</h3>
+      <p>Measurements in which the order matters: correlation functions and power spectra, the models people
+      fit, how they are fitted, and what correlations do to your error bars. With a term-by-term dictionary
+      into ordinary physics language.</p>
+      <ul class="pages">
+        <li>Definitions</li><li>Physics dictionary</li><li>Models</li><li>Methods</li>
+        <li>Worked examples</li><li>More physics</li><li>Error estimates</li><li>Software</li>
+      </ul>
+      <p class="meta">Eight pages + a front page &middot; live-generated figures &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+  </div>
+</section>
+
+<section class="sec">
+  <h2>In preparation</h2>
+  <p class="note">Written up but not yet converted into interactive pages.</p>
+  <div class="soon">
+    <div class="scard"><h3>Diffusion and score-based models</h3>
+      <p>The forward and reverse SDEs, score matching, Tweedie's formula, DDIM as a probability-flow ODE, and
+      flow matching &mdash; derived for physicists. Currently a PDF with embedded animations.</p></div>
+    <div class="scard"><h3>Running things on an HPC cluster</h3>
+      <p>Parallel CPU and GPU jobs under PBS: worked examples, the commands that matter, and the mistakes that
+      quietly cost you a factor of thirty.</p></div>
+    <div class="scard"><h3>Variational inference</h3>
+      <p>The evidence lower bound, mean-field and normalising-flow families, and where variational methods beat
+      sampling &mdash; and where they badly do not.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Using the pages</h2>
+  <div class="howto">
+    <div class="hcard"><h3>Moving around</h3>
+      <p><kbd>&larr;</kbd> <kbd>&rarr;</kbd> or swipe move between slides. The bar across the top of every page
+      jumps straight to any section.</p></div>
+    <div class="hcard"><h3>The notes</h3>
+      <p><kbd>N</kbd> shows or hides the longer explanation under each slide &mdash; the part you would say out
+      loud if you were presenting it.</p></div>
+    <div class="hcard"><h3>Text size</h3>
+      <p><kbd>A&minus;</kbd> and <kbd>A+</kbd> in the bottom bar scale everything, which is what you want on a
+      projector or a phone.</p></div>
+    <div class="hcard"><h3>Without JavaScript</h3>
+      <p>Each page degrades into one long scrolling document with every slide and all the notes visible. Only the
+      live figures need JavaScript.</p></div>
+  </div>
+</section>
+
+<footer class="sec foot">
+  <h2>About</h2>
+  <p>Prepared by Dipak Munshi with Claude (Anthropic). Equation rendering by
+  <a href="https://katex.org">KaTeX</a> (MIT licence), with the fonts embedded so the pages work offline.
+  Everything here is plain HTML, CSS and JavaScript &mdash; no build step and no dependencies to install.</p>
+  <p>Corrections and suggestions are welcome through the repository's issue tracker.</p>
+</footer>
+
+</div>
+</body>
+</html>

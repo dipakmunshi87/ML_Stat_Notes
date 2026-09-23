@@ -1,0 +1,74 @@
+:root{
+  --bg1:#ffffff; --bg2:#f2f6fd; --ink:#0b2559; --ink2:#27406e; --muted:#6a7c9c;
+  --blue:#1450c8; --orange:#b4530a; --green:#0b7a5a; --purple:#6b3fd4;
+  --pink:#b3246b; --yellow:#9a6b00; --red:#c2273d; --card:#ffffff;
+  --rule:#ccd8ec;
+}
+*{box-sizing:border-box}
+html{font-size:18px}
+html,body{margin:0;background:var(--bg1);color:var(--ink);
+  font-family:"Segoe UI",-apple-system,system-ui,Roboto,"Helvetica Neue",sans-serif}
+a{color:var(--blue)}
+
+.page{max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,48px) 80px}
+
+/* ---------------- header ---------------- */
+.hero{padding:clamp(28px,6vh,72px) 0 18px;
+  background:radial-gradient(1100px 620px at 88% -30%,rgba(20,80,200,.10),transparent 62%)}
+.kicker{font:600 .82rem/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--blue);margin:0 0 10px}
+h1{font-size:clamp(2.6rem,6.5vw,5rem);line-height:1.04;margin:0 0 20px;letter-spacing:-.02em}
+h1 .hl{color:var(--blue)}
+.lead{font-size:clamp(1.2rem,2.2vw,1.65rem);line-height:1.45;color:var(--ink);max-width:66ch;margin:0 0 12px}
+.sub{font-size:1.08rem;color:var(--muted);max-width:70ch}
+
+/* ---------------- sections ---------------- */
+.sec{padding:34px 0;border-top:1px solid var(--rule)}
+.sec h2{font-size:clamp(1.7rem,3.4vw,2.6rem);margin:0 0 6px;letter-spacing:-.01em}
+.sec .note{color:var(--muted);margin:0 0 20px;font-size:1.05rem}
+p,li{font-size:1.08rem;line-height:1.55;color:var(--ink2)}
+
+/* ---------------- topic cards ---------------- */
+.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.tcard{display:block;position:relative;text-decoration:none;color:inherit;background:var(--card);
+  border:1px solid var(--rule);border-left:6px solid var(--blue);border-radius:16px;
+  padding:22px 24px 18px;box-shadow:0 1px 3px rgba(11,37,89,.07);
+  transition:transform .15s,box-shadow .15s,border-color .15s}
+.tcard:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(11,37,89,.13);border-color:var(--ink)}
+.tcard .mnum{position:absolute;top:16px;right:20px;font-size:2.6rem;font-weight:800;color:var(--rule);line-height:1}
+.tcard h3{margin:2px 0 10px;font-size:1.45rem;letter-spacing:-.01em;padding-right:44px}
+.tcard p{color:var(--ink2);margin:0 0 10px;font-size:1.06rem}
+.tcard .pages{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.tcard .pages li{font-size:.92rem;color:var(--ink2);background:#f2f6fd;border:1px solid var(--rule);
+  border-radius:999px;padding:3px 11px;margin:0}
+.tcard .meta{margin:14px 0 0;font-size:.95rem;color:var(--muted)}
+.tcard .go{font-weight:700}
+.c-blue{border-left-color:var(--blue)}   .c-blue h3, .c-blue .go{color:var(--blue)}
+.c-green{border-left-color:var(--green)} .c-green h3, .c-green .go{color:var(--green)}
+.c-orange{border-left-color:var(--orange)} .c-orange h3, .c-orange .go{color:var(--orange)}
+.c-purple{border-left-color:var(--purple)} .c-purple h3, .c-purple .go{color:var(--purple)}
+.c-pink{border-left-color:var(--pink)}   .c-pink h3, .c-pink .go{color:var(--pink)}
+
+/* ---------------- planned topics ---------------- */
+.soon{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.scard{background:#fafcff;border:1px dashed var(--rule);border-radius:14px;padding:16px 18px}
+.scard h3{margin:0 0 6px;font-size:1.12rem;color:var(--ink)}
+.scard p{font-size:.98rem;color:var(--muted);margin:0}
+
+/* ---------------- how to use ---------------- */
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.hcard{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:16px 18px;
+  box-shadow:0 1px 3px rgba(11,37,89,.06)}
+.hcard h3{margin:0 0 8px;font-size:1.1rem;color:var(--blue)}
+.hcard p{font-size:1rem;margin:0}
+kbd{font:600 .9em ui-monospace,Menlo,monospace;background:#eef3fc;border:1px solid var(--rule);
+  border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:var(--ink)}
+
+/* ---------------- footer ---------------- */
+.foot{color:var(--muted)}
+.foot p{font-size:1rem;color:var(--muted)}
+.foot a{color:var(--blue)}
+
+@media (max-width:640px){html{font-size:17px}}
+
+.tcard .go{white-space:nowrap}

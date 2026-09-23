@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The No-U-Turn Sampler</title>
+<meta name="description" content="NUTS explained for physicists: how it chooses the trajectory length for Hamiltonian Monte Carlo by doubling until the path turns back, plus step-size adaptation and its diagnostics.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">&#8962; All topics</a><a href="index.html">Introduction</a><a href="metropolis.html">1 · Metropolis</a><a href="gibbs.html">2 · Gibbs</a><a href="hmc.html">3 · HMC</a><a href="nuts.html" class="here">4 · NUTS</a><a href="nested.html">5 · Nested</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Method 4 of 5 · HMC without the tuning</p>
+  <h1>The <span class="hl">No-U-Turn</span> Sampler</h1>
+  <p class="lead" style="max-width:62ch">Hamiltonian Monte Carlo works beautifully once you know how long to
+  follow each trajectory. NUTS works that out for itself: it runs the dynamics forwards and backwards, doubling the
+  length each round, and stops the moment the path starts to double back on itself.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-orange jump" href="#s2"><h3 class="orange">1 · The problem →</h3><p>Why the path length matters, and what goes wrong at both extremes.</p></a>
+    <a class="card c-green jump" href="#s3"><h3 class="green">2 · The U-turn →</h3><p>The criterion, the doubling tree, and keeping the chain exact.</p></a>
+    <a class="card c-purple jump" href="#s6"><h3 class="purple">3 · In practice →</h3><p>Step-size adaptation, divergences, and what its warnings mean.</p></a>
+  </div>
+  <p style="margin-top:24px;font-size:1rem;color:var(--muted)">Hoffman &amp; Gelman (2014). Read
+  <a href="hmc.html">the HMC deck</a> first if the leapfrog integrator is new. Part of the MCMC demo set:
+  <a href="index.html">all methods</a>.</p>
+  <div class="notes"><p>NUTS is the default sampler in Stan, PyMC and NumPyro, so in practice "running HMC" almost always
+  means running NUTS. Its two adaptations, of path length and of step size, are what make it usable without expert tuning.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s2">
+<div class="inner">
+  <p class="kicker">The problem</p>
+  <h2>How long should the <span class="hl">trajectory</span> be?</h2>
+  <div class="grid g23">
+    <div>
+      <p>One HMC iteration draws a momentum <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">p</mi><mo>∼</mo><mi mathvariant="script">N</mi><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mi>M</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\boldsymbol p\sim\mathcal N(0,M)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.14736em;">N</span><span class="mopen">(</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mclose">)</span></span></span></span> and follows Hamilton's equations for
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span> leapfrog steps of size <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ε</mi></mrow><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">ε</span></span></span></span>. The step size is set by stability, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ε</mi><mo>&lt;</mo><mn>2</mn><mi mathvariant="normal">ℓ</mi></mrow><annotation encoding="application/x-tex">\varepsilon&lt;2\ell</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">ε</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">2</span><span class="mord">ℓ</span></span></span></span> with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">ℓ</mi></mrow><annotation encoding="application/x-tex">\ell</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">ℓ</span></span></span></span> the
+      narrowest width. The <em>path length</em> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>ε</mi></mrow><annotation encoding="application/x-tex">L\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mord mathnormal">ε</span></span></span></span> is a free choice, and it decides everything:</p>
+      <ul>
+        <li><strong>Too short</strong>: the sampler is a random walk again, with gradients wasted.</li>
+        <li><strong>Too long</strong>: the trajectory curls back on itself; the extra gradient evaluations buy nothing.</li>
+        <li><strong>Exactly resonant</strong>: for a Gaussian of width <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span></span></span></span>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>ε</mi><mo>≈</mo><mi>π</mi><mi>σ</mi></mrow><annotation encoding="application/x-tex">L\varepsilon\approx\pi\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mord mathnormal">ε</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">πσ</span></span></span></span> maps
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi><mo>↦</mo><mn>2</mn><mi>μ</mi><mo>−</mo><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta\mapsto2\mu-\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7054em;vertical-align:-0.011em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">↦</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span> every time. The chain then flips between two points with 100% acceptance —
+        perfect diagnostics, no information.</li>
+      </ul>
+      <p>And the right value is different in every direction and at every point of a curved posterior.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">Seen in the test problems</div>
+        <p>Fixed-length HMC on the one-dimensional target hit exactly this resonance, with 100% acceptance and a chain
+        alternating between two values. Jittering <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span> removes it; NUTS removes the choice altogether.</p></div>
+      <div class="box physics"><div class="t">Physics picture</div>
+        <p>A particle in a harmonic well returns to its starting point after one period. Sampling it once per period
+        tells you nothing; sampling it after about half a period moves you as far as the dynamics can.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The "optimal" path length for a Gaussian is a quarter to a half period. NUTS effectively discovers
+  that locally, at every iteration, without knowing the period.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s3">
+<div class="inner">
+  <p class="kicker">The criterion</p>
+  <h2>Stop when the ends start <span class="hl">approaching</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="bold-italic">θ</mi><mo>−</mo></msup><mo separator="true">,</mo><msup><mi mathvariant="bold-italic">p</mi><mo>−</mo></msup></mrow><annotation encoding="application/x-tex">\boldsymbol\theta^-,\boldsymbol p^-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0501em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03194em;">θ</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8557em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="bold-italic">θ</mi><mo>+</mo></msup><mo separator="true">,</mo><msup><mi mathvariant="bold-italic">p</mi><mo>+</mo></msup></mrow><annotation encoding="application/x-tex">\boldsymbol\theta^+,\boldsymbol p^+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0501em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03194em;">θ</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8557em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span></span></span></span></span></span></span></span> be the two ends of the
+      trajectory built so far. The separation vector is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">Δ</mi><mo>=</mo><msup><mi mathvariant="bold-italic">θ</mi><mo>+</mo></msup><mo>−</mo><msup><mi mathvariant="bold-italic">θ</mi><mo>−</mo></msup></mrow><annotation encoding="application/x-tex">\boldsymbol\Delta=\boldsymbol\theta^+-\boldsymbol\theta^-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6861em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.939em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03194em;">θ</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8557em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8557em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03194em;">θ</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8557em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span></span></span></span>, and
+      it is still growing as long as both ends move apart:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mstyle displaystyle="false" scriptlevel="0"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mi mathvariant="normal">∣</mi><mi mathvariant="bold">Δ</mi><msup><mi mathvariant="normal">∣</mi><mn>2</mn></msup><mo>=</mo><mi mathvariant="bold">Δ</mi><mo>⋅</mo><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><msup><mi>M</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold-italic">p</mi><mo>+</mo></msup><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">)</mo><mspace width="1em"/><mtext>forwards</mtext><mo separator="true">,</mo><mspace width="2em"/><mo>−</mo><mi mathvariant="bold">Δ</mi><mo>⋅</mo><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><msup><mi>M</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold-italic">p</mi><mo>−</mo></msup><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">)</mo><mspace width="1em"/><mtext>backwards</mtext><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\frac{d}{dt}\tfrac12|\boldsymbol\Delta|^2=\boldsymbol\Delta\cdot\big(M^{-1}\boldsymbol p^+\big)
+      \quad\text{forwards},\qquad -\boldsymbol\Delta\cdot\big(M^{-1}\boldsymbol p^-\big)\quad\text{backwards}.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">∣</span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mord"><span class="mord">∣</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6861em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2141em;vertical-align:-0.35em;"></span><span class="mord"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8213em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span></span></span></span></span><span class="mord"><span class="delimsizing size1">)</span></span><span class="mspace" style="margin-right:1em;"></span><span class="mord text"><span class="mord">forwards</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">−</span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2141em;vertical-align:-0.35em;"></span><span class="mord"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8213em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span><span class="mord"><span class="delimsizing size1">)</span></span><span class="mspace" style="margin-right:1em;"></span><span class="mord text"><span class="mord">backwards</span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>So the trajectory has made a <strong>U-turn</strong> when either</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="bold">Δ</mi><mo>⋅</mo><msup><mi>M</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold-italic">p</mi><mo>+</mo></msup><mo>&lt;</mo><mn>0</mn><mspace width="2em"/><mtext>or</mtext><mspace width="2em"/><mi mathvariant="bold">Δ</mi><mo>⋅</mo><msup><mi>M</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msup><mi mathvariant="bold-italic">p</mi><mo>−</mo></msup><mo>&lt;</mo><mn>0</mn><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">\boldsymbol\Delta\cdot M^{-1}\boldsymbol p^+&lt;0
+      \qquad\text{or}\qquad \boldsymbol\Delta\cdot M^{-1}\boldsymbol p^-&lt;0 ,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6861em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0585em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8213em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6861em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:2em;"></span><span class="mord text"><span class="mord">or</span></span><span class="mspace" style="margin-right:2em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">Δ</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0585em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">p</span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8213em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>that is, when extending the path further would start bringing the ends back together. At that point the
+      trajectory has covered as much of the distribution as this direction of travel allows.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Building the trajectory</div>
+        <ol style="margin:0;padding-left:1.2em">
+          <li>Start with the current point as a trajectory of length 1.</li>
+          <li>Choose a direction of time at random, forwards or backwards.</li>
+          <li>Double the trajectory in that direction: run <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>j</mi></msup></mrow><annotation encoding="application/x-tex">2^j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8247em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8247em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span></span></span></span></span></span></span> more leapfrog steps.</li>
+          <li>Stop if the U-turn test fires anywhere in the new part, or across the whole trajectory.</li>
+        </ol>
+        <p>Doubling keeps the set of visited points <em>balanced</em>, which is what allows the sampler to remain exact.</p></div>
+      <div class="box stats"><div class="t">Choosing the next state</div>
+        <p>The original paper draws a slice level <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>∼</mo><mi mathvariant="script">U</mi><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><msup><mi>e</mi><mrow><mo>−</mo><msub><mi>H</mi><mn>0</mn></msub></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">u\sim\mathcal U(0,e^{-H_0})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0913em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">U</span><span class="mopen">(</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:-0.0813em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> and samples uniformly among the points
+        with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>H</mi></mrow></msup><mo>&gt;</mo><mi>u</mi></mrow><annotation encoding="application/x-tex">e^{-H}&gt;u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8804em;vertical-align:-0.0391em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.08125em;">H</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span>. Modern implementations use multinomial sampling with weights <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>H</mi></mrow></msup></mrow><annotation encoding="application/x-tex">e^{-H}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.08125em;">H</span></span></span></span></span></span></span></span></span></span></span></span>, which is a little more
+        efficient. Either choice preserves detailed balance.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The subtlety is that you must not simply take the last point: that would break reversibility.
+  Doubling plus a balanced selection rule is what keeps the algorithm exact.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s4">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>Watch the tree <span class="hl">double</span> until it turns</h2>
+  <canvas id="nu" width="1160" height="430"></canvas>
+  <div class="controls">
+    <button class="btn" id="nuStep">one iteration</button>
+    <button class="btn" id="nuRun">▶ run</button>
+    <button class="btn" id="nuReset">reset</button>
+    <label>step size ε <input id="nuEps" type="range" min="0.04" max="0.5" step="0.02" value="0.18"><b id="nuEpsV">0.18</b></label>
+    <span class="readout" id="nuRead"></span>
+  </div>
+  <p class="cap">Left: one NUTS iteration on a correlated Gaussian. Each doubling round is drawn in a different shade;
+  the white dot is the current state, the dark dot the point finally chosen. Right: the trajectory length chosen at
+  each iteration, in leapfrog steps.</p>
+  <div class="notes"><p>Press "one iteration" a few times. The trajectory grows 1, 2, 4, 8, … steps, wandering along the
+  ridge, and stops when the ends begin to approach. Smaller ε means more, finer steps for the same physical path
+  length, so the tree depth grows: NUTS pays for a small step size in tree depth, not in bias.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s5">
+<div class="inner">
+  <p class="kicker">Keeping it exact</p>
+  <h2>Why doubling, and not just <span class="hl">"stop when it turns"</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>A sampler is valid if the probability of proposing <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span> from <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span> matches, in the right sense, the probability
+      of proposing <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span> from <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span>. A naive rule — integrate forwards until the U-turn and take the last point — fails
+      this: from the new point, the trajectory that would be built is not the same set.</p>
+      <p>NUTS fixes it with two devices:</p>
+      <ul>
+        <li><strong>Random time direction</strong> at each doubling, so the trajectory grows both ways.</li>
+        <li><strong>Sub-tree checks</strong>: the U-turn test is applied to every balanced sub-tree, not just the
+        whole trajectory. This makes the stopping rule a property of the <em>set</em> of points, not of the order in
+        which they were built.</li>
+      </ul>
+      <p>With those, every point in the final trajectory would have built the same trajectory, and selecting among them
+      with weights <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>H</mi></mrow></msup></mrow><annotation encoding="application/x-tex">e^{-H}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.08125em;">H</span></span></span></span></span></span></span></span></span></span></span></span> leaves <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi></mrow><annotation encoding="application/x-tex">\pi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">π</span></span></span></span> invariant.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Cost</div>
+        <p>A tree of depth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span> costs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>j</mi></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^j-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.908em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8247em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> gradient evaluations, and an iteration doubles until the U-turn or a
+        maximum depth (10 by default in Stan: 1023 steps). On the ridge test NUTS averaged about 30 gradients per
+        iteration, against about 90 for the fixed-length HMC, for a similar answer.</p></div>
+      <div class="box physics"><div class="t">Physics picture</div>
+        <p>Think of it as integrating the orbit in both directions from the current phase-space point until the
+        excursion stops growing — roughly half an orbit — then picking a new point from that arc with Boltzmann weights.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Betancourt's review is the clearest account of why the naive version is wrong and how the
+  balanced trees repair it.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s6">
+<div class="inner">
+  <p class="kicker">Adaptation and diagnostics</p>
+  <h2>What warm-up actually <span class="hl">does</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Step size ε</h3>
+      <p>Tuned by <strong>dual averaging</strong> during warm-up to hit a target acceptance statistic, 0.8 by default.
+      Higher targets mean smaller steps, deeper trees and more robustness in curved geometry.</p></div>
+    <div class="card c-blue"><h3 class="blue">Mass matrix M</h3>
+      <p>Estimated from warm-up samples, usually diagonal (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>M</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>≈</mo></mrow><annotation encoding="application/x-tex">M^{-1}\approx</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span></span></span></span> the posterior variances). This is
+      preconditioning: it rescales each direction so the dynamics sees a rounder distribution.</p></div>
+    <div class="card c-orange"><h3 class="orange">Warm-up windows</h3>
+      <p>Stan interleaves the two: short windows to find ε, longer ones to estimate <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span>, then a final ε tuning. Warm-up
+      samples are discarded because the chain is not yet <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>π</mi></mrow><annotation encoding="application/x-tex">\pi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">π</span></span></span></span>-invariant while adapting.</p></div>
+  </div>
+  <div class="box warn"><div class="t">The two warnings you will meet</div>
+    <p><strong>Divergent transitions.</strong> The energy error <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi mathvariant="normal">Δ</mi><mi>H</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\Delta H|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣Δ</span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="mord">∣</span></span></span></span> blows up, usually where the posterior
+    narrows sharply (a funnel). The sampler cannot enter that region properly, so the affected area is
+    under-sampled. Fix by raising the acceptance target, or better, by reparameterising (non-centred form).</p>
+    <p><strong>Maximum tree depth reached.</strong> Not a correctness problem but an efficiency one: the trajectory was
+    cut off before the U-turn, usually because the posterior is badly scaled in some direction. Fix with a better mass
+    matrix or reparameterisation.</p></div>
+  <div class="notes"><p>Divergences matter: a handful in a long run is often harmless, but a systematic pattern means
+  part of the posterior is not being explored. Look at where they occur in parameter space.</p></div>
+</div>
+</section>
+
+<section class="slide s-yellow" id="s7">
+<div class="inner">
+  <p class="kicker">Evidence</p>
+  <h2>Strong on smooth targets, <span class="hl">blind to barriers</span></h2>
+  <div class="grid g23">
+    <div><video src="assets/study2.mp4" poster="assets/study2.jpg" controls muted loop playsinline preload="metadata"></video>
+      <p class="cap">The 20:1 ridge. NUTS is the right-hand panel of the three chains; the two graphs show error against
+      work done.</p></div>
+    <div>
+      <table>
+        <tr><th>problem</th><th class="num">NUTS</th><th class="num">comment</th></tr>
+        <tr><td>1-D Gaussian</td><td class="num">mean 1.620</td><td class="num">exact 1.600</td></tr>
+        <tr><td>20:1 ridge</td><td class="num">6,657 iterations</td><td class="num">~30 gradients each</td></tr>
+        <tr><td>four modes</td><td class="num">2 of 4 modes</td><td class="num">TV error 0.430</td></tr>
+      </table>
+      <div class="box warn" style="margin-top:14px"><div class="t">The instructive failure</div>
+        <p>On the four-mode target NUTS crossed a barrier <em>once</em>, by luck, and then spent 63% of its samples in a
+        mode whose true weight is 0.20. A single lucky crossing produced a more confidently wrong answer than never
+        crossing at all: the chain looks well-mixed between two modes and reports tight error bars.</p></div>
+      <p style="font-size:1rem">On the ridge, by contrast, it matched fixed-length HMC while needing no tuning.</p>
+    </div>
+  </div>
+  <div class="notes"><p>The lesson for practice: NUTS should be your default for smooth unimodal posteriors, and should
+  always be checked against dispersed starts or a tempered or nested run when multimodality is possible.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s8">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>When to reach for it</h2>
+  <div class="grid g2">
+    <div class="card c-green"><h3 class="green">Good when…</h3>
+      <ul>
+        <li>the posterior is smooth, continuous and mostly unimodal;</li>
+        <li>gradients are available through automatic differentiation;</li>
+        <li>the dimension is moderate to large, tens to thousands;</li>
+        <li>you want a sampler that tunes itself and warns you when it struggles.</li>
+      </ul></div>
+    <div class="card c-pink"><h3 class="pink">Bad when…</h3>
+      <ul>
+        <li>modes are separated by regions of very low probability;</li>
+        <li>parameters are discrete, or the density has kinks or hard edges;</li>
+        <li>the geometry is funnel-shaped and cannot be reparameterised;</li>
+        <li>you need the evidence <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Z</mi></mrow><annotation encoding="application/x-tex">Z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">Z</span></span></span></span>: use <a href="nested.html">nested sampling</a>.</li>
+      </ul></div>
+  </div>
+  <p style="margin-top:16px">Background: <a href="hmc.html">Hamiltonian Monte Carlo</a>. Contrast:
+  <a href="metropolis.html">random-walk Metropolis</a>, which is blind to gradients and therefore, on the four-mode
+  problem, less confidently wrong.</p>
+  <div class="notes"><p>In the satellite-RFI analysis NUTS is used through NumPyro; the same warnings apply there.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s9">
+<div class="inner">
+  <p class="kicker">Further reading</p>
+  <h2>References</h2>
+  <ul>
+    <li>M. D. Hoffman, A. Gelman, <em>The No-U-Turn Sampler: adaptively setting path lengths in Hamiltonian Monte Carlo</em>, JMLR <strong>15</strong>, 1593 (2014); <a href="https://arxiv.org/abs/1111.4246" target="_blank" rel="noopener">arXiv:1111.4246</a>.</li>
+    <li>M. Betancourt, <em>A conceptual introduction to Hamiltonian Monte Carlo</em>, <a href="https://arxiv.org/abs/1701.02434" target="_blank" rel="noopener">arXiv:1701.02434</a> (2017).</li>
+    <li>R. M. Neal, <em>MCMC using Hamiltonian dynamics</em>, Handbook of MCMC (2011); <a href="https://arxiv.org/abs/1206.1901" target="_blank" rel="noopener">arXiv:1206.1901</a>.</li>
+    <li>B. Carpenter et al., <em>Stan: a probabilistic programming language</em>, J. Stat. Soft. <strong>76</strong> (2017).</li>
+    <li>M. Betancourt, M. Girolami, <em>Hamiltonian Monte Carlo for hierarchical models</em>, <a href="https://arxiv.org/abs/1312.0906" target="_blank" rel="noopener">arXiv:1312.0906</a> (2013), on funnels and divergences.</li>
+    <li>Y. Nishimura, D. Dunson (2020) and Stan's reference manual, for the multinomial variant used today.</li>
+  </ul>
+  <div class="notes"><p>Betancourt &amp; Girolami is the paper to read before fitting any hierarchical model with NUTS.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All methods</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- NUTS: doubling trajectories until a U-turn ---------- */
+(function(){
+  var cv=document.getElementById('nu'); if(!cv) return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  var rho=0.93, det=1-rho*rho, EPS=0.18, timer=null;
+  function gradU(x,y){return [(x-rho*y)/det,(y-rho*x)/det]}
+  function U(x,y){return 0.5*(x*x-2*rho*x*y+y*y)/det}
+  var seed=13579;
+  function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+  function gauss(){var a=rnd()||1e-12,b=rnd();return Math.sqrt(-2*Math.log(a))*Math.cos(2*Math.PI*b)}
+  var st;
+  function reset(){st={p:[-2.0,-2.4],rounds:[],chosen:null,depths:[],n:0,steps:0};draw()}
+  function leap(q,p,sign){
+    var g=gradU(q[0],q[1]), e=sign*EPS;
+    var p1=[p[0]-e/2*g[0], p[1]-e/2*g[1]];
+    var q1=[q[0]+e*p1[0], q[1]+e*p1[1]];
+    var g1=gradU(q1[0],q1[1]);
+    return [q1,[p1[0]-e/2*g1[0], p1[1]-e/2*g1[1]]];
+  }
+  function iteration(){
+    var q=st.p.slice(), p=[gauss(),gauss()];
+    var minus={q:q.slice(),p:p.slice()}, plus={q:q.slice(),p:p.slice()};
+    var pts=[{q:q.slice(),w:1}], rounds=[[q.slice()]], depth=0, steps=0, stop=false;
+    while(!stop && depth<8){
+      var dir=rnd()<0.5?1:-1, n=Math.pow(2,depth), seg=[];
+      var node=dir>0?plus:minus;
+      for(var k=0;k<n;k++){
+        var r=leap(node.q,node.p,dir); node.q=r[0]; node.p=r[1]; steps++;
+        seg.push(node.q.slice());
+        pts.push({q:node.q.slice(), w:Math.exp(-(U(node.q[0],node.q[1])+0.5*(node.p[0]*node.p[0]+node.p[1]*node.p[1])))});
+        var d=[plus.q[0]-minus.q[0], plus.q[1]-minus.q[1]];
+        if(d[0]*plus.p[0]+d[1]*plus.p[1]<0 || d[0]*minus.p[0]+d[1]*minus.p[1]<0){stop=true;break}
+      }
+      rounds.push(seg); depth++;
+    }
+    // pick the next state with weights exp(-H)
+    var tot=0; for(var i=0;i<pts.length;i++)tot+=pts[i].w;
+    var u=rnd()*tot, acc=0, pick=pts[0];
+    for(i=0;i<pts.length;i++){acc+=pts[i].w; if(acc>=u){pick=pts[i];break}}
+    st.rounds=rounds; st.chosen=pick.q.slice(); st.p=pick.q.slice();
+    st.n++; st.steps=steps; st.depths.push(steps);
+    if(st.depths.length>60) st.depths.shift();
+  }
+  var pw=W*0.56, sc=pw/9.0, cx=pw/2, cy=H/2;
+  function px(x,y){return [cx+x*sc, cy-y*sc]}
+  var shades=['#9ec9ff','#5c9bea','#1450c8','#0b7a5a','#b4530a','#b3246b','#6b3fd4','#c2273d'];
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();ctx.beginPath();ctx.rect(6,8,pw-12,H-16);ctx.clip();
+    ctx.fillStyle='#f7faff';ctx.fillRect(6,8,pw-12,H-16);
+    var a=Math.sqrt(1+rho)*sc, b=Math.sqrt(1-rho)*sc;
+    for(var k=3;k>=1;k--){ctx.save();var c=px(0,0);ctx.translate(c[0],c[1]);ctx.rotate(-Math.PI/4);
+      ctx.beginPath();ctx.ellipse(0,0,k*a,k*b,0,0,2*Math.PI);
+      ctx.strokeStyle='rgba(107,63,212,'+(0.28+0.18*(3-k))+')';ctx.lineWidth=1.4;ctx.stroke();ctx.restore()}
+    for(var r=0;r<st.rounds.length;r++){
+      var seg=st.rounds[r]; if(!seg.length) continue;
+      ctx.strokeStyle=shades[Math.min(r,shades.length-1)];ctx.lineWidth=2.2;ctx.beginPath();
+      for(var j=0;j<seg.length;j++){var qq=px(seg[j][0],seg[j][1]);if(j===0)ctx.moveTo(qq[0],qq[1]);else ctx.lineTo(qq[0],qq[1])}
+      ctx.stroke();
+      ctx.fillStyle=shades[Math.min(r,shades.length-1)];
+      for(j=0;j<seg.length;j++){var p2=px(seg[j][0],seg[j][1]);ctx.beginPath();ctx.arc(p2[0],p2[1],2.6,0,7);ctx.fill()}
+    }
+    if(st.chosen){var e=px(st.chosen[0],st.chosen[1]);
+      ctx.fillStyle='#0b2559';ctx.beginPath();ctx.arc(e[0],e[1],6,0,7);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
+    ctx.restore();
+    ctx.fillStyle='#0b7a5a';ctx.font='bold 17px sans-serif';
+    ctx.fillText('one NUTS iteration: each doubling in a new colour',20,32);
+    // right: steps per iteration
+    var ox=pw+18, ow=W-ox-14, oy=52, oh=H-120;
+    ctx.fillStyle='#f7faff';ctx.fillRect(ox,oy,ow,oh);ctx.strokeStyle='#ccd8ec';ctx.strokeRect(ox,oy,ow,oh);
+    ctx.fillStyle='#27406e';ctx.font='15px sans-serif';ctx.fillText('leapfrog steps chosen, per iteration',ox+8,oy-14);
+    var d=st.depths, mx=1; for(var i2=0;i2<d.length;i2++)mx=Math.max(mx,d[i2]);
+    ctx.fillStyle='#0b7a5a';
+    for(i2=0;i2<d.length;i2++){
+      var bw=ow/60, X=ox+i2*bw, hgt=oh*d[i2]/(mx*1.1);
+      ctx.fillRect(X+1,oy+oh-hgt,Math.max(2,bw-2),hgt);
+    }
+    ctx.font='13px ui-monospace,monospace';ctx.fillStyle='#6a7c9c';
+    ctx.fillText(mx+' steps',ox+6,oy+14);ctx.fillText('0',ox+6,oy+oh-6);
+    document.getElementById('nuRead').innerHTML='iterations <b>'+st.n+'</b> &nbsp; last trajectory <b>'+
+      st.steps+'</b> leapfrog steps &nbsp; tree depth <b>'+Math.max(0,st.rounds.length-1)+'</b>';
+  }
+  document.getElementById('nuStep').onclick=function(){iteration();draw()};
+  document.getElementById('nuRun').onclick=function(){
+    if(timer){clearInterval(timer);timer=null;this.textContent='▶ run'}
+    else{timer=setInterval(function(){iteration();draw()},420);this.textContent='❚❚ pause'}};
+  document.getElementById('nuReset').onclick=function(){
+    if(timer){clearInterval(timer);timer=null;document.getElementById('nuRun').textContent='▶ run'}
+    seed=13579;reset()};
+  var sl=document.getElementById('nuEps');
+  sl.oninput=function(){EPS=+sl.value;document.getElementById('nuEpsV').textContent=EPS.toFixed(2)};
+  window.addEventListener('slidechange',function(e){
+    if(timer&&e.detail!==3){clearInterval(timer);timer=null;document.getElementById('nuRun').textContent='▶ run'}});
+  reset();iteration();draw();
+})();
+
+</script>
+
+</body>
+</html>

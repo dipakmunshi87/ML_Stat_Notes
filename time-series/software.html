@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Software and Reading List</title>
+<meta name="description" content="Public software for time-series analysis in physics and astronomy, with links, and a reading list of standard textbooks and key papers.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">&#8962; All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · Definitions</a><a href="dictionary.html">2 · Physics dictionary</a><a href="models.html">3 · Models</a><a href="methods.html">4 · Methods</a><a href="examples.html">5 · Examples</a><a href="applications.html">6 · More physics</a><a href="errors.html">7 · Errors</a><a href="software.html" class="here">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-purple" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Resources</p>
+  <h1>Software and <span class="hl">reading list</span></h1>
+  <p class="lead" style="max-width:64ch">Everything below is publicly available and open source, and most of it is
+  one <code>pip install</code> away. Links were checked in September 2026; if one has moved, the package name will
+  find it.</p>
+  <div class="grid g3" style="margin-top:26px">
+    <a class="card c-blue jump" href="#s2"><h3 class="blue">1 · General tools →</h3><p>Spectra, ARMA, Gaussian processes, wavelets, Bayesian fitting.</p></a>
+    <a class="card c-orange jump" href="#s3"><h3 class="orange">2 · Field-specific →</h3><p>Astronomy, gravitational waves, pulsar timing, seismology, metrology.</p></a>
+    <a class="card c-green jump" href="#s4"><h3 class="green">3 · Reading →</h3><p>Textbooks and the papers behind the methods.</p></a>
+  </div>
+  <p style="margin-top:22px;font-size:1rem;color:var(--muted)">Part of the time-series set:
+  <a href="index.html">all pages</a>.</p>
+  <div class="notes"><p>Prefer a package with a paper behind it: it is likely to document its conventions, which is
+  where most cross-tool disagreements come from.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s2">
+<div class="inner">
+  <p class="kicker">General tools</p>
+  <h2>The <span class="hl">general-purpose</span> stack</h2>
+  <table>
+    <tr><th>Package</th><th>What it gives you</th><th>Link</th></tr>
+    <tr><td><strong>numpy / scipy.signal</strong></td><td>FFTs, <code>welch</code>, <code>periodogram</code>, <code>csd</code>, <code>coherence</code>, Butterworth and Savitzky–Golay filters, <code>filtfilt</code>, resampling</td><td><a href="https://docs.scipy.org/doc/scipy/reference/signal.html" target="_blank" rel="noopener">scipy.signal docs</a></td></tr>
+    <tr><td><strong>statsmodels.tsa</strong></td><td>ARIMA and SARIMAX, Yule–Walker, ACF/PACF with confidence bands, Ljung–Box, unit-root tests, state-space models and the Kalman filter</td><td><a href="https://www.statsmodels.org/stable/tsa.html" target="_blank" rel="noopener">statsmodels.org/stable/tsa</a></td></tr>
+    <tr><td><strong>astropy.timeseries</strong></td><td>Lomb–Scargle for uneven sampling, with false-alarm probabilities; box least squares for transits; binned and sampled time-series containers</td><td><a href="https://docs.astropy.org/en/stable/timeseries/lombscargle.html" target="_blank" rel="noopener">docs.astropy.org · Lomb–Scargle</a></td></tr>
+    <tr><td><strong>celerite2</strong></td><td>Gaussian processes with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><mi>N</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal O(N)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mclose">)</span></span></span></span> likelihoods for a useful family of kernels (damped oscillators, Matérn-like); built for light curves</td><td><a href="https://celerite2.readthedocs.io/" target="_blank" rel="noopener">celerite2.readthedocs.io</a></td></tr>
+    <tr><td><strong>george / tinygp</strong></td><td>General Gaussian processes, flexible kernels, JAX-based in the case of tinygp</td><td><a href="https://tinygp.readthedocs.io/" target="_blank" rel="noopener">tinygp.readthedocs.io</a></td></tr>
+    <tr><td><strong>PyWavelets</strong></td><td>Discrete and continuous wavelet transforms, for non-stationary series</td><td><a href="https://pywavelets.readthedocs.io/" target="_blank" rel="noopener">pywavelets.readthedocs.io</a></td></tr>
+    <tr><td><strong>emcee / PyMC / NumPyro / Stan</strong></td><td>Posterior sampling for fitted models — the companion MCMC set explains what they are doing</td><td><a href="https://emcee.readthedocs.io/" target="_blank" rel="noopener">emcee</a> · <a href="https://num.pyro.ai/" target="_blank" rel="noopener">NumPyro</a> · <a href="https://mc-stan.org/" target="_blank" rel="noopener">Stan</a></td></tr>
+    <tr><td><strong>filterpy</strong></td><td>Kalman and particle filters, with a readable textbook alongside</td><td><a href="https://filterpy.readthedocs.io/" target="_blank" rel="noopener">filterpy.readthedocs.io</a></td></tr>
+  </table>
+  <div class="notes"><p>For most physics work, scipy plus statsmodels plus one GP package covers everything in the
+  first four pages of this set.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s3">
+<div class="inner">
+  <p class="kicker">Field-specific</p>
+  <h2>Tools built for <span class="hl">particular data</span></h2>
+  <table>
+    <tr><th>Field</th><th>Package</th><th>What it does</th><th>Link</th></tr>
+    <tr><td>X-ray and radio timing</td><td><strong>Stingray</strong></td><td>power spectra with the correct statistics, cross spectra, coherence, time lags, bispectra, QPO searches</td><td><a href="https://docs.stingray.science/" target="_blank" rel="noopener">docs.stingray.science</a></td></tr>
+    <tr><td>Space photometry</td><td><strong>Lightkurve</strong></td><td>Kepler/TESS light curves: detrending, periodograms, asteroseismic quantities</td><td><a href="https://docs.lightkurve.org/" target="_blank" rel="noopener">docs.lightkurve.org</a></td></tr>
+    <tr><td>Gravitational waves</td><td><strong>GWpy</strong>, <strong>PyCBC</strong>, <strong>Bilby</strong></td><td>strain handling and spectra; matched-filter searches; Bayesian parameter estimation. Public data and tutorials at GWOSC</td><td><a href="https://gwpy.github.io/" target="_blank" rel="noopener">gwpy</a> · <a href="https://pycbc.org/" target="_blank" rel="noopener">pycbc</a> · <a href="https://gwosc.org/software/" target="_blank" rel="noopener">GWOSC software</a></td></tr>
+    <tr><td>Pulsar timing</td><td><strong>PINT</strong>, <strong>TEMPO2</strong>, <strong>enterprise</strong></td><td>timing models and residuals; red-noise and gravitational-wave-background inference across an array</td><td><a href="https://github.com/nanograv/PINT" target="_blank" rel="noopener">nanograv/PINT</a> · <a href="https://github.com/nanograv/enterprise" target="_blank" rel="noopener">nanograv/enterprise</a></td></tr>
+    <tr><td>Seismology</td><td><strong>ObsPy</strong></td><td>waveform I/O, filtering, spectrograms, cross-correlation, instrument response removal</td><td><a href="https://docs.obspy.org/" target="_blank" rel="noopener">docs.obspy.org</a></td></tr>
+    <tr><td>Frequency metrology</td><td><strong>allantools</strong></td><td>Allan, modified Allan, Hadamard and overlapping variances with confidence intervals</td><td><a href="https://github.com/aewallin/allantools" target="_blank" rel="noopener">github.com/aewallin/allantools</a></td></tr>
+    <tr><td>Radio interferometry</td><td><strong>CASA</strong>, <strong>AOFlagger</strong>, <strong>tabascal</strong></td><td>calibration and imaging; RFI flagging; trajectory-based RFI subtraction</td><td><a href="https://casa.nrao.edu/" target="_blank" rel="noopener">casa.nrao.edu</a> · <a href="https://gitlab.com/aroffringa/aoflagger" target="_blank" rel="noopener">aoflagger</a></td></tr>
+    <tr><td>Solar and heliophysics</td><td><strong>SunPy</strong></td><td>time-series containers for instrument data, with units and metadata handled</td><td><a href="https://docs.sunpy.org/" target="_blank" rel="noopener">docs.sunpy.org</a></td></tr>
+  </table>
+  <div class="notes"><p>Every one of these has a citable paper; when you use one, cite it — and check its normalisation
+  convention for the spectrum before comparing with another tool.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s4">
+<div class="inner">
+  <p class="kicker">Reading</p>
+  <h2>Textbooks and the <span class="hl">papers behind the methods</span></h2>
+  <div class="grid g2">
+    <div>
+      <h3>Books</h3>
+      <ul>
+        <li>D. B. Percival, A. T. Walden, <em>Spectral Analysis for Physical Applications</em>, CUP (1993). The
+        reference for tapers, multitaper and the statistics of spectral estimates.</li>
+        <li>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, <em>Time Series Analysis: Forecasting and Control</em>. The
+        origin of the ARIMA machinery.</li>
+        <li>C. Chatfield, H. Xing, <em>The Analysis of Time Series: An Introduction with R</em>. The gentlest
+        complete introduction.</li>
+        <li>R. H. Shumway, D. S. Stoffer, <em>Time Series Analysis and Its Applications</em>. Strong on state-space
+        models and the Kalman filter.</li>
+        <li>C. E. Rasmussen, C. K. I. Williams, <em>Gaussian Processes for Machine Learning</em>, MIT Press (2006);
+        <a href="https://gaussianprocess.org/gpml/" target="_blank" rel="noopener">free online</a>.</li>
+        <li>Ž. Ivezić, A. Connolly, J. VanderPlas, A. Gray, <em>Statistics, Data Mining and Machine Learning in
+        Astronomy</em>, Princeton (2020). Chapter 10 is time series, with code.</li>
+        <li>W. J. Riley, <em>Handbook of Frequency Stability Analysis</em>, NIST SP 1065 (2008);
+        <a href="https://www.nist.gov/publications/handbook-frequency-stability-analysis" target="_blank" rel="noopener">free from NIST</a>.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Papers worth having read</h3>
+      <ul>
+        <li>P. D. Welch, <em>The use of FFT for the estimation of power spectra</em>, IEEE Trans. AU <strong>15</strong>, 70 (1967).</li>
+        <li>D. J. Thomson, <em>Spectrum estimation and harmonic analysis</em>, Proc. IEEE <strong>70</strong>, 1055 (1982) — multitaper.</li>
+        <li>N. R. Lomb (1976) and J. D. Scargle (1982), and J. VanderPlas, <em>Understanding the Lomb–Scargle
+        periodogram</em>, ApJS <strong>236</strong>, 16 (2018);
+        <a href="https://arxiv.org/abs/1703.09824" target="_blank" rel="noopener">arXiv:1703.09824</a>.</li>
+        <li>M. E. Mann, J. Lees, <em>Robust estimation of background noise and signal detection in climatic time
+        series</em>, Climatic Change <strong>33</strong>, 409 (1996) — red-noise significance.</li>
+        <li>S. Vaughan, <em>A simple test for periodic signals in red noise</em>, A&amp;A <strong>431</strong>, 391
+        (2005); and the Bayesian version, MNRAS <strong>402</strong>, 307 (2010).</li>
+        <li>J. Theiler et al., <em>Testing for nonlinearity in time series: the method of surrogate data</em>,
+        Physica D <strong>58</strong>, 77 (1992).</li>
+        <li>D. Foreman-Mackey et al., <em>Fast and scalable Gaussian process modeling with applications to
+        astronomical time series</em>, AJ <strong>154</strong>, 220 (2017);
+        <a href="https://arxiv.org/abs/1703.09710" target="_blank" rel="noopener">arXiv:1703.09710</a>.</li>
+        <li>P. Uttley et al., <em>X-ray reverberation and the origin of variability</em>, A&amp;A Rev.
+        <strong>22</strong>, 72 (2014) — cross-spectra, coherence and lags in practice.</li>
+        <li>D. W. Allan, <em>Statistics of atomic frequency standards</em>, Proc. IEEE <strong>54</strong>, 221 (1966).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="notes"><p>If you read only two: Percival &amp; Walden for spectra, and VanderPlas for Lomb–Scargle and
+  the practicalities of uneven sampling.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">Getting started</p>
+  <h2>A one-hour <span class="hl">self-test</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>The quickest way to trust a pipeline is to build it against a case you can compute by hand. In an hour, with
+      scipy and statsmodels:</p>
+      <ol class="steps">
+        <li><strong>Simulate</strong> an AR(1) series with a known <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>φ</mi></mrow><annotation encoding="application/x-tex">\varphi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">φ</span></span></span></span> and variance.</li>
+        <li><strong>Recover</strong> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>φ</mi></mrow><annotation encoding="application/x-tex">\varphi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">φ</span></span></span></span> by Yule–Walker and by maximum likelihood; check both against the truth
+        and against each other.</li>
+        <li><strong>Estimate</strong> the spectrum with <code>scipy.signal.welch</code> and overlay the analytic
+        Lorentzian: they should agree within the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mi>K</mi></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1767em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;padding-left:0.833em;">K</span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span></span></span></span> scatter.</li>
+        <li><strong>Check the error bar</strong>: repeat 500 times and compare the spread of the recovered <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>φ</mi></mrow><annotation encoding="application/x-tex">\varphi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">φ</span></span></span></span>
+        with the uncertainty the fit reported.</li>
+        <li><strong>Break it</strong>: add a gap, a trend, or an outlier, and see which step notices.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Why step 4 matters most</div>
+        <p>It is the only step that tests whether your <em>uncertainties</em> are right, and uncertainty is where
+        time-series analysis usually goes wrong. Everything else tests the central value, which is rarely the
+        problem.</p></div>
+      <div class="box physics"><div class="t">And then</div>
+        <p>Replace the simulated series with your own data, keep the same tests as a regression suite, and you have a
+        pipeline whose failures announce themselves.</p></div>
+      <p style="margin-top:10px">Back to <a href="index.html">the introduction</a>, or to
+      <a href="errors.html">error estimates</a>.</p>
+    </div>
+  </div>
+  <div class="notes"><p>This is the same "test against a known answer" principle as the companion MCMC set, where
+  every target has a closed-form solution.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+</script>
+
+</body>
+</html>
