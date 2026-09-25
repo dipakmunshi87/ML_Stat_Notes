@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bayesian Optimisation</title>
 <meta name="description" content="Bayesian optimisation from first principles: Gaussian process surrogates, acquisition functions derived and compared, and four worked examples in one and two dimensions — every number computed live in your browser.">
@@ -10,73 +9,87 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Bayesian Optimisation — a worked introduction">
 <meta property="og:description" content="How to optimise a function so expensive you can only afford thirty evaluations. The Gaussian process, the acquisition functions, and the failure that nobody warns you about.">
-<link rel="stylesheet" href="assets/deck.css">
 <style>
-/* ---- page-specific: only what deck.css does not already provide ---- */
-:root{--accent2:#0b7a5a; --warn:#b4530a}   /* deck.css defines neither */
-h3{color:var(--accent2)}
-h2+.rule{height:2px;background:var(--rule);margin:0 0 14px}
-
-/* hand-rolled maths */
-.eq{font-family:'Latin Modern Math',Cambria,Georgia,serif;text-align:center}
+:root{
+  --bg:#ffffff; --fg:#16202b; --muted:#5d6b7a; --rule:#dde3ea;
+  --accent:#1f6f9f; --accent2:#0f5d4a; --warn:#b3541e; --pink:#a3336b;
+  --card:#f5f8fa; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+    --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+    --card:#18202a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+  --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+  --card:#18202a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:17px/1.62 Georgia,'Iowan Old Style','Times New Roman',serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px 80px}
+header.top{padding:54px 0 26px;border-bottom:3px solid var(--accent)}
+h1{font-size:2.35rem;line-height:1.12;margin:0 0 10px;letter-spacing:-.02em}
+.sub{font-size:1.12rem;color:var(--muted);margin:0 0 14px}
+.byline{font-size:.92rem;color:var(--muted);font-family:var(--mono)}
+h2{font-size:1.5rem;margin:46px 0 4px;letter-spacing:-.01em;color:var(--accent)}
+h2+.rule{height:2px;background:var(--rule);margin-bottom:14px}
+h3{font-size:1.12rem;margin:26px 0 6px;color:var(--accent2)}
+p{margin:12px 0} a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.9em;background:var(--card);padding:1px 4px;border-radius:3px}
+.lead{font-size:1.1rem}
+.eq{margin:16px 0;text-align:center;font-family:'Latin Modern Math',Cambria,Georgia,serif;font-size:1.12rem;overflow-x:auto}
 .eq.big{font-size:1.2rem}
-i.v{font-style:italic}
-sub,sup{font-size:.72em}
+i.v{font-style:italic} sub,sup{font-size:.72em}
 .frac{display:inline-block;vertical-align:middle;text-align:center;margin:0 .25em}
 .frac>span{display:block;padding:0 .35em}
 .frac .num{border-bottom:1.3px solid currentColor}
 .op{margin:0 .3em}
-
-/* live demos */
-.demo{border:1px solid var(--rule);border-radius:10px;margin:24px 0;overflow:hidden;background:#fff}
-.demo .hd{background:#f5f8fe;padding:9px 14px;border-bottom:1px solid var(--rule);
-  font:600 .82rem/1.4 ui-monospace,Menlo,monospace;color:var(--muted);letter-spacing:.02em}
+.box{background:var(--card);border-left:4px solid var(--accent);padding:14px 16px;margin:20px 0;border-radius:0 4px 4px 0}
+.box .t{font-weight:700;margin-bottom:5px;color:var(--accent)}
+.box.warn{border-left-color:var(--warn)} .box.warn .t{color:var(--warn)}
+.box.key{border-left-color:var(--accent2)} .box.key .t{color:var(--accent2)}
+.box p{margin:7px 0;font-size:.97rem}
+.demo{border:1px solid var(--rule);border-radius:6px;margin:24px 0;overflow:hidden;background:var(--bg)}
+.demo .hd{background:var(--card);padding:9px 14px;border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:.82rem;color:var(--muted);letter-spacing:.02em}
 .demo .bd{padding:14px}
-canvas{display:block;width:100%;height:auto;border-radius:6px}
+canvas{display:block;width:100%;height:auto;border-radius:4px}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:11px 0 4px}
-button{font:600 .88rem/1 system-ui,sans-serif;padding:8px 14px;border:1px solid var(--blue);
-  background:var(--blue);color:#fff;border-radius:6px;cursor:pointer}
-button.ghost{background:#fff;color:var(--blue)}
+button{font:600 .88rem/1 system-ui,sans-serif;padding:8px 14px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;border-radius:5px;cursor:pointer}
+button.ghost{background:var(--bg);color:var(--accent)}
 button:disabled{opacity:.45;cursor:default}
 label.sl{font:.84rem/1 system-ui,sans-serif;color:var(--muted);display:flex;align-items:center;gap:7px}
-input[type=range]{width:118px}
-select{font:.86rem/1 system-ui,sans-serif;padding:6px 8px;border:1px solid var(--rule);border-radius:6px}
-.readout{font-family:ui-monospace,Menlo,monospace;font-size:.84rem;background:#f5f8fe;
-  padding:9px 11px;border-radius:6px;margin-top:10px;white-space:pre-wrap;line-height:1.55}
-
-/* dimension tags - deck.css .tag is absolutely positioned, so restate it */
-.tag{position:static;display:inline-block;font:600 .7rem/1 system-ui,sans-serif;padding:3px 7px;
-  border-radius:4px;background:var(--blue);color:#fff;vertical-align:middle;margin-left:6px;
-  letter-spacing:.04em}
+input[type=range]{width:110px}
+select{font:.84rem system-ui,sans-serif;padding:5px 7px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--bg);color:var(--fg)}
+.readout{font-family:var(--mono);font-size:.84rem;background:var(--card);padding:9px 11px;
+  border-radius:4px;margin-top:10px;white-space:pre-wrap;line-height:1.55}
+.tag{display:inline-block;font:600 .7rem/1 system-ui,sans-serif;padding:3px 7px;border-radius:3px;
+  background:var(--accent);color:#fff;vertical-align:middle;margin-left:6px;letter-spacing:.04em}
 .tag.d2{background:var(--pink)}
-
-footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);
-  font-size:.9rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93rem}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule)}
+th{color:var(--accent);font-family:system-ui,sans-serif;font-size:.84rem;letter-spacing:.03em}
+td.num{font-family:var(--mono)}
+footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);font-size:.9rem;color:var(--muted)}
+ol,ul{padding-left:1.25em} li{margin:6px 0}
+@media (max-width:600px){h1{font-size:1.85rem} body{font-size:16px} .wrap{padding:0 16px 60px}}
 </style>
 </head>
 <body>
-<script>document.body.className="plain";</script>
-<nav class="topbar">
-  <a class="brand" href="../" title="Back to all topics">&#8962; All topics</a>
-  <a href="#s1">1 &middot; The setting</a>
-  <a href="#s2">2 &middot; The surrogate</a>
-  <a href="#s3">3 &middot; Acquisition</a>
-  <a href="#s4">4 &middot; Do they differ?</a>
-  <a href="#s5">5 &middot; Two dimensions</a>
-  <a href="#s6">6 &middot; The failure</a>
-  <a href="#s7">7 &middot; Limitations</a>
-  <a href="#s8">8 &middot; Software</a>
-</nav>
+<div class="wrap">
 
-<div class="page">
-
-<header class="hero">
-  <p class="kicker">BO set &middot; surrogates, acquisition functions, and where they fail</p>
-  <h1>Bayesian<br><span class="hl">optimisation</span></h1>
-  <p class="lead">How to optimise a function so expensive that you can only afford thirty
+<header class="top">
+  <h1>Bayesian Optimisation</h1>
+  <p class="sub">How to optimise a function so expensive that you can only afford thirty
   evaluations of it &mdash; and why the kernel you chose matters more than the algorithm.</p>
-  <p class="lead" style="font-size:1.15rem;color:var(--muted)">Dr. Dipak Munshi &middot; every number
-  on this page is computed in your browser while you watch.</p>
+  <p class="byline">Dr. Dipak Munshi &middot; every number on this page is computed in your browser</p>
 </header>
 
 <p class="lead">Some functions are cheap. You can evaluate them a million times, take gradients, and
@@ -92,7 +105,7 @@ admits it does not know. This page builds it from scratch, then shows you four e
 the one where it fails badly, quietly, and for a reason that is entirely your fault.</p>
 
 <!-- ============================================ -->
-<h2 id="s1">1. The setting, and when this is the right tool</h2><div class="rule"></div>
+<h2>1. The setting, and when this is the right tool</h2><div class="rule"></div>
 
 <p>You want to minimise <i class="v">f</i>(<b>x</b>) over some bounded domain, where:</p>
 
@@ -122,7 +135,7 @@ ways:</p>
 </div>
 
 <!-- ============================================ -->
-<h2 id="s2">2. The surrogate: a Gaussian process in one page</h2><div class="rule"></div>
+<h2>2. The surrogate: a Gaussian process in one page</h2><div class="rule"></div>
 
 <p>A Gaussian process is a distribution over <em>functions</em>. The idea is less exotic than it
 sounds: assume that the function values at any finite set of points are jointly Gaussian, with a
@@ -180,7 +193,7 @@ Long &#8467; and it draws a smooth curve through everything, confident far from 
 cannot easily distinguish them. Hold on to that: it is the whole of &sect;7.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s3">3. The acquisition function: where to look next</h2><div class="rule"></div>
+<h2>3. The acquisition function: where to look next</h2><div class="rule"></div>
 
 <p>The surrogate gives a mean and a standard deviation everywhere. The acquisition function turns
 that into a single number per candidate point, and we evaluate <i class="v">f</i> wherever it is
@@ -257,7 +270,7 @@ scheduled &mdash; it emerges</strong>, because uncertainty is spent as it is res
 Probability of Improvement and watch it get stuck in the decoy.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s4">4. Do the acquisition functions actually differ? <span class="tag">1D</span></h2><div class="rule"></div>
+<h2>4. Do the acquisition functions actually differ? <span class="tag">1D</span></h2><div class="rule"></div>
 
 <p>It is easy to assert that EI beats PI and that both beat random. Easier still to test it: run
 each strategy many times from different random starts on the same problem and compare the
@@ -286,7 +299,7 @@ failure rate across restarts</em> rather than on the best value found. The ranki
 score it that way.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s5">5. Two dimensions: a real benchmark <span class="tag d2">2D</span></h2><div class="rule"></div>
+<h2>5. Two dimensions: a real benchmark <span class="tag d2">2D</span></h2><div class="rule"></div>
 
 <p>The Branin function is the standard two-dimensional test case. It has <strong>three</strong>
 global minima, all with value <b>0.397887</b>, which makes it a fair test of whether a method finds
@@ -326,7 +339,7 @@ the acquisition concentrates. <strong>You are watching the model's beliefs, not 
 and fails when it fails.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s6">6. The failure nobody warns you about <span class="tag d2">2D</span></h2><div class="rule"></div>
+<h2>6. The failure nobody warns you about <span class="tag d2">2D</span></h2><div class="rule"></div>
 
 <p>Every treatment of Bayesian optimisation explains the exploration&ndash;exploitation trade-off.
 Far fewer say plainly that <strong>the method's performance is dominated by the kernel
@@ -366,7 +379,7 @@ random sampling on your problem, something is wrong with the model, not with you
 random search is a genuinely strong baseline in higher dimensions.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s7">7. Honest limitations</h2><div class="rule"></div>
+<h2>7. Honest limitations</h2><div class="rule"></div>
 
 <ul>
 <li><strong>Dimension.</strong> Performance degrades badly above roughly 20 parameters. The volume
@@ -405,7 +418,7 @@ reasonable description of the function. When it fails, it is almost always becau
 not &mdash; and the algorithm has no way of telling you so.</p></div>
 
 <!-- ============================================ -->
-<h2 id="s8">8. Software and reading</h2><div class="rule"></div>
+<h2>8. Software and reading</h2><div class="rule"></div>
 
 <p><strong>Libraries.</strong> <code>BoTorch</code> (PyTorch, the current research standard) and
 <code>GPyTorch</code> beneath it; <code>Ax</code> for a higher-level interface;
