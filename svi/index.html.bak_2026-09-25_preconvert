@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stochastic Variational Inference</title>
 <meta name="description" content="Stochastic variational inference from first principles: the ELBO derived, the reparameterisation trick, and four worked examples in one and two dimensions — every number computed live in your browser.">
@@ -10,15 +9,47 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Stochastic Variational Inference — a worked introduction">
 <meta property="og:description" content="The ELBO derived, the reparameterisation trick explained, and four examples where you can watch the optimisation run. Including the two cases where it quietly fails.">
-<link rel="stylesheet" href="assets/deck.css">
 <style>
-/* ---- SVI-specific: only what deck.css does not already provide ---- */
-:root{--accent2:#0b7a5a}          /* deck.css has no --accent2; the JS and h3 both read it */
-h3{color:var(--accent2)}
-h2+.rule{height:2px;background:var(--rule);margin:0 0 14px}
+:root{
+  --bg:#ffffff; --fg:#16202b; --muted:#5d6b7a; --rule:#dde3ea;
+  --accent:#1f6f9f; --accent2:#0f5d4a; --warn:#b3541e; --pink:#a3336b;
+  --card:#f5f8fa; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+    --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+    --card:#18202a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+  --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+  --card:#18202a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:17px/1.62 Georgia,'Iowan Old Style','Times New Roman',serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px 80px}
+header.top{padding:54px 0 26px;border-bottom:3px solid var(--accent)}
+h1{font-size:2.35rem;line-height:1.12;margin:0 0 10px;letter-spacing:-.02em}
+.sub{font-size:1.12rem;color:var(--muted);margin:0 0 14px}
+.byline{font-size:.92rem;color:var(--muted);font-family:var(--mono)}
+h2{font-size:1.5rem;margin:46px 0 4px;letter-spacing:-.01em;color:var(--accent)}
+h2+.rule{height:2px;background:var(--rule);margin-bottom:14px}
+h3{font-size:1.12rem;margin:26px 0 6px;color:var(--accent2)}
+p{margin:12px 0}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.9em;background:var(--card);padding:1px 4px;border-radius:3px}
+.lead{font-size:1.1rem}
+.small{font-size:.93rem;color:var(--muted)}
 
-/* hand-rolled maths */
-.eq{font-family:'Latin Modern Math',Cambria,Georgia,serif;text-align:center}
+/* ---- hand-rolled maths ---- */
+.eq{margin:16px 0;text-align:center;font-family:'Latin Modern Math',Cambria,Georgia,serif;font-size:1.12rem;overflow-x:auto}
 .eq.big{font-size:1.2rem}
 i.v{font-style:italic}
 sub,sup{font-size:.72em}
@@ -27,56 +58,48 @@ sub,sup{font-size:.72em}
 .frac .num{border-bottom:1.3px solid currentColor}
 .op{margin:0 .3em}
 
-/* live demos */
-.demo{border:1px solid var(--rule);border-radius:10px;margin:24px 0;overflow:hidden;background:#fff}
-.demo .hd{background:#f5f8fe;padding:9px 14px;border-bottom:1px solid var(--rule);
-  font:600 .82rem/1.4 ui-monospace,Menlo,monospace;color:var(--muted);letter-spacing:.02em}
+/* ---- boxes ---- */
+.box{background:var(--card);border-left:4px solid var(--accent);padding:14px 16px;margin:20px 0;border-radius:0 4px 4px 0}
+.box .t{font-weight:700;margin-bottom:5px;color:var(--accent)}
+.box.warn{border-left-color:var(--warn)} .box.warn .t{color:var(--warn)}
+.box.key{border-left-color:var(--accent2)} .box.key .t{color:var(--accent2)}
+.box p{margin:7px 0;font-size:.97rem}
+
+/* ---- demos ---- */
+.demo{border:1px solid var(--rule);border-radius:6px;margin:24px 0;overflow:hidden;background:var(--bg)}
+.demo .hd{background:var(--card);padding:9px 14px;border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:.82rem;color:var(--muted);letter-spacing:.02em}
 .demo .bd{padding:14px}
-canvas{display:block;width:100%;height:auto;border-radius:6px}
+canvas{display:block;width:100%;height:auto;border-radius:4px}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:11px 0 4px}
-button{font:600 .88rem/1 system-ui,sans-serif;padding:8px 14px;border:1px solid var(--blue);
-  background:var(--blue);color:#fff;border-radius:6px;cursor:pointer}
-button.ghost{background:#fff;color:var(--blue)}
+button{font:600 .88rem/1 system-ui,sans-serif;padding:8px 14px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;border-radius:5px;cursor:pointer}
+button.ghost{background:var(--bg);color:var(--accent)}
 button:disabled{opacity:.45;cursor:default}
 label.sl{font:.84rem/1 system-ui,sans-serif;color:var(--muted);display:flex;align-items:center;gap:7px}
 input[type=range]{width:118px}
-.readout{font-family:ui-monospace,Menlo,monospace;font-size:.84rem;background:#f5f8fe;
-  padding:9px 11px;border-radius:6px;margin-top:10px;white-space:pre-wrap;line-height:1.55}
-
-/* dimension tags - deck.css .tag is absolutely positioned, so restate it */
-.tag{position:static;display:inline-block;font:600 .7rem/1 system-ui,sans-serif;padding:3px 7px;
-  border-radius:4px;background:var(--blue);color:#fff;vertical-align:middle;margin-left:6px;
-  letter-spacing:.04em}
+.readout{font-family:var(--mono);font-size:.84rem;background:var(--card);padding:9px 11px;
+  border-radius:4px;margin-top:10px;white-space:pre-wrap;line-height:1.55}
+.tag{display:inline-block;font:600 .7rem/1 system-ui,sans-serif;padding:3px 7px;border-radius:3px;
+  background:var(--accent);color:#fff;vertical-align:middle;margin-left:6px;letter-spacing:.04em}
 .tag.d2{background:var(--pink)}
-
-footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);
-  font-size:.9rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93rem}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule)}
+th{color:var(--accent);font-family:system-ui,sans-serif;font-size:.84rem;letter-spacing:.03em}
+td.num{font-family:var(--mono)}
+footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);font-size:.9rem;color:var(--muted)}
+ol,ul{padding-left:1.25em} li{margin:6px 0}
+@media (max-width:600px){h1{font-size:1.85rem} body{font-size:16px} .wrap{padding:0 16px 60px}}
 </style>
 </head>
 <body>
-<script>document.body.className="plain";</script>
-<nav class="topbar">
-  <a class="brand" href="../" title="Back to all topics">&#8962; All topics</a>
-  <a href="#s1">1 &middot; The problem</a>
-  <a href="#s2">2 &middot; The ELBO</a>
-  <a href="#s3">3 &middot; Stochastic</a>
-  <a href="#s4">4 &middot; Reparameterisation</a>
-  <a href="#s5">5 &middot; Known answer</a>
-  <a href="#s6">6 &middot; KL picks a side</a>
-  <a href="#s7">7 &middot; Mean-field trap</a>
-  <a href="#s8">8 &middot; Wrong family</a>
-  <a href="#s9">9 &middot; Believe it?</a>
-</nav>
+<div class="wrap">
 
-<div class="page">
-
-<header class="hero">
-  <p class="kicker">SVI set &middot; the ELBO derived, four worked examples</p>
-  <h1>Stochastic<br><span class="hl">variational inference</span></h1>
-  <p class="lead">Turning an integral you cannot do into an optimisation you can &mdash; and the two
+<header class="top">
+  <h1>Stochastic Variational Inference</h1>
+  <p class="sub">Turning an integral you cannot do into an optimisation you can — and the two
   places it quietly lies to you.</p>
-  <p class="lead" style="font-size:1.15rem;color:var(--muted)">Dr. Dipak Munshi &middot; every number
-  on this page is computed in your browser while you watch.</p>
+  <p class="byline">Dr. Dipak Munshi &middot; every number on this page is computed in your browser</p>
 </header>
 
 <p class="lead">Bayesian inference asks for a posterior. Usually you cannot have one, because the
@@ -92,7 +115,7 @@ This page derives the method from scratch and then shows you, in four worked exa
 it succeeds and where it fails.</p>
 
 <!-- ==================================================== -->
-<h2 id="s1">1. The problem, stated honestly</h2><div class="rule"></div>
+<h2>1. The problem, stated honestly</h2><div class="rule"></div>
 
 <p>Bayes' theorem for a latent variable <i class="v">z</i> given data <i class="v">x</i>:</p>
 
@@ -116,7 +139,7 @@ problem into optimisation, where the unknown constant becomes an additive term t
 where the optimum is.</p></div>
 
 <!-- ==================================================== -->
-<h2 id="s2">2. The ELBO, derived</h2><div class="rule"></div>
+<h2>2. The ELBO, derived</h2><div class="rule"></div>
 
 <p>Choose a family of distributions <i class="v">q</i><sub>&phi;</sub>(<i class="v">z</i>) with
 parameters &phi; — say Gaussians, with &phi; = (&mu;, &sigma;). We want the member closest to the
@@ -185,7 +208,7 @@ against regularisation, falling out of the algebra rather than being bolted on.<
 </div>
 
 <!-- ==================================================== -->
-<h2 id="s3">3. Where the "stochastic" comes from</h2><div class="rule"></div>
+<h2>3. Where the "stochastic" comes from</h2><div class="rule"></div>
 
 <p>The ELBO is an expectation, and expectations are integrals — we appear to have swapped one
 intractable integral for another. Two things rescue it.</p>
@@ -211,7 +234,7 @@ This is what makes the method scale: the cost per step stops depending on the si
 Hence <strong>stochastic</strong> variational inference.</p>
 
 <!-- ==================================================== -->
-<h2 id="s4">4. The reparameterisation trick</h2><div class="rule"></div>
+<h2>4. The reparameterisation trick</h2><div class="rule"></div>
 
 <p>One obstacle remains, and it is the one that held the field back for years. We need the gradient
 of an expectation <em>whose distribution depends on the parameters we are differentiating</em>:</p>
@@ -264,7 +287,7 @@ thousand steps or a million. The demonstration below measures it.</p></div>
 </div>
 
 <!-- ==================================================== -->
-<h2 id="s5">5. Example one &mdash; a case with a known answer <span class="tag">1D</span></h2><div class="rule"></div>
+<h2>5. Example one &mdash; a case with a known answer <span class="tag">1D</span></h2><div class="rule"></div>
 
 <p>Always start where the truth is available. Take a Gaussian prior and a Gaussian likelihood:
 <i class="v">z</i> &sim; <i class="v">N</i>(0,&thinsp;1), and <i class="v">N</i> observations
@@ -305,7 +328,7 @@ because it was never biased. That is a useful instinct to carry: <em>more sample
 quieter ride, not a different destination</em>.</p></div>
 
 <!-- ==================================================== -->
-<h2 id="s6">6. Example two &mdash; where KL chooses a side <span class="tag">1D</span></h2><div class="rule"></div>
+<h2>6. Example two &mdash; where KL chooses a side <span class="tag">1D</span></h2><div class="rule"></div>
 
 <p>Now a posterior the Gaussian family cannot represent: a mixture of two well-separated modes.
 A single Gaussian must do something, and what it does is characteristic.</p>
@@ -351,7 +374,7 @@ different answers. If your reported uncertainty depends on the initialisation, y
 the posterior — you have found a local optimum of a bound.</p></div>
 
 <!-- ==================================================== -->
-<h2 id="s7">7. Example three &mdash; the mean-field trap <span class="tag d2">2D</span></h2><div class="rule"></div>
+<h2>7. Example three &mdash; the mean-field trap <span class="tag d2">2D</span></h2><div class="rule"></div>
 
 <p>In more than one dimension the usual choice is the <strong>mean-field</strong> family: a product
 of independent one-dimensional distributions,</p>
@@ -404,7 +427,7 @@ and recovers the correlation exactly in this example. Normalising flows go furth
 comparison above and read the measured ratio against &radic;(1&minus;&rho;<sup>2</sup>).</p></div>
 
 <!-- ==================================================== -->
-<h2 id="s8">8. Example four &mdash; when the family is simply wrong <span class="tag d2">2D</span></h2><div class="rule"></div>
+<h2>8. Example four &mdash; when the family is simply wrong <span class="tag d2">2D</span></h2><div class="rule"></div>
 
 <p>The correlated Gaussian was a case where a richer family fixes everything, because the truth was
 still Gaussian. Now a posterior that is not Gaussian in any coordinate system you would naturally
@@ -432,7 +455,7 @@ the ELBO and the true log evidence is exactly the thing you cannot compute.</p>
 Those are different claims, and conflating them is the most common mistake made with this method.</p></div>
 
 <!-- ==================================================== -->
-<h2 id="s9">9. So how do you know whether to believe it?</h2><div class="rule"></div>
+<h2>9. So how do you know whether to believe it?</h2><div class="rule"></div>
 
 <p>Since the ELBO cannot certify the answer, the checks have to come from outside:</p>
 
@@ -495,9 +518,9 @@ function randn(){ if(spare!==null){const v=spare;spare=null;return v;}
 const LOG2PI=Math.log(2*Math.PI);
 function TH(){const c=getComputedStyle(document.documentElement);
   const g=n=>c.getPropertyValue(n).trim();
-  return {acc:g('--accent')||'#0e7490',acc2:g('--accent2')||'#0b7a5a',
-          pink:g('--pink')||'#b3246b',muted:g('--muted')||'#6a7c9c',
-          rule:g('--rule')||'#ccd8ec'};}
+  return {acc:g('--accent')||TH().acc,acc2:g('--accent2')||TH().acc2,
+          pink:g('--pink')||TH().pink,muted:g('--muted')||'#5d6b7a',
+          rule:g('--rule')||'#dde3ea'};}
 function dpr(cv){const d=window.devicePixelRatio||1;const w=cv.clientWidth||cv.width;
   const h=cv.height*(w/cv.width);cv.style.height=h+'px';
   if(cv._w!==w){cv.width=w*d;cv.height=h*d;cv._w=w;}
