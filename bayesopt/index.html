@@ -720,28 +720,69 @@ const BRA_MIN=0.397887;
     const pad={l:40,r:14,t:12,b:30};
     const A=frame(g,W,H,pad,X1[0],X1[1],X2[0],X2[1],'x1','x2');
     const w=Math.floor(W-pad.l-pad.r),h=Math.floor(H-pad.t-pad.b);
-    const img=g.createImageData(w,h);
+    // The field is smooth, and the GP mean/sd cost one solve per sample, so
+    // evaluate on a half-resolution grid and let drawImage scale it up. This
+    // is 4x less work and visually indistinguishable.
+    const gw=Math.max(2,Math.ceil(w/2)), gh=Math.max(2,Math.ceil(h/2));
+    const img=g.createImageData(gw,gh);
     const gp=X.length?gpNow():null,best=X.length?Math.min(...y):0;
-    const vals=new Float64Array(w*h);let lo=1e30,hi=-1e30;
-    for(let j=0;j<h;j++)for(let i=0;i<w;i++){
-      const u=[i/(w-1),1-j/(h-1)];
+    const vals=new Float64Array(gw*gh);let lo=1e30,hi=-1e30;
+    for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){
+      const u=[i/(gw-1),1-j/(gh-1)];
       const p=[X1[0]+u[0]*(X1[1]-X1[0]),X2[0]+u[1]*(X2[1]-X2[0])];
       let v;
       if(view.value==='f')v=Math.log(1+branin(p[0],p[1]));
       else if(view.value==='mu')v=Math.log(1+Math.max(gp.mu(u),0));
       else if(view.value==='sd')v=gp.sd(u);
-      else v=Math.pow(acq('ei',gp.mu(u),gp.sd(u),best,2),0.25);
-      vals[j*w+i]=v; if(v<lo)lo=v; if(v>hi)hi=v;}
-    for(let k=0;k<w*h;k++){const t=(vals[k]-lo)/Math.max(hi-lo,1e-12);
-      const a=view.value==='f'||view.value==='mu'?(1-t):t;
-      img.data[k*4]=31;img.data[k*4+1]=111;img.data[k*4+2]=159;
-      img.data[k*4+3]=Math.round(30+190*a);}
+      else v=Math.pow(Math.max(acq('ei',gp.mu(u),gp.sd(u),best,2),0),0.25);
+      if(!isFinite(v))v=0;                       // EI can underflow to NaN
+      vals[j*gw+i]=v; if(v<lo)lo=v; if(v>hi)hi=v;}
+    // ColorBrewer Blues: a real lightness ramp reads the surface far better
+    // than one colour at varying opacity.
+    const RAMP=[[247,251,255],[222,235,247],[198,219,239],[158,202,225],
+                [107,174,214],[66,146,198],[33,113,181],[8,69,148]];
+    for(let k=0;k<gw*gh;k++){const t=(vals[k]-lo)/Math.max(hi-lo,1e-12);
+      let a=view.value==='f'||view.value==='mu'?(1-t):t;
+      if(!isFinite(a))a=0;
+      const x=Math.max(0,Math.min(1,a))*(RAMP.length-1);
+      const q=Math.min(RAMP.length-2,Math.max(0,Math.floor(x))),f=x-q;
+      const c0=RAMP[q],c1=RAMP[q+1];
+      img.data[k*4]  =c0[0]+(c1[0]-c0[0])*f;
+      img.data[k*4+1]=c0[1]+(c1[1]-c0[1])*f;
+      img.data[k*4+2]=c0[2]+(c1[2]-c0[2])*f;
+      img.data[k*4+3]=255;}
     // putImageData ignores the canvas transform, so on a HiDPI screen it would
     // land at device-pixel coordinates and cover only part of the box. Stage it
     // on an offscreen canvas and drawImage it, which does respect the transform.
-    const off=document.createElement('canvas');off.width=w;off.height=h;
+    const off=document.createElement('canvas');
+    off.width=img.width;off.height=img.height;
     off.getContext('2d').putImageData(img,0,0);
-    g.drawImage(off,pad.l,pad.t,w,h);
+    g.drawImage(off,0,0,img.width,img.height,pad.l,pad.t,w,h);
+    // iso-contours by marching squares, so the shape of the surface is explicit
+    (function(){
+      const NL=8, st=2, sx=w/gw, sy=h/gh;
+      g.save();g.lineWidth=1;g.strokeStyle='rgba(8,48,107,.42)';
+      const cut=(ax,ay,av,bx,by,bv,lev)=>{const t=(lev-av)/((bv-av)||1e-12);
+        return [ax+(bx-ax)*t, ay+(by-ay)*t];};
+      for(let L=1;L<NL;L++){
+        const lev=lo+(hi-lo)*L/NL;
+        g.beginPath();
+        for(let j=0;j+st<gh;j+=st)for(let i=0;i+st<gw;i+=st){
+          const a=vals[j*gw+i], b=vals[j*gw+i+st],
+                c=vals[(j+st)*gw+i+st], d=vals[(j+st)*gw+i];
+          const X0=pad.l+i*sx,Y0=pad.t+j*sy,X1=pad.l+(i+st)*sx,Y1=pad.t+(j+st)*sy;
+          const P=[];
+          if((a<lev)!==(b<lev))P.push(cut(X0,Y0,a,X1,Y0,b,lev));
+          if((b<lev)!==(c<lev))P.push(cut(X1,Y0,b,X1,Y1,c,lev));
+          if((c<lev)!==(d<lev))P.push(cut(X1,Y1,c,X0,Y1,d,lev));
+          if((d<lev)!==(a<lev))P.push(cut(X0,Y1,d,X0,Y0,a,lev));
+          if(P.length>=2){g.moveTo(P[0][0],P[0][1]);g.lineTo(P[1][0],P[1][1]);
+            if(P.length===4){g.moveTo(P[2][0],P[2][1]);g.lineTo(P[3][0],P[3][1]);}}
+        }
+        g.stroke();
+      }
+      g.restore();
+    })();
     g.strokeStyle=C.rule;g.strokeRect(pad.l,pad.t,w,h);
     // true optima
     g.fillStyle=C.acc2;
