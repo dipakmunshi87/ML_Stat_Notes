@@ -57,7 +57,7 @@ footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);
 <body>
 <script>document.body.className="plain";</script>
 <nav class="topbar">
-  <a class="brand" href="../" title="Back to all topics">&#8962; All topics</a>
+  <a class="brand" href="../index.html" title="Back to all topics">&#8962; All topics</a>
   <a href="#s1">1 &middot; The setting</a>
   <a href="#s2">2 &middot; The surrogate</a>
   <a href="#s3">3 &middot; Acquisition</a>
@@ -781,16 +781,43 @@ const BRA_MIN=0.397887;
       X.push([bx]);y.push(forrester(bx));curve.push(Math.min(...y)-FOR_MIN);}
     return {curve,regret:Math.min(...y)-FOR_MIN};
   }
+  const LO=1e-4, DEC=5;                       // decades shown: 1e-4 .. 10
+  function lg(v){return Math.log10(Math.max(v,LO));}
+  function frameLog(g,W,H,pad){
+    const C=TH();g.strokeStyle=C.rule;g.lineWidth=1;
+    g.strokeRect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);
+    g.fillStyle=C.muted;g.font='11px ui-monospace,monospace';
+    for(let i=0;i<=4;i++){const t=3+17*i/4,px=pad.l+(W-pad.l-pad.r)*i/4;
+      g.fillText(t.toFixed(0),px-8,H-pad.b+14);}
+    [[-4,'1e-4'],[-3,'1e-3'],[-2,'0.01'],[-1,'0.1'],[0,'1'],[1,'10']].forEach(function(t){
+      const py=H-pad.b-(t[0]+4)/DEC*(H-pad.t-pad.b);
+      g.fillStyle=C.muted;g.fillText(t[1],4,py+4);
+      g.save();g.strokeStyle=C.rule;g.globalAlpha=.5;g.setLineDash([2,4]);
+      g.beginPath();g.moveTo(pad.l,py);g.lineTo(W-pad.r,py);g.stroke();g.restore();});
+    g.fillStyle=C.muted;
+    g.fillText('evaluations',(pad.l+W-pad.r)/2-28,H-2);
+    g.save();g.translate(11,(pad.t+H-pad.b)/2+38);g.rotate(-Math.PI/2);
+    g.fillText('regret  (log scale)',0,0);g.restore();
+    return {X:v=>pad.l+(v-3)/17*(W-pad.l-pad.r),
+            Y:v=>H-pad.b-(lg(v)+4)/DEC*(H-pad.t-pad.b)};
+  }
   function draw(){
     const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
-    if(!res){frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1,'evaluations','median regret');
-      g.fillStyle=C.muted;g.font='13px system-ui';g.fillText('press the button',W/2-50,H/2);return;}
-    const A=frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1.05,'evaluations','median regret (normalised)');
+    const pad={l:54,r:14,t:14,b:30};
+    const A=frameLog(g,W,H,pad);
+    if(!res){g.fillStyle=C.muted;g.font='13px system-ui';
+      g.fillText('press the button',W/2-50,H/2);return;}
     const cols=[C.warn,C.acc2,C.pink];
-    LS.forEach(([v,n],i)=>{
-      const med=res[i].med.map(x=>x/res.scale);
-      line(g,med.map((x,j)=>[A.X(4+j),A.Y(Math.min(x,1.05))]),cols[i],2.4);
-      g.font='12px system-ui';g.fillStyle=cols[i];g.fillText(n,W-200,26+i*17);});
+    const fills=['rgba(180,83,10,.14)','rgba(11,122,90,.14)','rgba(179,36,107,.14)'];
+    LS.forEach(function(L,i){const r=res[i];
+      band(g,r.q75.map((x,j)=>[A.X(4+j),A.Y(x)]),
+             r.q25.map((x,j)=>[A.X(4+j),A.Y(x)]),fills[i]);
+      line(g,r.med.map((x,j)=>[A.X(4+j),A.Y(x)]),cols[i],2.4);});
+    g.font='12px system-ui';
+    LS.forEach(function(L,i){g.fillStyle=cols[i];g.fillText(L[1],W-232,26+i*17);});
+    g.fillStyle=C.muted;g.font='11px system-ui';
+    g.fillText('median line, interquartile band',W-232,26+3*17+2);
+    g.fillText('25 runs each',W-232,26+4*17-2);
   }
   document.getElementById('ls_run').onclick=function(){
     this.disabled=true;this.textContent='running 75 optimisations...';
@@ -798,11 +825,13 @@ const BRA_MIN=0.397887;
       const NR=25;res=[];
       LS.forEach(([v])=>{
         const runs=[];for(let s=0;s<NR;s++)runs.push(run(v,500+s*17));
-        const T=runs[0].curve.length,med=[];
+        const T=runs[0].curve.length,med=[],q25=[],q75=[];
         for(let t=0;t<T;t++){const a=runs.map(r=>r.curve[t]).sort((x,z)=>x-z);
-          med.push(a[Math.floor(NR/2)]);}
+          med.push(a[Math.floor(NR/2)]);
+          q25.push(a[Math.floor(NR*0.25)]);
+          q75.push(a[Math.floor(NR*0.75)]);}
         const fin=runs.map(r=>r.regret).sort((x,z)=>x-z);
-        res.push({med,medFinal:fin[Math.floor(NR/2)],worst:fin[fin.length-1],
+        res.push({med,q25,q75,medFinal:fin[Math.floor(NR/2)],worst:fin[fin.length-1],
                   hit:runs.filter(r=>r.regret<0.05).length/NR});});
       res.scale=Math.max(...res.map(r=>r.med[0]));
       draw();
