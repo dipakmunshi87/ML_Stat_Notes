@@ -820,7 +820,12 @@ function Adam(n,lr){return{lr:lr,m:new Float64Array(n),v:new Float64Array(n),t:0
       const q=T.inv[0][0]*z1*z1+2*T.inv[0][1]*z1*z2+T.inv[1][1]*z2*z2;
       const d=Math.exp(-.5*q); const k=(j*img.width+i)*4;
       img.data[k]=31;img.data[k+1]=111;img.data[k+2]=159;img.data[k+3]=Math.min(210,d*210);}
-    g.putImageData(img,Math.floor(x0),Math.floor(y0));
+    // putImageData ignores the canvas transform, so on a HiDPI screen it lands at
+    // device-pixel coordinates and covers only part of the box. Stage it offscreen
+    // and drawImage it instead, which does respect the transform.
+    {const off=document.createElement('canvas');off.width=img.width;off.height=img.height;
+     off.getContext('2d').putImageData(img,0,0);
+     g.drawImage(off,Math.floor(x0),Math.floor(y0),img.width,img.height);}
     g.strokeStyle=TH().rule;g.strokeRect(40,14,W-54,H-46);
     ellipse(g,A.X,A.Y,[0,0],[[1,rho],[rho,1]],TH().acc);
     if(MF) ellipse(g,A.X,A.Y,MF.mu,MF.C,TH().pink,[6,4]);
@@ -909,7 +914,12 @@ function Adam(n,lr){return{lr:lr,m:new Float64Array(n),v:new Float64Array(n),t:0
       const z1=-6+12*i/img.width, z2=4-10*j/img.height;
       const d=Math.exp(lp(z1,z2)); const k=(j*img.width+i)*4;
       img.data[k]=31;img.data[k+1]=111;img.data[k+2]=159;img.data[k+3]=Math.min(215,d*215);}
-    g.putImageData(img,Math.floor(x0),Math.floor(y0));
+    // putImageData ignores the canvas transform, so on a HiDPI screen it lands at
+    // device-pixel coordinates and covers only part of the box. Stage it offscreen
+    // and drawImage it instead, which does respect the transform.
+    {const off=document.createElement('canvas');off.width=img.width;off.height=img.height;
+     off.getContext('2d').putImageData(img,0,0);
+     g.drawImage(off,Math.floor(x0),Math.floor(y0),img.width,img.height);}
     g.strokeStyle=TH().rule;g.strokeRect(40,14,W-54,H-46);
     if(MF)ellipse(g,A.X,A.Y,MF.mu,MF.C,TH().pink,[6,4]);
     if(FR)ellipse(g,A.X,A.Y,FR.mu,FR.C,TH().acc2);
