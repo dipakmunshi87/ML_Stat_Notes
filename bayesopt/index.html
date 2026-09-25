@@ -761,11 +761,12 @@ const BRA_MIN=0.397887;
     // iso-contours by marching squares, so the shape of the surface is explicit
     (function(){
       const NL=8, st=2, sx=w/gw, sy=h/gh;
-      g.save();g.lineWidth=1;g.strokeStyle='rgba(8,48,107,.42)';
+      g.save();
       const cut=(ax,ay,av,bx,by,bv,lev)=>{const t=(lev-av)/((bv-av)||1e-12);
         return [ax+(bx-ax)*t, ay+(by-ay)*t];};
       for(let L=1;L<NL;L++){
         const lev=lo+(hi-lo)*L/NL;
+        const segs=[];
         g.beginPath();
         for(let j=0;j+st<gh;j+=st)for(let i=0;i+st<gw;i+=st){
           const a=vals[j*gw+i], b=vals[j*gw+i+st],
@@ -776,10 +777,15 @@ const BRA_MIN=0.397887;
           if((b<lev)!==(c<lev))P.push(cut(X1,Y0,b,X1,Y1,c,lev));
           if((c<lev)!==(d<lev))P.push(cut(X1,Y1,c,X0,Y1,d,lev));
           if((d<lev)!==(a<lev))P.push(cut(X0,Y1,d,X0,Y0,a,lev));
-          if(P.length>=2){g.moveTo(P[0][0],P[0][1]);g.lineTo(P[1][0],P[1][1]);
-            if(P.length===4){g.moveTo(P[2][0],P[2][1]);g.lineTo(P[3][0],P[3][1]);}}
+          if(P.length>=2){segs.push([P[0],P[1]]);
+            if(P.length===4)segs.push([P[2],P[3]]);}
         }
-        g.stroke();
+        const path=()=>{g.beginPath();
+          segs.forEach(q=>{g.moveTo(q[0][0],q[0][1]);g.lineTo(q[1][0],q[1][1]);});};
+        // pale halo first so the line survives over the dark basins,
+        // then the dark line so it survives over the pale background
+        path();g.lineWidth=2.6;g.strokeStyle='rgba(255,255,255,.55)';g.stroke();
+        path();g.lineWidth=1.1;g.strokeStyle='rgba(8,48,107,.85)';g.stroke();
       }
       g.restore();
     })();
