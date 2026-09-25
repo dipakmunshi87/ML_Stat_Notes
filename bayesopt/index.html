@@ -736,7 +736,12 @@ const BRA_MIN=0.397887;
       const a=view.value==='f'||view.value==='mu'?(1-t):t;
       img.data[k*4]=31;img.data[k*4+1]=111;img.data[k*4+2]=159;
       img.data[k*4+3]=Math.round(30+190*a);}
-    g.putImageData(img,pad.l,pad.t);
+    // putImageData ignores the canvas transform, so on a HiDPI screen it would
+    // land at device-pixel coordinates and cover only part of the box. Stage it
+    // on an offscreen canvas and drawImage it, which does respect the transform.
+    const off=document.createElement('canvas');off.width=w;off.height=h;
+    off.getContext('2d').putImageData(img,0,0);
+    g.drawImage(off,pad.l,pad.t,w,h);
     g.strokeStyle=C.rule;g.strokeRect(pad.l,pad.t,w,h);
     // true optima
     g.fillStyle=C.acc2;
@@ -781,7 +786,7 @@ const BRA_MIN=0.397887;
       X.push([bx]);y.push(forrester(bx));curve.push(Math.min(...y)-FOR_MIN);}
     return {curve,regret:Math.min(...y)-FOR_MIN};
   }
-  const LO=1e-4, DEC=5;                       // decades shown: 1e-4 .. 10
+  const LO=1e-3, DEC=4;                       // decades shown: 1e-3 .. 10
   function lg(v){return Math.log10(Math.max(v,LO));}
   function frameLog(g,W,H,pad){
     const C=TH();g.strokeStyle=C.rule;g.lineWidth=1;
@@ -789,21 +794,21 @@ const BRA_MIN=0.397887;
     g.fillStyle=C.muted;g.font='11px ui-monospace,monospace';
     for(let i=0;i<=4;i++){const t=3+17*i/4,px=pad.l+(W-pad.l-pad.r)*i/4;
       g.fillText(t.toFixed(0),px-8,H-pad.b+14);}
-    [[-4,'1e-4'],[-3,'1e-3'],[-2,'0.01'],[-1,'0.1'],[0,'1'],[1,'10']].forEach(function(t){
-      const py=H-pad.b-(t[0]+4)/DEC*(H-pad.t-pad.b);
-      g.fillStyle=C.muted;g.fillText(t[1],4,py+4);
+    [[-3,'0.001'],[-2,'0.01'],[-1,'0.1'],[0,'1'],[1,'10']].forEach(function(t){
+      const py=H-pad.b-(t[0]+3)/DEC*(H-pad.t-pad.b);
+      g.fillStyle=C.muted;g.fillText(t[1],20,py+4);
       g.save();g.strokeStyle=C.rule;g.globalAlpha=.5;g.setLineDash([2,4]);
       g.beginPath();g.moveTo(pad.l,py);g.lineTo(W-pad.r,py);g.stroke();g.restore();});
     g.fillStyle=C.muted;
     g.fillText('evaluations',(pad.l+W-pad.r)/2-28,H-2);
-    g.save();g.translate(11,(pad.t+H-pad.b)/2+38);g.rotate(-Math.PI/2);
+    g.save();g.translate(12,(pad.t+H-pad.b)/2+40);g.rotate(-Math.PI/2);
     g.fillText('regret  (log scale)',0,0);g.restore();
     return {X:v=>pad.l+(v-3)/17*(W-pad.l-pad.r),
-            Y:v=>H-pad.b-(lg(v)+4)/DEC*(H-pad.t-pad.b)};
+            Y:v=>H-pad.b-(lg(v)+3)/DEC*(H-pad.t-pad.b)};
   }
   function draw(){
     const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
-    const pad={l:54,r:14,t:14,b:30};
+    const pad={l:62,r:14,t:14,b:30};
     const A=frameLog(g,W,H,pad);
     if(!res){g.fillStyle=C.muted;g.font='13px system-ui';
       g.fillText('press the button',W/2-50,H/2);return;}
