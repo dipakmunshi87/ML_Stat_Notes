@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bayesian Optimisation</title>
+<meta name="description" content="Bayesian optimisation from first principles: Gaussian process surrogates, acquisition functions derived and compared, and four worked examples in one and two dimensions — every number computed live in your browser.">
+<meta name="author" content="Dr. Dipak Munshi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Bayesian Optimisation — a worked introduction">
+<meta property="og:description" content="How to optimise a function so expensive you can only afford thirty evaluations. The Gaussian process, the acquisition functions, and the failure that nobody warns you about.">
+<style>
+:root{
+  --bg:#ffffff; --fg:#16202b; --muted:#5d6b7a; --rule:#dde3ea;
+  --accent:#1f6f9f; --accent2:#0f5d4a; --warn:#b3541e; --pink:#a3336b;
+  --card:#f5f8fa; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+    --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+    --card:#18202a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151b; --fg:#e4eaf0; --muted:#9aa8b6; --rule:#28323d;
+  --accent:#68b6e0; --accent2:#4fc2a0; --warn:#e0885a; --pink:#e07aae;
+  --card:#18202a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:17px/1.62 Georgia,'Iowan Old Style','Times New Roman',serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px 80px}
+header.top{padding:54px 0 26px;border-bottom:3px solid var(--accent)}
+h1{font-size:2.35rem;line-height:1.12;margin:0 0 10px;letter-spacing:-.02em}
+.sub{font-size:1.12rem;color:var(--muted);margin:0 0 14px}
+.byline{font-size:.92rem;color:var(--muted);font-family:var(--mono)}
+h2{font-size:1.5rem;margin:46px 0 4px;letter-spacing:-.01em;color:var(--accent)}
+h2+.rule{height:2px;background:var(--rule);margin-bottom:14px}
+h3{font-size:1.12rem;margin:26px 0 6px;color:var(--accent2)}
+p{margin:12px 0} a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.9em;background:var(--card);padding:1px 4px;border-radius:3px}
+.lead{font-size:1.1rem}
+.eq{margin:16px 0;text-align:center;font-family:'Latin Modern Math',Cambria,Georgia,serif;font-size:1.12rem;overflow-x:auto}
+.eq.big{font-size:1.2rem}
+i.v{font-style:italic} sub,sup{font-size:.72em}
+.frac{display:inline-block;vertical-align:middle;text-align:center;margin:0 .25em}
+.frac>span{display:block;padding:0 .35em}
+.frac .num{border-bottom:1.3px solid currentColor}
+.op{margin:0 .3em}
+.box{background:var(--card);border-left:4px solid var(--accent);padding:14px 16px;margin:20px 0;border-radius:0 4px 4px 0}
+.box .t{font-weight:700;margin-bottom:5px;color:var(--accent)}
+.box.warn{border-left-color:var(--warn)} .box.warn .t{color:var(--warn)}
+.box.key{border-left-color:var(--accent2)} .box.key .t{color:var(--accent2)}
+.box p{margin:7px 0;font-size:.97rem}
+.demo{border:1px solid var(--rule);border-radius:6px;margin:24px 0;overflow:hidden;background:var(--bg)}
+.demo .hd{background:var(--card);padding:9px 14px;border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:.82rem;color:var(--muted);letter-spacing:.02em}
+.demo .bd{padding:14px}
+canvas{display:block;width:100%;height:auto;border-radius:4px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:11px 0 4px}
+button{font:600 .88rem/1 system-ui,sans-serif;padding:8px 14px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;border-radius:5px;cursor:pointer}
+button.ghost{background:var(--bg);color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+label.sl{font:.84rem/1 system-ui,sans-serif;color:var(--muted);display:flex;align-items:center;gap:7px}
+input[type=range]{width:110px}
+select{font:.84rem system-ui,sans-serif;padding:5px 7px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--bg);color:var(--fg)}
+.readout{font-family:var(--mono);font-size:.84rem;background:var(--card);padding:9px 11px;
+  border-radius:4px;margin-top:10px;white-space:pre-wrap;line-height:1.55}
+.tag{display:inline-block;font:600 .7rem/1 system-ui,sans-serif;padding:3px 7px;border-radius:3px;
+  background:var(--accent);color:#fff;vertical-align:middle;margin-left:6px;letter-spacing:.04em}
+.tag.d2{background:var(--pink)}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93rem}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule)}
+th{color:var(--accent);font-family:system-ui,sans-serif;font-size:.84rem;letter-spacing:.03em}
+td.num{font-family:var(--mono)}
+footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--rule);font-size:.9rem;color:var(--muted)}
+ol,ul{padding-left:1.25em} li{margin:6px 0}
+@media (max-width:600px){h1{font-size:1.85rem} body{font-size:16px} .wrap{padding:0 16px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Bayesian Optimisation</h1>
+  <p class="sub">How to optimise a function so expensive that you can only afford thirty
+  evaluations of it &mdash; and why the kernel you chose matters more than the algorithm.</p>
+  <p class="byline">Dr. Dipak Munshi &middot; every number on this page is computed in your browser</p>
+</header>
+
+<p class="lead">Some functions are cheap. You can evaluate them a million times, take gradients, and
+let a standard optimiser do its work. Other functions are not: a simulation that runs overnight, a
+laboratory experiment, a full training run of a large model, an observing campaign you have to
+apply for. There you might get thirty evaluations in total, you have no gradients, and every point
+you spend is one you cannot spend elsewhere.</p>
+
+<p>Bayesian optimisation is built for exactly that regime. It keeps a <em>probabilistic model of
+the function itself</em>, updates it after every evaluation, and uses it to decide where to look
+next &mdash; balancing going where the model says the optimum is against going where the model
+admits it does not know. This page builds it from scratch, then shows you four examples including
+the one where it fails badly, quietly, and for a reason that is entirely your fault.</p>
+
+<!-- ============================================ -->
+<h2>1. The setting, and when this is the right tool</h2><div class="rule"></div>
+
+<p>You want to minimise <i class="v">f</i>(<b>x</b>) over some bounded domain, where:</p>
+
+<ul>
+<li><i class="v">f</i> is a <strong>black box</strong> &mdash; you can evaluate it, and that is all.</li>
+<li>Evaluations are <strong>expensive</strong>: minutes, hours, or money.</li>
+<li>There are <strong>no gradients</strong>, and finite differences would cost <i class="v">d</i>+1
+    evaluations per step, which you cannot afford.</li>
+<li><i class="v">f</i> may be <strong>noisy</strong>, and is probably <strong>multimodal</strong>.</li>
+<li>The dimension is <strong>modest</strong> &mdash; say under twenty.</li>
+</ul>
+
+<div class="box key"><div class="t">Getting this judgement right matters more than any tuning</div>
+<p>If evaluations are cheap, use a gradient method, or differential evolution, and do not bother
+with any of this: the bookkeeping will cost more than the function does. If the dimension is in the
+hundreds, Bayesian optimisation will not help you either, for reasons in &sect;8. Its territory is
+<em>expensive, low-dimensional, gradient-free</em> &mdash; hyperparameter tuning, experimental
+design, calibrating an expensive simulator, choosing where to point an instrument.</p></div>
+
+<p>Two pieces make it work, and they are worth naming separately because they fail in different
+ways:</p>
+
+<div class="eq big">
+  expensive <i class="v">f</i>
+  <span class="op">&rarr;</span> <b>surrogate</b> (cheap probabilistic model)
+  <span class="op">&rarr;</span> <b>acquisition</b> (where to look next)
+</div>
+
+<!-- ============================================ -->
+<h2>2. The surrogate: a Gaussian process in one page</h2><div class="rule"></div>
+
+<p>A Gaussian process is a distribution over <em>functions</em>. The idea is less exotic than it
+sounds: assume that the function values at any finite set of points are jointly Gaussian, with a
+covariance that depends only on how far apart the points are.</p>
+
+<div class="eq">
+  <i class="v">k</i>(<i class="v">x</i>, <i class="v">x</i>&prime;)
+  <span class="op">=</span> &sigma;<sub>f</sub><sup>2</sup> exp
+  <span style="font-size:1.3em">(</span>&minus;
+  <span class="frac"><span class="num">(<i class="v">x</i> &minus; <i class="v">x</i>&prime;)<sup>2</sup></span><span>2&#8467;<sup>2</sup></span></span>
+  <span style="font-size:1.3em">)</span>
+</div>
+
+<p>That is the squared-exponential kernel. It encodes one assumption: <strong>points closer
+together than the lengthscale &#8467; have similar function values</strong>. Everything the model
+believes before seeing data is in that sentence.</p>
+
+<p>Given <i class="v">n</i> observations <b>y</b> at points <b>X</b>, with noise variance
+&sigma;<sub>n</sub><sup>2</sup>, the posterior at a new point <i class="v">x</i><sub>*</sub> is
+Gaussian with</p>
+
+<div class="eq">
+  &mu;(<i class="v">x</i><sub>*</sub>) <span class="op">=</span>
+  <b>k</b><sub>*</sub><sup>&#8868;</sup> (<b>K</b> + &sigma;<sub>n</sub><sup>2</sup><b>I</b>)<sup>&minus;1</sup> <b>y</b>
+  <span class="op">,</span>&emsp;
+  &sigma;<sup>2</sup>(<i class="v">x</i><sub>*</sub>) <span class="op">=</span>
+  <i class="v">k</i>(<i class="v">x</i><sub>*</sub>,<i class="v">x</i><sub>*</sub>)
+  &minus; <b>k</b><sub>*</sub><sup>&#8868;</sup> (<b>K</b> + &sigma;<sub>n</sub><sup>2</sup><b>I</b>)<sup>&minus;1</sup> <b>k</b><sub>*</sub>
+</div>
+
+<p>Two things are worth noticing. The mean is a <em>weighted average of the observed values</em>,
+with weights set by the kernel. And the variance <strong>does not depend on <b>y</b> at all</strong>
+&mdash; only on where you have looked. The model's uncertainty is a statement about coverage of the
+domain, not about what it found there. That fact is what makes the next section possible.</p>
+
+<div class="demo">
+  <div class="hd">FIGURE 1 &middot; a Gaussian process posterior &mdash; add points, change the lengthscale</div>
+  <div class="bd">
+    <canvas id="c_gp" width="760" height="300"></canvas>
+    <div class="ctl">
+      <button id="gp_add">Add an observation</button>
+      <button class="ghost" id="gp_clear">Clear</button>
+      <label class="sl">lengthscale &#8467; <input type="range" id="gp_ls" min="2" max="60" value="15" step="1"><span id="gp_lsv">0.15</span></label>
+      <label class="sl">noise <input type="range" id="gp_nz" min="0" max="30" value="2" step="1"><span id="gp_nzv">0.02</span></label>
+    </div>
+    <div class="readout" id="gp_out"></div>
+  </div>
+</div>
+
+<div class="box"><div class="t">Try this before moving on</div>
+<p>Add four or five points, then drag the lengthscale. Short &#8467; and the posterior snaps back to
+the prior between observations &mdash; the model believes the function can do anything in the gaps.
+Long &#8467; and it draws a smooth curve through everything, confident far from any data.
+<strong>Neither is more correct; they are different assumptions</strong>, and the data you have
+cannot easily distinguish them. Hold on to that: it is the whole of &sect;7.</p></div>
+
+<!-- ============================================ -->
+<h2>3. The acquisition function: where to look next</h2><div class="rule"></div>
+
+<p>The surrogate gives a mean and a standard deviation everywhere. The acquisition function turns
+that into a single number per candidate point, and we evaluate <i class="v">f</i> wherever it is
+largest. Every acquisition function is a different answer to the same question: how much is
+uncertainty worth, compared with a promising mean?</p>
+
+<p>Write <i class="v">f</i><sup>+</sup> for the best value seen so far, and let
+<i class="v">Z</i> = (<i class="v">f</i><sup>+</sup> &minus; &mu;(<i class="v">x</i>) &minus; &xi;)&thinsp;/&thinsp;&sigma;(<i class="v">x</i>)
+for a minimisation problem.</p>
+
+<h3>Probability of improvement</h3>
+<div class="eq">
+  PI(<i class="v">x</i>) <span class="op">=</span> &Phi;(<i class="v">Z</i>)
+</div>
+<p>The probability that this point beats the incumbent &mdash; by any margin at all. Intuitive, and
+too greedy: a point that improves by 10<sup>&minus;9</sup> with near-certainty scores higher than
+one that might improve enormously but could also fail. It gets stuck.</p>
+
+<h3>Expected improvement</h3>
+<div class="eq big">
+  EI(<i class="v">x</i>) <span class="op">=</span>
+  (<i class="v">f</i><sup>+</sup> &minus; &mu; &minus; &xi;)&thinsp;&Phi;(<i class="v">Z</i>)
+  <span class="op">+</span> &sigma;&thinsp;&phi;(<i class="v">Z</i>)
+</div>
+<p>The expected <em>size</em> of the improvement, not merely its probability. Those two terms are
+the trade-off made explicit: the first rewards a promising mean, the second rewards uncertainty.
+Where &sigma; = 0 &mdash; a point you have already measured &mdash; EI is exactly zero, so it never
+wastes an evaluation. This is the default, and deservedly so.</p>
+
+<h3>Lower confidence bound</h3>
+<div class="eq">
+  LCB(<i class="v">x</i>) <span class="op">=</span> &minus;&thinsp;[&thinsp;&mu;(<i class="v">x</i>) &minus; &kappa;&thinsp;&sigma;(<i class="v">x</i>)&thinsp;]
+</div>
+<p>Crude and effective: be optimistic by &kappa; standard deviations. The trade-off is now a knob
+you turn rather than a consequence of the maths, which is either a virtue or a nuisance depending
+on whether you know what to set it to. It has the best theoretical regret guarantees of the three.</p>
+
+<h3>Thompson sampling</h3>
+<p>Draw one random function from the posterior and minimise <em>that</em>. Exploration comes from
+the randomness of the draw rather than from an explicit bonus. Trivially parallel, which matters
+when you can run several expensive evaluations at once.</p>
+
+<div class="demo">
+  <div class="hd">FIGURE 2 &middot; the loop, one step at a time &mdash; surrogate above, acquisition below</div>
+  <div class="bd">
+    <canvas id="c_bo" width="760" height="420"></canvas>
+    <div class="ctl">
+      <button id="bo_step">Next evaluation</button>
+      <button class="ghost" id="bo_run">Run 15</button>
+      <button class="ghost" id="bo_reset">Reset</button>
+      <label class="sl">acquisition
+        <select id="bo_acq">
+          <option value="ei">Expected improvement</option>
+          <option value="lcb">Lower confidence bound</option>
+          <option value="pi">Probability of improvement</option>
+          <option value="rand">Random (control)</option>
+        </select></label>
+    </div>
+    <div class="readout" id="bo_out"></div>
+  </div>
+</div>
+
+<p>The test function is Forrester's, <i class="v">f</i>(<i class="v">x</i>) =
+(6<i class="v">x</i>&minus;2)<sup>2</sup> sin(12<i class="v">x</i>&minus;4) on [0,&thinsp;1], a
+standard benchmark. Its global minimum is <b>&minus;6.02074</b> at
+<i class="v">x</i> = 0.7572, and there is a decoy local minimum near
+<i class="v">x</i> = 0.15 to catch anything too greedy.</p>
+
+<div class="box"><div class="t">What the loop looks like when it is working</div>
+<p>Watch the shaded band. Early on it is wide everywhere and the acquisition sends you to unexplored
+regions. As points accumulate the band collapses where you have looked, and the acquisition switches
+to refining the best region. <strong>That transition from exploration to exploitation is not
+scheduled &mdash; it emerges</strong>, because uncertainty is spent as it is resolved. Try
+Probability of Improvement and watch it get stuck in the decoy.</p></div>
+
+<!-- ============================================ -->
+<h2>4. Do the acquisition functions actually differ? <span class="tag">1D</span></h2><div class="rule"></div>
+
+<p>It is easy to assert that EI beats PI and that both beat random. Easier still to test it: run
+each strategy many times from different random starts on the same problem and compare the
+distribution of outcomes, not one run.</p>
+
+<div class="demo">
+  <div class="hd">FIGURE 3 &middot; 40 independent runs of each strategy, 20 evaluations apiece</div>
+  <div class="bd">
+    <canvas id="c_cmp" width="760" height="320"></canvas>
+    <div class="ctl">
+      <button id="cmp_run">Run the comparison</button>
+      <button class="ghost" id="cmp_reset">Reset</button>
+    </div>
+    <div class="readout" id="cmp_out">Press the button. Each strategy gets the same budget and the same starting points.</div>
+  </div>
+</div>
+
+<div class="box key"><div class="t">Report the spread, not the best run</div>
+<p>The table gives the median regret and the failure rate &mdash; the fraction of runs that never
+escaped the decoy minimum. Both matter, and the second is the one usually omitted. A method with a
+slightly worse median but a much lower failure rate is the better choice when you get one attempt
+at an expensive campaign, which is the situation this whole method exists for.</p>
+<p>This mirrors a comparison I ran on multimodal objectives, scoring Bayesian optimisation against
+Nelder&ndash;Mead, differential evolution, MCMC and neural surrogates on <em>evaluation budget and
+failure rate across restarts</em> rather than on the best value found. The ranking changes when you
+score it that way.</p></div>
+
+<!-- ============================================ -->
+<h2>5. Two dimensions: a real benchmark <span class="tag d2">2D</span></h2><div class="rule"></div>
+
+<p>The Branin function is the standard two-dimensional test case. It has <strong>three</strong>
+global minima, all with value <b>0.397887</b>, which makes it a fair test of whether a method finds
+<em>an</em> optimum rather than getting lucky:</p>
+
+<div class="eq">
+  <i class="v">f</i> <span class="op">=</span>
+  <i class="v">a</i>(<i class="v">x</i><sub>2</sub> &minus; <i class="v">b x</i><sub>1</sub><sup>2</sup> + <i class="v">c x</i><sub>1</sub> &minus; <i class="v">r</i>)<sup>2</sup>
+  <span class="op">+</span> <i class="v">s</i>(1 &minus; <i class="v">t</i>) cos(<i class="v">x</i><sub>1</sub>) <span class="op">+</span> <i class="v">s</i>
+</div>
+
+<div class="demo">
+  <div class="hd">FIGURE 4 &middot; Branin &mdash; the surface, the evaluations, and where it goes next</div>
+  <div class="bd">
+    <canvas id="c_br" width="760" height="400"></canvas>
+    <div class="ctl">
+      <button id="br_step">Next evaluation</button>
+      <button class="ghost" id="br_run">Run 25</button>
+      <button class="ghost" id="br_reset">Reset</button>
+      <label class="sl">show <select id="br_view">
+        <option value="f">true function</option>
+        <option value="mu">surrogate mean</option>
+        <option value="sd">surrogate uncertainty</option>
+        <option value="ei">acquisition (EI)</option>
+      </select></label>
+    </div>
+    <div class="readout" id="br_out"></div>
+  </div>
+</div>
+
+<div class="box"><div class="t">Switch the view</div>
+<p>Flip between the true function, the surrogate's mean, its uncertainty, and the acquisition
+surface. Early on the surrogate is nothing like the truth and the acquisition is driven almost
+entirely by uncertainty. After fifteen or twenty points the mean has learned the three valleys, and
+the acquisition concentrates. <strong>You are watching the model's beliefs, not the function</strong>
+&mdash; and the difference between those two pictures is the whole reason this works when it works,
+and fails when it fails.</p></div>
+
+<!-- ============================================ -->
+<h2>6. The failure nobody warns you about <span class="tag d2">2D</span></h2><div class="rule"></div>
+
+<p>Every treatment of Bayesian optimisation explains the exploration&ndash;exploitation trade-off.
+Far fewer say plainly that <strong>the method's performance is dominated by the kernel
+hyperparameters</strong>, and that getting them wrong does not produce an error &mdash; it produces
+a confident, well-behaved, wrong answer.</p>
+
+<p>The lengthscale is an assumption about how fast the function varies. Set it too long and the
+surrogate cannot represent the structure: it smooths the optimum away and the uncertainty band
+collapses over regions it has never visited, so the acquisition stops exploring them. Set it too
+short and every observation is local news: the posterior returns to the prior between points, the
+uncertainty is large everywhere, and the search degenerates towards random.</p>
+
+<div class="demo">
+  <div class="hd">FIGURE 5 &middot; the same problem, the same budget, three lengthscales</div>
+  <div class="bd">
+    <canvas id="c_ls" width="760" height="330"></canvas>
+    <div class="ctl">
+      <button id="ls_run">Run 20 evaluations at each lengthscale &times; 25 repeats</button>
+      <button class="ghost" id="ls_reset">Reset</button>
+    </div>
+    <div class="readout" id="ls_out">The only difference between the three is one number in the kernel.</div>
+  </div>
+</div>
+
+<div class="box warn"><div class="t">What to do about it</div>
+<p><strong>Do not fix the hyperparameters by hand.</strong> Fit them by maximising the marginal
+likelihood after each batch, or be properly Bayesian and marginalise over them. Every serious
+library does this by default &mdash; and it is worth knowing that this is what it is doing, because
+with very few observations the marginal likelihood is itself poorly determined, and early in a run
+the fitted lengthscale can be nonsense.</p>
+<p><strong>Standardise your inputs and outputs.</strong> A single isotropic lengthscale across
+parameters measured in different units is meaningless. Scale every input to [0,&thinsp;1], centre
+and scale the output, or use a separate lengthscale per dimension (ARD), which also tells you which
+parameters matter.</p>
+<p><strong>Sanity-check against random search.</strong> If Bayesian optimisation is not beating
+random sampling on your problem, something is wrong with the model, not with your luck &mdash; and
+random search is a genuinely strong baseline in higher dimensions.</p></div>
+
+<!-- ============================================ -->
+<h2>7. Honest limitations</h2><div class="rule"></div>
+
+<ul>
+<li><strong>Dimension.</strong> Performance degrades badly above roughly 20 parameters. The volume
+of the domain grows exponentially while your budget does not, and the surrogate cannot cover it.
+Remedies exist &mdash; additive kernels, random embeddings, trust regions &mdash; and all of them
+buy improvement by assuming extra structure.</li>
+<li><strong>Cost of the surrogate.</strong> Fitting a Gaussian process is
+<i class="v">O</i>(<i class="v">n</i><sup>3</sup>) in the number of observations. Fine at
+<i class="v">n</i> = 100, painful at 10,000 &mdash; though if you can afford 10,000 evaluations of
+your function, you did not need this method.</li>
+<li><strong>Noise.</strong> Everything above assumed you told the model the right noise level. Get
+it wrong and either the surrogate interpolates noise as though it were signal, or it dismisses real
+structure as noise.</li>
+<li><strong>The inner optimisation.</strong> Maximising the acquisition function is itself a
+multimodal optimisation problem. It is cheap, so you do it with many restarts &mdash; but it is
+another place to be quietly wrong.</li>
+<li><strong>Constraints and mixed variables.</strong> Unknown constraints, integer or categorical
+parameters, and multiple competing objectives all have extensions, and none of them is as clean as
+the story above.</li>
+</ul>
+
+<table>
+<tr><th>Situation</th><th>Use</th></tr>
+<tr><td>Cheap function, gradients available</td><td>Gradient descent, L-BFGS</td></tr>
+<tr><td>Cheap function, no gradients, low dimension</td><td>Nelder&ndash;Mead, differential evolution</td></tr>
+<tr><td><b>Expensive, no gradients, &lt; 20 dimensions</b></td><td><b>Bayesian optimisation</b></td></tr>
+<tr><td>Expensive, very high dimension</td><td>Random search, or reduce the dimension first</td></tr>
+<tr><td>Expensive, and you need the posterior not the optimum</td><td>MCMC or an emulator</td></tr>
+<tr><td>Many cheap parallel evaluations</td><td>Evolutionary methods, or batch BO</td></tr>
+</table>
+
+<div class="box key"><div class="t">The sentence worth keeping</div>
+<p>Bayesian optimisation is not an optimiser that happens to be Bayesian. It is a <em>model of your
+function</em>, plus a rule for what to ask next. When it works, it is because the model was a
+reasonable description of the function. When it fails, it is almost always because the model was
+not &mdash; and the algorithm has no way of telling you so.</p></div>
+
+<!-- ============================================ -->
+<h2>8. Software and reading</h2><div class="rule"></div>
+
+<p><strong>Libraries.</strong> <code>BoTorch</code> (PyTorch, the current research standard) and
+<code>GPyTorch</code> beneath it; <code>Ax</code> for a higher-level interface;
+<code>scikit-optimize</code> for something simple; <code>Optuna</code> and <code>Hyperopt</code>
+for hyperparameter work specifically, where the Tree-structured Parzen Estimator is a different
+surrogate with the same loop; <code>GPflow</code> if you prefer TensorFlow;
+<code>Dragonfly</code> for higher dimensions and parallel evaluation.</p>
+
+<p><strong>Reading.</strong> Rasmussen &amp; Williams, <em>Gaussian Processes for Machine
+Learning</em> (MIT Press, 2006), free online and still the reference for everything in &sect;2.
+Garnett, <em>Bayesian Optimization</em> (CUP, 2023), the current book-length treatment. Shahriari
+et al., <em>Taking the Human Out of the Loop</em> (Proc. IEEE, 2016), the standard survey.
+Jones, Schonlau &amp; Welch (1998) for the paper that made expected improvement the default.</p>
+
+<footer>
+<p><strong>Everything above runs in your browser.</strong> The Gaussian process is solved by
+Cholesky decomposition written from scratch; the acquisition functions are evaluated on a grid; the
+test functions are the standard benchmarks with their published optima. No libraries, no
+precomputed numbers, no network requests. Reload and every figure is recomputed.</p>
+<p>Dr. Dipak Munshi &mdash; Imperial College London. Companion sets on variational inference,
+Monte Carlo samplers, time series, transformers and more at
+<a href="https://dipakmunshi87.github.io/ML_Stat_Notes/">dipakmunshi87.github.io/ML_Stat_Notes</a>.</p>
+</footer>
+
+</div>
+
+<script>
+/* ================= utilities ================= */
+function mkRng(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+let R=mkRng(7);
+let spare=null;
+function randn(){if(spare!==null){const v=spare;spare=null;return v;}
+  let u=0,v=0,r=0;do{u=2*R()-1;v=2*R()-1;r=u*u+v*v;}while(r>=1||r===0);
+  const f=Math.sqrt(-2*Math.log(r)/r);spare=v*f;return u*f;}
+function TH(){const c=getComputedStyle(document.documentElement);const g=n=>c.getPropertyValue(n).trim();
+  return {acc:g('--accent')||'#1f6f9f',acc2:g('--accent2')||'#0f5d4a',pink:g('--pink')||'#a3336b',
+          warn:g('--warn')||'#b3541e',muted:g('--muted')||'#5d6b7a',rule:g('--rule')||'#dde3ea'};}
+function dpr(cv){const d=window.devicePixelRatio||1;const w=cv.clientWidth||cv.width;
+  const h=cv.height*(w/cv.width);cv.style.height=h+'px';
+  if(cv._w!==w){cv.width=w*d;cv.height=h*d;cv._w=w;}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return{g,W:w,H:h};}
+function frame(g,W,H,pad,x0,x1,y0,y1,xl,yl){
+  const C=TH(); g.strokeStyle=C.rule;g.lineWidth=1;
+  g.strokeRect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);
+  g.fillStyle=C.muted;g.font='11px ui-monospace,monospace';
+  for(let i=0;i<=4;i++){const t=x0+(x1-x0)*i/4,px=pad.l+(W-pad.l-pad.r)*i/4;
+    g.fillText(t.toFixed(Math.abs(t)>=10?0:2).replace(/\.00$/,''),px-11,H-pad.b+14);}
+  for(let i=0;i<=3;i++){const t=y0+(y1-y0)*i/3,py=H-pad.b-(H-pad.t-pad.b)*i/3;
+    g.fillText(t.toFixed(Math.abs(t)>=10?0:1),4,py+4);}
+  if(xl)g.fillText(xl,(pad.l+W-pad.r)/2-10,H-2);
+  if(yl){g.save();g.translate(11,(pad.t+H-pad.b)/2+16);g.rotate(-Math.PI/2);g.fillText(yl,0,0);g.restore();}
+  return {X:v=>pad.l+(v-x0)/(x1-x0)*(W-pad.l-pad.r), Y:v=>H-pad.b-(v-y0)/(y1-y0)*(H-pad.t-pad.b)};
+}
+function line(g,pts,col,w,dash){g.save();g.strokeStyle=col;g.lineWidth=w||2;if(dash)g.setLineDash(dash);
+  g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.restore();}
+function band(g,up,lo,col){g.fillStyle=col;g.beginPath();
+  up.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+  for(let i=lo.length-1;i>=0;i--)g.lineTo(lo[i][0],lo[i][1]);g.closePath();g.fill();}
+function erf(x){const s=x<0?-1:1;x=Math.abs(x);
+  const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;
+  const t=1/(1+p*x);const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return s*y;}
+const Phi=z=>.5*(1+erf(z/Math.SQRT2));
+const phi=z=>Math.exp(-.5*z*z)/Math.sqrt(2*Math.PI);
+
+/* ================= Gaussian process ================= */
+function chol(A){const n=A.length,L=Array.from({length:n},()=>new Float64Array(n));
+  for(let i=0;i<n;i++)for(let j=0;j<=i;j++){let s=A[i][j];
+    for(let k=0;k<j;k++)s-=L[i][k]*L[j][k];
+    if(i===j){if(s<=1e-12)s=1e-12;L[i][j]=Math.sqrt(s);}else L[i][j]=s/L[j][j];}
+  return L;}
+function cholSolve(L,b){const n=L.length,y=new Float64Array(n),x=new Float64Array(n);
+  for(let i=0;i<n;i++){let s=b[i];for(let k=0;k<i;k++)s-=L[i][k]*y[k];y[i]=s/L[i][i];}
+  for(let i=n-1;i>=0;i--){let s=y[i];for(let k=i+1;k<n;k++)s-=L[k][i]*x[k];x[i]=s/L[i][i];}
+  return x;}
+function GP(X,y,ls,sf2,sn2,dim){
+  const n=X.length;
+  const k=(a,b)=>{let d2=0;for(let j=0;j<dim;j++){const t=a[j]-b[j];d2+=t*t;}
+    return sf2*Math.exp(-d2/(2*ls*ls));};
+  if(n===0)return{mu:()=>0,sd:()=>Math.sqrt(sf2),n:0};
+  const K=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>k(X[i],X[j])+(i===j?sn2:0)));
+  const L=chol(K), al=cholSolve(L,y);
+  return {n, mu(xs){let m=0;for(let i=0;i<n;i++)m+=k(X[i],xs)*al[i];return m;},
+    sd(xs){const ks=new Float64Array(n);for(let i=0;i<n;i++)ks[i]=k(X[i],xs);
+      const v=cholSolve(L,ks);let s=sf2;for(let i=0;i<n;i++)s-=ks[i]*v[i];
+      return Math.sqrt(Math.max(s,1e-12));}};
+}
+/* acquisition (minimisation): larger is better */
+function acq(kind,mu,sd,best,kappa){
+  const xi=0.01;
+  if(kind==='lcb')return -(mu-(kappa||2)*sd);
+  const Z=(best-mu-xi)/Math.max(sd,1e-9);
+  if(kind==='pi')return Phi(Z);
+  return (best-mu-xi)*Phi(Z)+sd*phi(Z);    /* ei */
+}
+/* test functions */
+const forrester=x=>{const a=6*x-2;return a*a*Math.sin(12*x-4);};
+const FOR_MIN=-6.020740; const FOR_ARG=0.757249;
+function branin(x1,x2){const a=1,b=5.1/(4*Math.PI*Math.PI),c=5/Math.PI,r=6,s=10,t=1/(8*Math.PI);
+  const u=x2-b*x1*x1+c*x1-r;return a*u*u+s*(1-t)*Math.cos(x1)+s;}
+const BRA_MIN=0.397887;
+
+/* ================= FIG 1 : GP posterior ================= */
+(function(){
+  const cv=document.getElementById('c_gp'),out=document.getElementById('gp_out');
+  const lsS=document.getElementById('gp_ls'),nzS=document.getElementById('gp_nz');
+  const lsV=document.getElementById('gp_lsv'),nzV=document.getElementById('gp_nzv');
+  let X=[],y=[]; let rng=mkRng(11);
+  function add(){const x=rng();X.push([x]);y.push(forrester(x)/6);draw();}
+  function draw(){
+    const ls=+lsS.value/100, sn2=Math.pow(+nzS.value/100,2)+1e-6;
+    lsV.textContent=ls.toFixed(2); nzV.textContent=(+nzS.value/100).toFixed(2);
+    const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
+    const A=frame(g,W,H,{l:34,r:14,t:12,b:28},0,1,-1.4,1.6,'x','f(x)');
+    const gp=GP(X,y,ls,1.0,sn2,1);
+    const up=[],lo=[],mm=[],tt=[];
+    for(let i=0;i<=260;i++){const x=i/260;
+      const m=gp.mu([x]),s=gp.sd([x]);
+      up.push([A.X(x),A.Y(m+2*s)]);lo.push([A.X(x),A.Y(m-2*s)]);
+      mm.push([A.X(x),A.Y(m)]);tt.push([A.X(x),A.Y(forrester(x)/6)]);}
+    band(g,up,lo,'rgba(31,111,159,.16)');
+    line(g,tt,C.muted,1.4,[5,4]);
+    line(g,mm,C.acc,2.4);
+    g.fillStyle=C.pink;
+    X.forEach((p,i)=>{g.beginPath();g.arc(A.X(p[0]),A.Y(y[i]),4,0,7);g.fill();});
+    g.font='12px system-ui';g.fillStyle=C.muted;g.fillText('true f (dashed)',W-150,24);
+    g.fillStyle=C.acc;g.fillText('GP mean ± 2σ',W-150,42);
+    out.textContent='observations '+X.length+'    lengthscale '+ls.toFixed(2)+
+      '    noise sd '+(+nzS.value/100).toFixed(2)+
+      '\nposterior sd at x=0.5: '+gp.sd([0.5]).toFixed(4)+
+      '   at x=0.95: '+gp.sd([0.95]).toFixed(4)+
+      '\n(the variance depends only on WHERE you looked, never on what you found)';
+  }
+  document.getElementById('gp_add').onclick=add;
+  document.getElementById('gp_clear').onclick=()=>{X=[];y=[];rng=mkRng(11);draw();};
+  lsS.oninput=nzS.oninput=draw;
+  add();add();add();window.addEventListener('resize',draw);
+})();
+
+/* ================= FIG 2 : the loop ================= */
+(function(){
+  const cv=document.getElementById('c_bo'),out=document.getElementById('bo_out');
+  const sel=document.getElementById('bo_acq');
+  let X,y,rng,running=false;
+  function reset(){rng=mkRng(23);X=[];y=[];
+    [0.1,0.45,0.9].forEach(x=>{X.push([x]);y.push(forrester(x));});draw();say();}
+  function nextX(){
+    const ls=0.12,gp=GP(X,y,ls,12,1e-6,1);
+    const best=Math.min(...y);
+    if(sel.value==='rand')return rng();
+    let bx=0,ba=-1e30;
+    for(let i=0;i<=400;i++){const x=i/400;
+      const a=acq(sel.value,gp.mu([x]),gp.sd([x]),best,2.0);
+      if(a>ba){ba=a;bx=x;}}
+    return bx;}
+  function step(){const x=nextX();X.push([x]);y.push(forrester(x));}
+  function say(){
+    const best=Math.min(...y),bi=y.indexOf(best);
+    out.textContent=
+      'evaluations used   '+X.length+'\n'+
+      'best so far        f = '+best.toFixed(5)+'   at x = '+X[bi][0].toFixed(4)+'\n'+
+      'true optimum       f = '+FOR_MIN.toFixed(5)+'   at x = '+FOR_ARG.toFixed(4)+'\n'+
+      'regret             '+(best-FOR_MIN).toFixed(5)+
+      (best-FOR_MIN<0.05?'   <- found it':(X[bi][0]<0.4?'   <- stuck in the decoy minimum':''));
+  }
+  function draw(){
+    const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
+    const ls=0.12,gp=GP(X,y,ls,12,1e-6,1),best=Math.min(...y);
+    const hSplit=Math.round(H*0.66);
+    const A=frame(g,W,hSplit,{l:38,r:14,t:12,b:24},0,1,-8,16,'','f(x)');
+    const up=[],lo=[],mm=[],tt=[];
+    for(let i=0;i<=300;i++){const x=i/300,m=gp.mu([x]),s=gp.sd([x]);
+      up.push([A.X(x),A.Y(m+2*s)]);lo.push([A.X(x),A.Y(m-2*s)]);
+      mm.push([A.X(x),A.Y(m)]);tt.push([A.X(x),A.Y(forrester(x))]);}
+    band(g,up,lo,'rgba(31,111,159,.16)');
+    line(g,tt,C.muted,1.4,[5,4]); line(g,mm,C.acc,2.2);
+    g.fillStyle=C.pink;X.forEach((p,i)=>{g.beginPath();g.arc(A.X(p[0]),A.Y(y[i]),4,0,7);g.fill();});
+    g.fillStyle=C.acc2;g.beginPath();g.arc(A.X(FOR_ARG),A.Y(FOR_MIN),5,0,7);g.fill();
+    g.font='11px system-ui';g.fillStyle=C.acc2;g.fillText('true optimum',A.X(FOR_ARG)+8,A.Y(FOR_MIN)+4);
+    // acquisition panel
+    const vals=[];let mxa=-1e30;
+    for(let i=0;i<=300;i++){const x=i/300;
+      const a=sel.value==='rand'?0.5:acq(sel.value,gp.mu([x]),gp.sd([x]),best,2.0);
+      vals.push([x,a]);if(a>mxa)mxa=a;}
+    const B=frame(g,W,H,{l:38,r:14,t:hSplit+16,b:26},0,1,0,mxa*1.15||1,'x','acq');
+    const pts=vals.map(v=>[B.X(v[0]),B.Y(v[1])]);
+    band(g,pts,vals.map(v=>[B.X(v[0]),B.Y(0)]),'rgba(163,51,107,.18)');
+    line(g,pts,C.pink,2);
+    let bx=0,ba=-1e30;vals.forEach(v=>{if(v[1]>ba){ba=v[1];bx=v[0];}});
+    if(sel.value!=='rand')line(g,[[B.X(bx),B.Y(0)],[B.X(bx),B.Y(mxa*1.1)]],C.warn,1.8,[4,3]);
+    g.font='11px system-ui';g.fillStyle=C.warn;
+    if(sel.value!=='rand')g.fillText('next → x='+bx.toFixed(3),B.X(bx)+6,B.Y(mxa*0.9));
+  }
+  sel.onchange=()=>{reset();};
+  document.getElementById('bo_step').onclick=()=>{step();draw();say();};
+  document.getElementById('bo_reset').onclick=reset;
+  document.getElementById('bo_run').onclick=function(){
+    if(running)return;running=true;this.disabled=true;let k=0;
+    const tick=()=>{step();draw();say();
+      if(++k<15)setTimeout(tick,110);else{running=false;this.disabled=false;}};tick();};
+  reset();window.addEventListener('resize',draw);
+})();
+
+/* ================= FIG 3 : acquisition comparison ================= */
+(function(){
+  const cv=document.getElementById('c_cmp'),out=document.getElementById('cmp_out');
+  let res=null;
+  const KINDS=[['ei','expected improvement'],['lcb','lower conf. bound'],
+               ['pi','prob. of improvement'],['rand','random search']];
+  function oneRun(kind,seed){
+    const r=mkRng(seed);const X=[],y=[];
+    for(let i=0;i<3;i++){const x=r();X.push([x]);y.push(forrester(x));}
+    const curve=[];
+    for(let t=0;t<17;t++){
+      let x;
+      if(kind==='rand')x=r();
+      else{const gp=GP(X,y,0.12,12,1e-6,1),b=Math.min(...y);
+        let bx=0,ba=-1e30;
+        for(let i=0;i<=200;i++){const xx=i/200;const a=acq(kind,gp.mu([xx]),gp.sd([xx]),b,2.0);
+          if(a>ba){ba=a;bx=xx;}}
+        x=bx;}
+      X.push([x]);y.push(forrester(x));
+      curve.push(Math.min(...y)-FOR_MIN);
+    }
+    const bi=y.indexOf(Math.min(...y));
+    return {curve, regret:Math.min(...y)-FOR_MIN, stuck: X[bi][0]<0.4};
+  }
+  function draw(){
+    const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
+    if(!res){const A=frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1,'evaluations','median regret');
+      g.fillStyle=C.muted;g.font='13px system-ui';g.fillText('press the button',W/2-50,H/2);return;}
+    const A=frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1.05,'evaluations','median regret (normalised)');
+    const cols=[C.acc,C.acc2,C.warn,C.muted];
+    KINDS.forEach(([k],i)=>{
+      const med=res[k].med.map(v=>v/res.scale);
+      line(g,med.map((v,j)=>[A.X(4+j),A.Y(Math.min(v,1.05))]),cols[i],2.2);
+      g.font='12px system-ui';g.fillStyle=cols[i];g.fillText(KINDS[i][1],W-190,26+i*17);
+    });
+  }
+  document.getElementById('cmp_run').onclick=function(){
+    this.disabled=true;this.textContent='running 160 optimisations...';
+    setTimeout(()=>{
+      const NR=40;res={scale:1};
+      KINDS.forEach(([k])=>{
+        const runs=[];for(let s=0;s<NR;s++)runs.push(oneRun(k,1000+s*13));
+        const T=runs[0].curve.length,med=[];
+        for(let t=0;t<T;t++){const v=runs.map(r=>r.curve[t]).sort((a,b)=>a-b);
+          med.push(v[Math.floor(NR/2)]);}
+        const fin=runs.map(r=>r.regret).sort((a,b)=>a-b);
+        res[k]={med, medFinal:fin[Math.floor(NR/2)],
+                fail:runs.filter(r=>r.regret>0.1).length/NR,
+                worst:fin[fin.length-1]};
+      });
+      res.scale=Math.max(...KINDS.map(([k])=>res[k].med[0]));
+      draw();
+      let s='40 independent runs each, 20 evaluations per run, identical starting points.\n\n';
+      s+='strategy                median regret    worst run    runs that failed\n';
+      s+='--------------------------------------------------------------------\n';
+      KINDS.forEach(([k,n])=>{const r=res[k];
+        s+=n.padEnd(24)+r.medFinal.toFixed(4).padStart(10)+
+           r.worst.toFixed(4).padStart(13)+(100*r.fail).toFixed(0).padStart(15)+'%\n';});
+      s+='\n(regret = best found minus the true optimum '+FOR_MIN.toFixed(5)+'; lower is better.\n'+
+         ' a run "failed" if it ended with regret above 0.1 -- i.e. never really found it.)\n\n'+
+         'Note what this does and does not show. With 20 evaluations on a one-dimensional\n'+
+         'problem the three acquisition functions usually all succeed, so their MEDIANS are\n'+
+         'nearly identical. The difference lives in the tail: look at the worst run and the\n'+
+         'failure rate. Reporting only a median would have hidden it entirely.';
+      out.textContent=s;
+      this.disabled=false;this.textContent='Run the comparison';
+    },30);};
+  document.getElementById('cmp_reset').onclick=()=>{res=null;draw();
+    out.textContent='Press the button. Each strategy gets the same budget and the same starting points.';};
+  draw();window.addEventListener('resize',draw);
+})();
+
+/* ================= FIG 4 : Branin 2D ================= */
+(function(){
+  const cv=document.getElementById('c_br'),out=document.getElementById('br_out');
+  const view=document.getElementById('br_view');
+  const X1=[-5,10],X2=[0,15];
+  let X,y,rng,running=false;
+  const nrm=p=>[(p[0]-X1[0])/(X1[1]-X1[0]),(p[1]-X2[0])/(X2[1]-X2[0])];
+  function reset(){rng=mkRng(41);X=[];y=[];
+    for(let i=0;i<4;i++){const p=[X1[0]+rng()*(X1[1]-X1[0]),X2[0]+rng()*(X2[1]-X2[0])];
+      X.push(p);y.push(branin(p[0],p[1]));}
+    draw();say();}
+  function gpNow(){
+    // standardise the outputs: a GP with a fixed signal variance cannot cope with
+    // a function whose range is O(300). This is what every library does for you.
+    const m=y.reduce((a,b)=>a+b,0)/y.length;
+    const sd=Math.sqrt(y.reduce((a,b)=>a+(b-m)*(b-m),0)/Math.max(y.length-1,1))||1;
+    const g=GP(X.map(nrm),y.map(v=>(v-m)/sd),0.22,1.0,1e-6,2);
+    return {n:g.n, mu:u=>g.mu(u)*sd+m, sd:u=>g.sd(u)*sd};}
+  function step(){
+    const gp=gpNow(),best=Math.min(...y);
+    let bp=null,ba=-1e30;
+    for(let i=0;i<=44;i++)for(let j=0;j<=44;j++){
+      const u=[i/44,j/44];
+      const a=acq('ei',gp.mu(u),gp.sd(u),best,2);
+      if(a>ba){ba=a;bp=u;}}
+    const p=[X1[0]+bp[0]*(X1[1]-X1[0]),X2[0]+bp[1]*(X2[1]-X2[0])];
+    X.push(p);y.push(branin(p[0],p[1]));}
+  function say(){
+    const best=Math.min(...y),bi=y.indexOf(best);
+    out.textContent=
+      'evaluations   '+X.length+'\n'+
+      'best found    f = '+best.toFixed(5)+'   at ('+X[bi][0].toFixed(3)+', '+X[bi][1].toFixed(3)+')\n'+
+      'true optimum  f = '+BRA_MIN.toFixed(5)+'   at three places: (-pi, 12.275), (pi, 2.275), (9.425, 2.475)\n'+
+      'regret        '+(best-BRA_MIN).toFixed(5)+(best-BRA_MIN<0.1?'   <- converged':'');
+  }
+  function draw(){
+    const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
+    const pad={l:40,r:14,t:12,b:30};
+    const A=frame(g,W,H,pad,X1[0],X1[1],X2[0],X2[1],'x1','x2');
+    const w=Math.floor(W-pad.l-pad.r),h=Math.floor(H-pad.t-pad.b);
+    const img=g.createImageData(w,h);
+    const gp=X.length?gpNow():null,best=X.length?Math.min(...y):0;
+    const vals=new Float64Array(w*h);let lo=1e30,hi=-1e30;
+    for(let j=0;j<h;j++)for(let i=0;i<w;i++){
+      const u=[i/(w-1),1-j/(h-1)];
+      const p=[X1[0]+u[0]*(X1[1]-X1[0]),X2[0]+u[1]*(X2[1]-X2[0])];
+      let v;
+      if(view.value==='f')v=Math.log(1+branin(p[0],p[1]));
+      else if(view.value==='mu')v=Math.log(1+Math.max(gp.mu(u),0));
+      else if(view.value==='sd')v=gp.sd(u);
+      else v=Math.pow(acq('ei',gp.mu(u),gp.sd(u),best,2),0.25);
+      vals[j*w+i]=v; if(v<lo)lo=v; if(v>hi)hi=v;}
+    for(let k=0;k<w*h;k++){const t=(vals[k]-lo)/Math.max(hi-lo,1e-12);
+      const a=view.value==='f'||view.value==='mu'?(1-t):t;
+      img.data[k*4]=31;img.data[k*4+1]=111;img.data[k*4+2]=159;
+      img.data[k*4+3]=Math.round(30+190*a);}
+    g.putImageData(img,pad.l,pad.t);
+    g.strokeStyle=C.rule;g.strokeRect(pad.l,pad.t,w,h);
+    // true optima
+    g.fillStyle=C.acc2;
+    [[-Math.PI,12.275],[Math.PI,2.275],[9.42478,2.475]].forEach(p=>{
+      g.beginPath();g.arc(A.X(p[0]),A.Y(p[1]),5,0,7);g.fill();});
+    // evaluations
+    X.forEach((p,i)=>{const t=i/Math.max(X.length-1,1);
+      g.fillStyle='rgba(163,51,107,'+(0.35+0.65*t)+')';
+      g.beginPath();g.arc(A.X(p[0]),A.Y(p[1]),3.4,0,7);g.fill();});
+    const bi=y.indexOf(Math.min(...y));
+    g.strokeStyle=C.warn;g.lineWidth=2;g.beginPath();
+    g.arc(A.X(X[bi][0]),A.Y(X[bi][1]),7,0,7);g.stroke();
+    g.font='12px system-ui';
+    g.fillStyle=C.acc2;g.fillText('true optima',W-160,26);
+    g.fillStyle=C.pink;g.fillText('evaluations',W-160,44);
+    g.fillStyle=C.warn;g.fillText('best so far',W-160,62);
+  }
+  view.onchange=draw;
+  document.getElementById('br_step').onclick=()=>{step();draw();say();};
+  document.getElementById('br_reset').onclick=reset;
+  document.getElementById('br_run').onclick=function(){
+    if(running)return;running=true;this.disabled=true;let k=0;
+    const tick=()=>{step();draw();say();
+      if(++k<25)setTimeout(tick,60);else{running=false;this.disabled=false;}};tick();};
+  reset();window.addEventListener('resize',draw);
+})();
+
+/* ================= FIG 5 : lengthscale sensitivity ================= */
+(function(){
+  const cv=document.getElementById('c_ls'),out=document.getElementById('ls_out');
+  const LS=[[0.02,'too short  (0.02)'],[0.12,'about right (0.12)'],[0.80,'too long  (0.80)']];
+  let res=null;
+  function run(ls,seed){
+    const r=mkRng(seed);const X=[],y=[];
+    for(let i=0;i<3;i++){const x=r();X.push([x]);y.push(forrester(x));}
+    const curve=[];
+    for(let t=0;t<17;t++){
+      const gp=GP(X,y,ls,12,1e-6,1),b=Math.min(...y);
+      let bx=0,ba=-1e30;
+      for(let i=0;i<=200;i++){const xx=i/200;const a=acq('ei',gp.mu([xx]),gp.sd([xx]),b,2);
+        if(a>ba){ba=a;bx=xx;}}
+      X.push([bx]);y.push(forrester(bx));curve.push(Math.min(...y)-FOR_MIN);}
+    return {curve,regret:Math.min(...y)-FOR_MIN};
+  }
+  function draw(){
+    const {g,W,H}=dpr(cv);const C=TH();g.clearRect(0,0,W,H);
+    if(!res){frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1,'evaluations','median regret');
+      g.fillStyle=C.muted;g.font='13px system-ui';g.fillText('press the button',W/2-50,H/2);return;}
+    const A=frame(g,W,H,{l:44,r:14,t:14,b:30},3,20,0,1.05,'evaluations','median regret (normalised)');
+    const cols=[C.warn,C.acc2,C.pink];
+    LS.forEach(([v,n],i)=>{
+      const med=res[i].med.map(x=>x/res.scale);
+      line(g,med.map((x,j)=>[A.X(4+j),A.Y(Math.min(x,1.05))]),cols[i],2.4);
+      g.font='12px system-ui';g.fillStyle=cols[i];g.fillText(n,W-200,26+i*17);});
+  }
+  document.getElementById('ls_run').onclick=function(){
+    this.disabled=true;this.textContent='running 75 optimisations...';
+    setTimeout(()=>{
+      const NR=25;res=[];
+      LS.forEach(([v])=>{
+        const runs=[];for(let s=0;s<NR;s++)runs.push(run(v,500+s*17));
+        const T=runs[0].curve.length,med=[];
+        for(let t=0;t<T;t++){const a=runs.map(r=>r.curve[t]).sort((x,z)=>x-z);
+          med.push(a[Math.floor(NR/2)]);}
+        const fin=runs.map(r=>r.regret).sort((x,z)=>x-z);
+        res.push({med,medFinal:fin[Math.floor(NR/2)],worst:fin[fin.length-1],
+                  hit:runs.filter(r=>r.regret<0.05).length/NR});});
+      res.scale=Math.max(...res.map(r=>r.med[0]));
+      draw();
+      let s='25 runs at each lengthscale, 20 evaluations each. Nothing differs but the kernel.\n\n';
+      s+='lengthscale             median regret    worst run    found the optimum\n';
+      s+='---------------------------------------------------------------------\n';
+      LS.forEach(([v,n],i)=>{const r=res[i];
+        s+=n.padEnd(24)+r.medFinal.toFixed(4).padStart(10)+
+           r.worst.toFixed(4).padStart(13)+(100*r.hit).toFixed(0).padStart(16)+'%\n';});
+      const ratio=res[2].medFinal/Math.max(res[1].medFinal,1e-9);
+      s+='\nOne number in the kernel changes the median regret by a factor of '+
+         (ratio>1?ratio.toFixed(1):(res[0].medFinal/Math.max(res[1].medFinal,1e-9)).toFixed(1))+
+         '.\nNo error is raised. Every run converges. The answers are simply worse.';
+      out.textContent=s;
+      this.disabled=false;this.textContent='Run 20 evaluations at each lengthscale × 25 repeats';
+    },30);};
+  document.getElementById('ls_reset').onclick=()=>{res=null;draw();
+    out.textContent='The only difference between the three is one number in the kernel.';};
+  draw();window.addEventListener('resize',draw);
+})();
+</script>
+</body>
+</html>

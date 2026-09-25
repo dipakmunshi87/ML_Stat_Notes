@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code, Reading and a Checklist</title>
+<meta name="description" content="Libraries for learned dynamics and structure-preserving integration, the papers worth reading, and five checks to run before trusting a learned time-stepper.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="question.html">1 · The question</a><a href="tokens.html">2 · Tokens</a><a href="training.html">3 · Train one</a><a href="rule.html">4 · The rule</a><a href="rollout.html">5 · Rolling out</a><a href="drift.html">6 · Why it drifts</a><a href="lesson.html">7 · The lesson</a><a href="software.html" class="here">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 8 of 8 &middot; tooling</p>
+  <h1>Code, reading,<br>and <span class="hl">a checklist</span></h1>
+  <p class="lead" style="max-width:64ch">What to install if you want to do this properly, what to read, and the
+  five checks that would have caught everything on these pages.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-green jump" href="#s2"><h3 class="green">1 &middot; Libraries &rarr;</h3><p>For learned dynamics, and for doing it right.</p></a>
+    <a class="card c-blue jump" href="#s3"><h3 class="blue">2 &middot; Reading &rarr;</h3><p>Six, and one of them is a textbook.</p></a>
+    <a class="card c-orange jump" href="#s4"><h3 class="orange">3 &middot; The checklist &rarr;</h3><p>Before you trust a rollout.</p></a>
+  </div>
+  <div class="notes"><p>The Hairer, Lubich and Wanner book is the one that makes the whole argument rigorous and
+  it predates the machine learning by two decades.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2">
+<div class="inner">
+  <p class="kicker">Libraries</p>
+  <h2>What to <span class="hl">install</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Learned dynamics</h3>
+      <p><b><a href="https://github.com/rtqichen/torchdiffeq">torchdiffeq</a></b> &mdash; neural ODEs with
+      adjoint gradients, including symplectic-friendly solvers.</p>
+      <p><b><a href="https://github.com/patrick-kidger/diffrax">diffrax</a></b> &mdash; the JAX equivalent,
+      with a wider solver set and better support for structure-preserving schemes.</p>
+      <p><b><a href="https://github.com/greydanus/hamiltonian-nn">hamiltonian-nn</a></b> &mdash; the reference
+      implementation of learning a Hamiltonian rather than a step.</p></div>
+    <div class="card c-green"><h3 class="green">Doing it properly</h3>
+      <p><b><a href="https://github.com/SciML/DifferentialEquations.jl">DifferentialEquations.jl</a></b> &mdash;
+      the most complete set of symplectic and structure-preserving integrators anywhere, and the easiest place
+      to compare a learned map against a proper scheme.</p>
+      <p><b><a href="https://github.com/openmm/openmm">OpenMM</a></b> and
+      <b><a href="https://github.com/lammps/lammps">LAMMPS</a></b> &mdash; if the learned object is a force
+      field, these are where the energy-drift diagnostics already live.</p></div>
+    <div class="card c-orange"><h3 class="orange">Write it yourself</h3>
+      <p>The code behind these pages is about 500 lines of plain JavaScript with no dependencies: a tape for
+      automatic differentiation, causal attention, a softmax over a vocabulary, and a spring.</p>
+      <p>Building one is the fastest way to stop treating a language model as something categorically different
+      from a recurrence relation. An afternoon.</p></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><div class="t">The one to reach for first</div>
+    <p>Whatever you are building, get a classical structure-preserving integrator for the same problem running
+    alongside it from day one. It costs an hour, it is the control for every experiment afterwards, and on these
+    pages it is the thing that made the failure obvious.</p></div>
+  <div class="notes"><p>Having the classical baseline present from the start is the practical recommendation of
+  the whole set.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">Reading</p>
+  <h2>Six, and <span class="hl">where they fit</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">The foundation</h3>
+      <p><b>Hairer, Lubich &amp; Wanner</b>, <em>Geometric Numerical Integration</em> (Springer, 2006) &mdash;
+      why structure beats accuracy over long runs, done properly. Chapters 1 and 6 are all you need for
+      everything on these pages, and it was written long before anyone tried to learn an integrator.</p>
+      <p><b>Leimkuhler &amp; Reich</b>, <em>Simulating Hamiltonian Dynamics</em> (CUP, 2004) &mdash; the same
+      material with more worked mechanics.</p></div>
+    <div class="card c-green"><h3 class="green">Learning dynamics</h3>
+      <p><b>Greydanus, Dzamba &amp; Yosinski</b>,
+      <a href="https://arxiv.org/abs/1906.01563">Hamiltonian Neural Networks</a> (2019) &mdash; learn the
+      Hamiltonian, take the step symplectically, conserve energy by construction.</p>
+      <p><b>Chen et al.</b>, <a href="https://arxiv.org/abs/1806.07366">Neural Ordinary Differential
+      Equations</a> (2018) &mdash; the paper that made "the network is the right-hand side" standard.</p></div>
+    <div class="card c-orange"><h3 class="orange">Where it bites</h3>
+      <p><b>Lam et al.</b>, <a href="https://www.science.org/doi/10.1126/science.adi2336">GraphCast</a>,
+      <em>Science</em> (2023) &mdash; a learned weather model, with the rollout behaviour treated as a first
+      class concern.</p>
+      <p><b>Vaswani et al.</b>, <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> (2017)
+      &mdash; for the architecture itself, if you have not read it.</p></div>
+  </div>
+  <div class="notes"><p>If there is time for one item, it is Hairer chapter 1: the backward-error argument is
+  the rigorous version of this whole set.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">Before you trust a rollout</p>
+  <h2>Five checks, <span class="hl">in order of cost</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>Plot a conserved quantity over the full horizon.</strong> One plot. It would have revealed
+        everything on these pages, and it is the check most often skipped.</li>
+        <li><strong>Run a classical structure-preserving scheme alongside.</strong> If leapfrog holds and your
+        model does not, the problem is structure, not accuracy.</li>
+        <li><strong>Extract the linear map and take its eigenvalues.</strong> Where the dynamics are nearly
+        linear, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> predicts the rollout before you run it.</li>
+        <li><strong>Run the exact rule through your own pipeline.</strong> Same discretisation, same precision.
+        Without that control you cannot separate your model's error from your plumbing's.</li>
+        <li><strong>Repeat with several random starts.</strong> Here the failure direction flipped between
+        runs. One run is an anecdote.</li>
+      </ol>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:8px">All five are cheap compared with training
+      the model in the first place.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The three that actually bite</div>
+        <p><b>Judging a time-stepper by its one-step error</b> &mdash; the failure is in the compounding, and
+        the average cannot see it.<br>
+        <b>Confusing a good coefficient with good physics</b> &mdash; error propagation can amplify it by an
+        order of magnitude, as it did here.<br>
+        <b>Blaming the discretisation without testing it</b> &mdash; on these pages the rounding turned out to
+        be <em>helping</em>.</p>
+        <p>All three produce plausible output. None announces itself.</p></div>
+      <div class="box physics"><div class="t">The companion sets</div>
+        <p><b>Transformers, and physics</b> &mdash; the architecture this model is built from, from the
+        equations up.<br>
+        <b>Stochastic differential equations</b> &mdash; the numerics of noisy dynamics, and diffusion
+        models.<br>
+        <b>Physics-informed neural networks</b> &mdash; putting the equation into the loss instead.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Check 1 is free and decisive, which is why it heads the list.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/lm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* reference page - no demonstration */
+
+</script>
+
+</body>
+</html>

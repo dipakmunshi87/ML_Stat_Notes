@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PINN Software and Reading List</title>
+<meta name="description" content="Open-source libraries for physics-informed machine learning with links - DeepXDE, NVIDIA PhysicsNeMo, jaxpi, NeuralPDE.jl and others - plus the papers behind each method and a first-problem checklist.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · What a PINN is</a><a href="theory.html">2 · Why it works</a><a href="training.html">3 · Training it</a><a href="failures.html">4 · When it fails</a><a href="inverse.html">5 · Inverse problems</a><a href="beyond.html">6 · Beyond ODEs</a><a href="software.html" class="here">7 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 7 of 7 &middot; tooling</p>
+  <h1>Software and <span class="hl">reading</span></h1>
+  <p class="lead" style="max-width:66ch">What to install, what to read, and what to measure before believing
+  anything. Every link below is to an actively maintained open-source project.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-green jump" href="#s2"><h3 class="green">1 &middot; Libraries &rarr;</h3><p>What each one is for, and which to start with.</p></a>
+    <a class="card c-blue jump" href="#s4"><h3 class="blue">2 &middot; Papers &rarr;</h3><p>The two dozen that matter, grouped by what they solve.</p></a>
+    <a class="card c-orange jump" href="#s5"><h3 class="orange">3 &middot; First problem &rarr;</h3><p>A checklist that fails fast rather than slowly.</p></a>
+  </div>
+  <div class="notes"><p>Library landscapes date quickly; the papers do not. Check the repositories before
+  committing to one.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2">
+<div class="inner">
+  <p class="kicker">Libraries</p>
+  <h2>What to <span class="hl">install</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Start here</h3>
+      <p><b><a href="https://github.com/lululxvi/deepxde">DeepXDE</a></b> &mdash; the standard research library.
+      ODEs, PDEs, integro-differential and inverse problems; backends for TensorFlow, PyTorch, JAX and PaddlePaddle;
+      DeepONet built in. Documentation at
+      <a href="https://deepxde.readthedocs.io/">deepxde.readthedocs.io</a>. If you are trying PINNs for the first
+      time, use this.</p>
+      <p class="cap">Lu, Meng, Mao &amp; Karniadakis, <em>SIAM Review</em> <b>63</b>, 208 (2021).</p></div>
+    <div class="card c-blue"><h3 class="blue">Production scale</h3>
+      <p><b><a href="https://developer.nvidia.com/physicsnemo">NVIDIA PhysicsNeMo</a></b> &mdash; formerly Modulus,
+      now open source. Multi-GPU, industrial geometries, neural operators and PINNs together. Heavier to learn;
+      the right choice if you need to scale beyond one device.
+      Code at <a href="https://github.com/NVIDIA/physicsnemo">github.com/NVIDIA/physicsnemo</a>.</p></div>
+    <div class="card c-orange"><h3 class="orange">Research in JAX</h3>
+      <p><b><a href="https://github.com/PredictiveIntelligenceLab/jaxpi">jaxpi</a></b> &mdash; the reference
+      implementation of the modern training tricks: NTK weighting, causal training, Fourier features, curriculum.
+      From the group that published most of them. Read it even if you do not use it.</p>
+      <p class="cap">Wang, Sankaran &amp; Perdikaris, arXiv:2308.08468.</p></div>
+  </div>
+  <div class="notes"><p>Writing your own for a one-dimensional problem is about two hundred lines and teaches you
+  more than any library. The engine behind these pages is roughly that size.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2b">
+<div class="inner">
+  <p class="kicker">Libraries, continued</p>
+  <h2>The <span class="hl">rest of the field</span></h2>
+  <div class="grid g3">
+    <div class="card c-purple"><h3 class="purple">Julia</h3>
+      <p><b><a href="https://github.com/SciML/NeuralPDE.jl">NeuralPDE.jl</a></b> &mdash; part of the SciML
+      ecosystem, with symbolic PDE specification through ModelingToolkit and tight integration with Julia's
+      differential-equation solvers. The best story for mixing learned and classical components.</p></div>
+    <div class="card c-pink"><h3 class="pink">Lighter alternatives</h3>
+      <p><b><a href="https://github.com/NeuroDiffGym/neurodiffeq">NeuroDiffEq</a></b> for ODEs with hard
+      constraints built in; <b><a href="https://github.com/sciann/sciann">SciANN</a></b> as a thin Keras wrapper;
+      <b><a href="https://github.com/mathLab/PINA">PINA</a></b> on PyTorch Lightning;
+      <b><a href="https://github.com/boschresearch/torchphysics">TorchPhysics</a></b> for geometry-heavy problems.</p></div>
+    <div class="card c-blue"><h3 class="blue">Operators and benchmarks</h3>
+      <p><b><a href="https://github.com/neuraloperator/neuraloperator">neuraloperator</a></b> &mdash; the
+      reference FNO implementation.
+      <b><a href="https://github.com/i207M/PINNacle">PINNacle</a></b> &mdash; a 20-problem benchmark suite, the
+      fastest way to find out whether a method works outside its own paper.</p></div>
+  </div>
+  <div class="notes"><p>Check the repositories before committing: this part of the field moves quickly and
+  several once-prominent projects are now unmaintained.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">Choosing</p>
+  <h2>Which one, for <span class="hl">what</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>If you want to&hellip;</th><th>use</th></tr>
+        <tr><td>try a PINN today on a small problem</td><td>DeepXDE</td></tr>
+        <tr><td>write your own and understand every line</td><td>plain PyTorch or JAX</td></tr>
+        <tr><td>use the current best training recipes</td><td>jaxpi</td></tr>
+        <tr><td>scale across many GPUs / real geometry</td><td>PhysicsNeMo</td></tr>
+        <tr><td>couple to classical solvers</td><td>NeuralPDE.jl</td></tr>
+        <tr><td>learn a solution operator, not a solution</td><td>neuraloperator, DeepXDE</td></tr>
+        <tr><td>get uncertainties</td><td>NumPyro / BlackJAX around your own model</td></tr>
+        <tr><td>check a claim against a benchmark</td><td>PINNacle</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The advice nobody gives</div>
+        <p>Before installing anything, spend an afternoon writing a PINN for a one-dimensional problem with a
+        known exact solution, in whatever framework you already use. You will hit the scaling issue, the
+        constraint issue and the weighting issue in that order, and every page of this set will make more sense
+        afterwards.</p></div>
+      <div class="box warn"><div class="t">Watch for</div>
+        <p>Libraries default to soft boundary conditions and unit loss weights, because those are general. Both
+        defaults are the wrong choice for most problems, and neither will announce itself. Check what your
+        library is doing before concluding that PINNs do not work on your equation.</p></div>
+      <div class="box stats"><div class="t">Hardware</div>
+        <p>One- and two-dimensional problems train perfectly well on a laptop CPU &mdash; the demonstrations in
+        this set run in a browser tab. GPUs matter above about <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">10^4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span> collocation points, which means three
+        dimensions and up.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The "write your own first" advice is not purism. Library abstractions hide exactly the
+  three things that determine whether your problem trains.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s4">
+<div class="inner">
+  <p class="kicker">Reading</p>
+  <h2>The papers, <span class="hl">grouped</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Foundations</h3>
+      <p>Lagaris, Likas &amp; Fotiadis, <em>IEEE TNN</em> <b>9</b>, 987 (1998) &mdash; hard constraints, before
+      deep learning.<br>
+      Raissi, Perdikaris &amp; Karniadakis, <em>JCP</em> <b>378</b>, 686 (2019) &mdash; the modern formulation.<br>
+      Sirignano &amp; Spiliopoulos, <em>JCP</em> <b>375</b>, 1339 (2018) &mdash; DGM, high dimensions.<br>
+      Karniadakis et al., <em>Nature Rev. Phys.</em> <b>3</b>, 422 (2021) &mdash; the review to read first.<br>
+      Cuomo et al., <em>J. Sci. Comput.</em> <b>92</b>, 88 (2022) &mdash; a broad survey.</p></div>
+    <div class="card c-orange"><h3 class="orange">Why it fails, and fixes</h3>
+      <p>Wang, Teng &amp; Perdikaris, <em>SIAM J. Sci. Comput.</em> <b>43</b>, A3055 (2021) &mdash; gradient
+      pathologies.<br>
+      Wang, Yu &amp; Perdikaris, <em>JCP</em> <b>449</b>, 110768 (2022) &mdash; the NTK view.<br>
+      Krishnapriyan et al., <em>NeurIPS</em> <b>34</b> (2021) &mdash; failure modes, curriculum training.<br>
+      Wang, Sankaran &amp; Perdikaris, arXiv:2203.07404 &mdash; causal weighting.<br>
+      McClenny &amp; Braga-Neto, <em>JCP</em> <b>474</b>, 111722 (2023) &mdash; self-adaptive weights.<br>
+      Wu et al., <em>CMAME</em> <b>403</b>, 115671 (2023) &mdash; adaptive sampling.</p></div>
+    <div class="card c-green"><h3 class="green">Theory</h3>
+      <p>Shin, Darbon &amp; Karniadakis, <em>CiCP</em> <b>28</b>, 2042 (2020) &mdash; consistency.<br>
+      Mishra &amp; Molinaro, <em>IMA J. Numer. Anal.</em> <b>42</b>, 981 (2022) &mdash; error estimates.<br>
+      De Ryck &amp; Mishra (2022) &mdash; rates without the curse of dimensionality.<br>
+      Rahaman et al., <em>ICML</em> (2019) &mdash; spectral bias.<br>
+      Tancik et al., <em>NeurIPS</em> (2020) &mdash; Fourier features.</p></div>
+  </div>
+  <div class="notes"><p>If you read four: Raissi et al. 2019, Karniadakis et al. 2021, Krishnapriyan et al. 2021,
+  and Grossmann et al. 2024.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s4b">
+<div class="inner">
+  <p class="kicker">Reading, continued</p>
+  <h2>Variants, inverse problems, <span class="hl">and the honest comparisons</span></h2>
+  <div class="grid g3">
+    <div class="card c-pink"><h3 class="pink">Variants</h3>
+      <p>Jagtap, Kharazmi &amp; Karniadakis, <em>CMAME</em> <b>365</b>, 113028 (2020) &mdash; cPINN.<br>
+      Jagtap &amp; Karniadakis, <em>CiCP</em> <b>28</b>, 2002 (2020) &mdash; XPINN.<br>
+      Moseley, Markham &amp; Nissen-Meyer, <em>Adv. Comput. Math.</em> <b>49</b>, 62 (2023) &mdash; FBPINN.<br>
+      E &amp; Yu, <em>Commun. Math. Stat.</em> <b>6</b>, 1 (2018) &mdash; Deep Ritz.<br>
+      Kharazmi, Zhang &amp; Karniadakis, <em>CMAME</em> <b>374</b>, 113547 (2021) &mdash; hp-VPINN.</p></div>
+    <div class="card c-purple"><h3 class="purple">Inverse and uncertainty</h3>
+      <p>Raissi, Yazdani &amp; Karniadakis, <em>Science</em> <b>367</b>, 1026 (2020) &mdash; hidden fluid
+      mechanics.<br>
+      Yang, Meng &amp; Karniadakis, <em>JCP</em> <b>425</b>, 109913 (2021) &mdash; Bayesian PINNs.</p></div>
+    <div class="card c-orange"><h3 class="orange">The honest comparisons</h3>
+      <p>Grossmann, Komorowska, Latz &amp; Sch&ouml;nlieb,
+      <a href="https://academic.oup.com/imamat/article/89/1/143/7680268"><em>IMA J. Appl. Math.</em> <b>89</b>,
+      143 (2024)</a> &mdash; "Can PINNs beat the finite element method?" The answer is mostly no, and the paper
+      is careful about when it is yes.<br>
+      Hao et al. (2023) &mdash; the PINNacle benchmark.</p></div>
+  </div>
+  <div class="notes"><p>The formulation, the landscape, the failures and the honest comparison &mdash; in that
+  order, they are the shortest route to a working judgement about the method.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s5">
+<div class="inner">
+  <p class="kicker">Getting started</p>
+  <h2>Your first problem, in <span class="hl">an afternoon</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>Designed to fail fast rather than slowly. Each step should take minutes; if one takes a day, that is
+      the answer to whether this method suits your problem.</p>
+      <ol>
+        <li><strong>Pick a problem with a known solution.</strong> Not the one you care about. Manufacture one:
+        choose <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span>, apply the operator, call the result <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span>.</li>
+        <li><strong>Non-dimensionalise.</strong> Every coefficient <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span>, domain mapped to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mo>−</mo><mn>1</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-1,1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">−</span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span></span>.</li>
+        <li><strong>Impose the boundary conditions hard.</strong> Check the ansatz keeps the network's job
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span> across the whole domain.</li>
+        <li><strong>Train and measure the relative <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">L^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> error against the exact solution</strong> &mdash; not
+        the loss. If it is not below a few per cent, nothing later will help.</li>
+        <li><strong>Solve the same problem classically</strong> and compare cost and accuracy. Do this before you
+        are emotionally invested.</li>
+        <li><strong>Only now</strong> move to the real problem, and only if step 5 did not settle the question.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box key"><div class="t">What to report, always</div>
+        <p>Relative <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">L^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> error against a reference; the residual plotted across the domain; each loss term
+        separately; wall-clock time and step count; the result from at least three random seeds. A paper or talk
+        without these is not reporting a measurement.</p></div>
+      <div class="box warn"><div class="t">When to stop</div>
+        <p>If a classical solver handles your problem in seconds and you only want the solution, stop. The
+        honest use cases are inverse problems, unobservable fields, high dimension, non-local operators, and
+        equations with no good classical method. If yours is none of these, the answer is a solver.</p></div>
+      <div class="box physics"><div class="t">Where this set goes next</div>
+        <p>The companion set on <b>neural operators and numerical solvers</b> covers the other approach: learning
+        the map from data to solution once, so that new instances are a forward pass rather than a new training
+        run &mdash; and how both compare against classical methods.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Step 5 is the one people skip, and it is the one that saves months.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/pinn.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* reference page - no demonstration */
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surrogates and Emulators: Replacing the Simulation</title>
+<meta name="description" content="When a learned model can stand in for an expensive simulation - the amortisation arithmetic, the learning curve, coverage and validation - with a live demonstration of overfitting on a small training set.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html">4 · Examples</a><a href="surrogates.html" class="here">5 · Surrogates</a><a href="generative.html">6 · Generative AI</a><a href="limits.html">7 · Limits</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 5 of 8 &middot; emulation</p>
+  <h1>Paying once, <span class="hl">using many times</span></h1>
+  <p class="lead" style="max-width:64ch">An emulator replaces an expensive calculation with a cheap learned
+  approximation. Whether that is legitimate is an arithmetic question and a checking question. It is almost
+  never a question about the network.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-green jump" href="#s2"><h3 class="green">1 &middot; When it pays &rarr;</h3><p>The break-even, written out.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">2 &middot; How many runs &rarr;</h3><p>Watch it memorise, live.</p></a>
+    <a class="card c-orange jump" href="#s7"><h3 class="orange">3 &middot; Checking it &rarr;</h3><p>Six things, before you believe it.</p></a>
+  </div>
+  <div class="notes"><p>This is the application with the clearest payoff in physics and the one most often done
+  without adequate validation.</p></div>
+</div>
+</section>
+
+
+<section class="slide s-green" id="s2">
+<div class="inner">
+  <p class="kicker">The whole argument</p>
+  <h2>Pay once, <span class="hl">use many times</span></h2>
+  <svg class="fig" viewBox="0 0 940 280" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arem" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armem" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="20" y="60" width="200" height="90" rx="8" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.4"/><text x="120" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">your simulation</text><text x="120" y="114" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">1 hour per run</text><text x="120" y="134" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">exact</text><line x1="224" y1="105" x2="296" y2="105" stroke="#27406e" stroke-width="2" marker-end="url(#arem)"/><text x="260" y="94" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">run it</text><text x="260" y="130" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">N times</text><rect x="300" y="60" width="200" height="90" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="400" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="700">a training set</text><text x="400" y="114" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">paid for once</text><line x1="504" y1="105" x2="576" y2="105" stroke="#27406e" stroke-width="2" marker-end="url(#arem)"/><text x="540" y="94" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">train</text><rect x="580" y="60" width="200" height="90" rx="8" fill="#ffffff" stroke="#b3246b" stroke-width="1.4"/><text x="680" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b3246b" text-anchor="middle" font-weight="700">the emulator</text><text x="680" y="114" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">1 millisecond</text><text x="680" y="134" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">approximate</text><line x1="784" y1="105" x2="856" y2="105" stroke="#27406e" stroke-width="2" marker-end="url(#arem)"/><text x="880" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">use it</text><text x="880" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">M times</text><text x="880" y="132" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#27406e" text-anchor="middle" font-weight="normal">M ≈ 10⁶</text><rect x="20" y="186" width="900" height="74" rx="10" fill="#eaf1ff" stroke="#9dbcf5" stroke-width="1"/><text x="470" y="214" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">It pays when  M  ≫  N  — and it never pays otherwise, however good the network is.</text><text x="470" y="240" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">A fit needs 10⁵ likelihood calls; a few thousand simulations train the emulator. That ratio is the whole argument.</text></svg>
+  <div class="notes"><p>If the ratio M/N is not large, no amount of architectural cleverness rescues the
+  idea.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s3">
+<div class="inner">
+  <p class="kicker">The arithmetic</p>
+  <h2>When emulation <span class="hl">pays</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Write <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span> for the cost of one simulation and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span> for one call to the network. You need <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span> evaluations
+      and it takes <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> simulations to train. Emulation is worth it when</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>N</mi><mtext> </mtext><mi>C</mi><mo>+</mo><mi>M</mi><mtext> </mtext><mi>c</mi><mtext>  </mtext><mo>&lt;</mo><mtext>  </mtext><mi>M</mi><mtext> </mtext><mi>C</mi><mo separator="true">,</mo><mspace width="2em"/><mtext>i.e.  </mtext><mi>M</mi><mo>≳</mo><mi>N</mi><mtext> when </mtext><mi>c</mi><mo>≪</mo><mi>C</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">N\,C+M\,c\;&lt;\;M\,C,\qquad\text{i.e. }\ M\gtrsim N \text{ when } c\ll C .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9592em;vertical-align:-0.2296em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">i.e. </span></span><span class="mspace"> </span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel amsrm">≳</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7335em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mord text"><span class="mord"> when </span></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≪</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mord">.</span></span></span></span></span></div>
+      <p>So the question is never "is the network accurate enough" on its own. It is whether <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span> is big enough
+      to repay <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>.</p>
+      <p><strong>Where it pays decisively:</strong> fitting a model to data. An MCMC or nested-sampling run
+      needs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>5</mn></msup></mrow><annotation encoding="application/x-tex">10^5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span></span></span></span> to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>7</mn></msup></mrow><annotation encoding="application/x-tex">10^7</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">7</span></span></span></span></span></span></span></span></span></span></span> likelihood calls, and a few thousand well-chosen simulations train the emulator. A
+      ratio of a thousand or more.</p>
+      <p><strong>Where it does not:</strong> when you need a handful of high-fidelity runs, when the parameter
+      space is wide and thinly sampled, or when every new study moves the region you would have to cover.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The worked case</div>
+        <p><b>CosmoPower</b> (Spurio Mancini et al.,
+        <a href="https://academic.oup.com/mnras/article/511/2/1771/6505144"><em>MNRAS</em> <b>511</b>, 1771
+        (2022)</a>) emulates CMB and matter power spectra in place of a Boltzmann solver: emulation error below
+        0.4% on the matter power spectrum, a speed-up of order <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">10^4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span> on the full inference pipeline, and Planck
+        2018 posteriors recovered to within sampling noise &mdash; in seconds.</p>
+        <p>It is an ordinary dense network, not a transformer &mdash; which is the point. Attention earns its
+        place when the input is a <em>set</em> or the output a <em>field</em>, not when it is a handful of
+        parameters.</p></div>
+      <div class="box warn"><div class="t">The number that decides it</div>
+        <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">M/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>. If you cannot say what it is for your problem, you are not ready to build an emulator.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The 0.4% figure is quoted relative to the accuracy the surveys require, which is the
+  right comparison &mdash; absolute accuracy alone means little.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Where attention helps</p>
+  <h2>Three shapes of <span class="hl">surrogate</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Parameters &rarr; observable</h3>
+      <p>A handful of inputs, a smooth output curve. Power spectra, cross-sections, equations of state. A dense
+      network or a Gaussian process is usually enough and easier to validate; a transformer adds nothing.
+      <b>Use the simplest thing that works.</b></p></div>
+    <div class="card c-green"><h3 class="green">Field &rarr; field</h3>
+      <p>One state of a system to the next: weather, turbulence, structure formation. Attention supplies the
+      non-local coupling that a convolutional stencil cannot, which is why Pangu-Weather and its relatives are
+      transformers. Cost is controlled by patching the field into tokens.</p></div>
+    <div class="card c-orange"><h3 class="orange">Set &rarr; summary</h3>
+      <p>Many objects in, one number or distribution out: a likelihood from a catalogue, a summary statistic
+      from a particle list, a detector response. This is the case that is <em>naturally</em> a transformer, and
+      the one where the choice needs no justification beyond the data type.</p></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><div class="t">A useful discipline</div>
+    <p>Fit a linear model first, then a Gaussian process or a small dense network, then something larger. Record
+    the error at each stage. Roughly half the time the simple model is adequate, and knowing that costs an
+    afternoon while not knowing it costs the rest of the project.</p></div>
+  <div class="notes"><p>The middle row is where most current research effort sits; the third row is where the
+  argument for attention is strongest and least contested.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>How many simulations is <span class="hl">enough</span></h2>
+  <p style="max-width:84ch">The model trains on a fixed pool of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> examples &mdash; your simulation budget
+  &mdash; and is tested on fresh ones. Watch the two curves separate as you shrink the pool.</p>
+  <div class="ctl">
+    <button id="u1run">Train</button>
+    <button id="u1reset" class="ghost">Reset</button>
+    <label>training set <input id="u1n" type="range" min="0" max="5" step="1" value="3"><span class="val" id="u1nv">150</span></label>
+    <span class="stat" id="u1stat">step 0</span>
+  </div>
+  <canvas id="u1" width="1160" height="310"></canvas>
+  <p class="vidcap">Blue: error on the training pool. Red: error on examples the model has never seen. At
+  <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">N=10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">10</span></span></span></span> the training error collapses while the test error stays at the level of predicting nothing at all
+  &mdash; the model has memorised the pool. Move the slider and press Reset to change the budget.</p>
+  <div class="notes"><p>Memorisation with a vanishing training error is exactly what a surrogate trained on too
+  few simulations does, and it does not announce itself unless you hold data out.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s6">
+<div class="inner">
+  <p class="kicker">The learning curve</p>
+  <h2>Measured, at six <span class="hl">budgets</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>training pool <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span></th><th>train RMSE</th><th>test RMSE</th></tr>
+        <tr><td>10</td><td>0.0012</td><td>0.700</td></tr>
+        <tr><td>25</td><td>0.0277</td><td>0.458</td></tr>
+        <tr><td>60</td><td>0.0161</td><td>0.306</td></tr>
+        <tr><td>150</td><td>0.0262</td><td>0.037</td></tr>
+        <tr><td>400</td><td>0.0285</td><td>0.031</td></tr>
+        <tr><td>1000</td><td>0.0179</td><td>0.017</td></tr>
+        <tr><td><em>predicting zero</em></td><td>&mdash;</td><td><em>0.577</em></td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:6px">2,500 steps of batch 8, averaged over two
+      seeds. The model, the optimiser and the number of updates are identical in every row; only the size of the
+      pool changes.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">Read the first row again</div>
+        <p>At <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">N=10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">10</span></span></span></span> the training error is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>3</mn></mrow></msup></mrow><annotation encoding="application/x-tex">10^{-3}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">3</span></span></span></span></span></span></span></span></span></span></span></span> &mdash; essentially exact &mdash; and the test error is
+        0.70, <em>worse than predicting zero</em>. A surrogate in this state looks perfect on every diagnostic
+        computed from its training set. Only held-out data reveals it.</p></div>
+      <div class="box key"><div class="t">Where the transition happens</div>
+        <p>Between 60 and 150 examples the gap collapses. There is a threshold, it is problem-specific, and it is
+        cheap to find empirically &mdash; train at several budgets and plot this curve. Doing so costs a fraction
+        of the simulation campaign it protects.</p></div>
+      <div class="box physics"><div class="t">In practice</div>
+        <p>Run the learning curve on a cheap version of the problem &mdash; lower resolution, smaller box, fewer
+        particles &mdash; and use the shape to plan the expensive campaign. The threshold moves, but the shape
+        rarely does.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Plotting a learning curve before committing simulation time is the highest-value hour in
+  a surrogate project.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s7">
+<div class="inner">
+  <p class="kicker">Validation</p>
+  <h2>Before you believe <span class="hl">a surrogate</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>Hold out properly.</strong> Not a random split if your simulations are correlated &mdash;
+        hold out whole runs, whole parameter regions, whole realisations.</li>
+        <li><strong>Test at the edges.</strong> Error in the interior of the training region says nothing about
+        the boundary, and inference chains spend much of their time near the boundary.</li>
+        <li><strong>Quantify uncertainty.</strong> A deep ensemble of five models gives a usable spread;
+        conformal prediction gives calibrated intervals with a guarantee. A point estimate with no error bar is
+        not a scientific result.</li>
+        <li><strong>Check conservation.</strong> Energy, mass, momentum, positivity, unitarity. A learned model
+        respects none of these unless made to, and violations are a sharp diagnostic.</li>
+        <li><strong>Propagate the emulator error.</strong> It enters the posterior. Show that it is small
+        compared with the statistical error &mdash; do not assume it.</li>
+        <li><strong>Re-validate when the problem moves.</strong> New priors, resolution or physics: the old
+        validation does not transfer.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The failure that matters</div>
+        <p>Surrogates fail <em>silently and confidently</em> off-distribution. There is no equivalent of a
+        solver blowing up or a residual refusing to fall: the network returns a plausible number. Every
+        safeguard above exists because nothing else raises the alarm.</p></div>
+      <div class="box key"><div class="t">The strongest available check</div>
+        <p>Keep the simulator. Spend a small fraction of the saved budget re-running it at points the surrogate
+        was used at, chosen adversarially &mdash; near the edges, at the posterior peak, where the ensemble
+        disagrees. This turns an assumption into a measurement.</p></div>
+      <div class="box physics"><div class="t">Active learning</div>
+        <p>If simulations are the bottleneck, choose the next one where the ensemble spread is largest rather
+        than at random &mdash; typically a factor of a few fewer simulations for the same accuracy.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Point 5 is the one most often skipped in published emulator work, and the one a referee
+  should always ask about.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s8">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>The surrogate <span class="hl">checklist</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Question</th><th>Answer before building</th></tr>
+        <tr><td>How many evaluations, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span>?</td><td>if <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>≲</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">M\lesssim N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9592em;vertical-align:-0.2296em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel amsrm">≲</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>, do not build one</td></tr>
+        <tr><td>What accuracy is needed?</td><td>relative to the statistical error, not absolute</td></tr>
+        <tr><td>What covers the input space?</td><td>Latin hypercube or active learning, not a grid</td></tr>
+        <tr><td>Is the simplest model enough?</td><td>linear, then GP, then network &mdash; in that order</td></tr>
+        <tr><td>How is uncertainty reported?</td><td>ensemble or conformal; never a bare point</td></tr>
+        <tr><td>What is held out?</td><td>whole runs and edge regions, not random rows</td></tr>
+        <tr><td>What happens off-distribution?</td><td>know it, or detect and refuse</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The one-sentence version</div>
+        <p>A surrogate is an interpolator with a very flexible basis: trustworthy inside the region it was
+        trained on and densely sampled, unreliable outside it, and silent about which of the two you are in
+        unless you build the alarm yourself.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="generative.html">Page 6</a> turns from predicting a number to generating a sample &mdash;
+        where the same architecture becomes a model of a distribution rather than a function.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The table is deliberately about process rather than architecture; that is where surrogate
+  projects actually succeed or fail.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- the learning curve: a fixed training pool, held-out test ---------- */
+(function(){
+  var cv=document.getElementById('u1'); if(!cv||typeof TFM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var task=TFM.makeTask({T:6,nlab:5});
+  var NS=[10,25,60,150,400,1000], ni=3;
+  var model,opt,pool,test,pr,running=false,raf=null,hTr=[],hTe=[],fi=0;
+
+  function reset(){
+    running=false; document.getElementById('u1run').textContent='Train';
+    model=new TFM.Model({din:task.din,dmodel:16,dk:8,dff:24,seed:5});
+    opt=new TFM.Adam(model.params(),5e-3);
+    var g=new TFM.Rng(166), i, N=NS[ni];
+    pool=[]; for(i=0;i<N;i++) pool.push(task.sample(g));
+    test=[]; var r=new TFM.Rng(777); for(i=0;i<120;i++) test.push(task.sample(r));
+    pr=new TFM.Rng(31); hTr=[]; hTe=[]; fi=0;
+    measure(); draw();
+  }
+  function trainBatch(){
+    TFM.reset(); opt.zero();
+    var L=[],b;
+    for(b=0;b<8;b++){ var s=pool[Math.floor(pr.u()*pool.length)];
+      L.push(TFM.mse(model.forward(s.X,task.T),new Float64Array([s.y]))); }
+    TFM.backward(TFM.sumS(L)); opt.step(); TFM.reset();
+  }
+  function ev(list,cap){
+    var n=Math.min(list.length,cap||120), se=0, i;
+    for(i=0;i<n;i++){ TFM.reset();
+      var o=model.forward(list[i].X,task.T); se+=(o.v[0]-list[i].y)*(o.v[0]-list[i].y); TFM.reset(); }
+    return Math.sqrt(se/n);
+  }
+  function measure(){ hTr.push(ev(pool,100)); hTe.push(ev(test,100)); }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var n=hTr.length, H=228;
+    var a1=new PL.Axes(ctx,70,34,700,H,{xlim:[0,Math.max(10,n-1)],ylim:[3e-4,2],logy:true,
+        title:'RMSE, training pool of '+NS[ni]+' examples',titleColor:C.blue,
+        xlabel:'measurement (every 30 batches)'});
+    a1.hline(Math.sqrt(1/3),C.rule,[5,4]);
+    if(n>1){
+      a1.line(PL.range(n),hTr.map(function(v){return Math.max(3e-4,v);}),C.blue,2.4);
+      a1.line(PL.range(n),hTe.map(function(v){return Math.max(3e-4,v);}),C.red,2.4);
+    }
+    a1.ticks([0,Math.max(10,n-1)],[0.001,0.01,0.1,1]);
+    a1.legend([['on the training pool',C.blue],['on fresh examples',C.red],['predict zero',C.rule]]);
+
+    /* the gap, as a number */
+    var gap=(n?hTe[n-1]/Math.max(1e-9,hTr[n-1]):1);
+    ctx.fillStyle=C.ink2; ctx.font='bold 15px sans-serif';
+    ctx.fillText('generalisation gap',830,52);
+    ctx.font='28px ui-monospace,Menlo,monospace';
+    ctx.fillStyle=gap>3?C.red:C.green;
+    ctx.fillText((n?gap.toFixed(1):'-')+'×',830,92);
+    ctx.font='13px sans-serif'; ctx.fillStyle=C.muted;
+    ctx.fillText('test error divided by',830,118);
+    ctx.fillText('training error',830,136);
+    ctx.fillText('A large gap means the model',830,170);
+    ctx.fillText('has memorised the pool rather',830,188);
+    ctx.fillText('than learned the rule — and',830,206);
+    ctx.fillText('nothing computed from the',830,224);
+    ctx.fillText('training set would show it.',830,242);
+
+    document.getElementById('u1stat').textContent=
+      'step '+opt.t+'   ·   train '+(n?hTr[n-1].toFixed(4):'-')+
+      '   ·   test '+(n?hTe[n-1].toFixed(4):'-');
+  }
+  function step(){
+    if(!running) return;
+    for(var i=0;i<6;i++) trainBatch();
+    fi++;
+    if(fi%5===0) measure();
+    draw();
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('u1run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('u1reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('u1n').oninput=function(){
+    ni=+this.value; document.getElementById('u1nv').textContent=NS[ni];
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

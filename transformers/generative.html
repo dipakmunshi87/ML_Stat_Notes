@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generative Models: the Same Machinery, Turned Around</title>
+<meta name="description" content="Autoregressive generation, causal masking and the link to the transfer matrix; diffusion models with transformer backbones; lattice field theory and simulation-based inference - with a causal transformer trained live to generate Ising chains.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html">4 · Examples</a><a href="surrogates.html">5 · Surrogates</a><a href="generative.html" class="here">6 · Generative AI</a><a href="limits.html">7 · Limits</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-purple" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 6 of 8 &middot; generation</p>
+  <h1>One mask turns a reader<br>into a <span class="hl">generator</span></h1>
+  <p class="lead" style="max-width:64ch">Nothing about the architecture changes. Forbid each object from
+  seeing the ones after it, and the same network stops predicting an answer and starts modelling a probability
+  distribution &mdash; which, for a physicist, is a transfer matrix with its entries left blank.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-purple jump" href="#s3"><h3 class="purple">1 &middot; The factorisation &rarr;</h3><p>Causal masking, exact likelihoods, independent samples.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">2 &middot; Generate Ising chains &rarr;</h3><p>Trained live, checked against <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>.</p></a>
+    <a class="card c-blue jump" href="#s7"><h3 class="blue">3 &middot; Diffusion and the rest &rarr;</h3><p>Where transformers sit inside modern generative models.</p></a>
+  </div>
+  <div class="notes"><p>The transfer-matrix reading is the one that makes autoregressive generation feel
+  inevitable rather than clever.</p></div>
+</div>
+</section>
+
+
+<section class="slide s-purple" id="s2">
+<div class="inner">
+  <p class="kicker">The whole idea</p>
+  <h2>One triangle, and <span class="hl">a Markov chain</span></h2>
+  <svg class="fig" viewBox="0 0 940 300" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arcd" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armcd" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><text x="160" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#6b3fd4" text-anchor="middle" font-weight="700">forbid looking ahead</text><rect x="50" y="48" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="82" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="114" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="146" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="178" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="210" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="242" y="48" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="80" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="82" y="80" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="114" y="80" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="146" y="80" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="178" y="80" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="210" y="80" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="242" y="80" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="112" width="30" height="30" fill="#6b3fd4" fill-opacity="0.416667" stroke="#ffffff"/><rect x="82" y="112" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="114" y="112" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="146" y="112" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="178" y="112" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="210" y="112" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="242" y="112" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="144" width="30" height="30" fill="#6b3fd4" fill-opacity="0.375" stroke="#ffffff"/><rect x="82" y="144" width="30" height="30" fill="#6b3fd4" fill-opacity="0.416667" stroke="#ffffff"/><rect x="114" y="144" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="146" y="144" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="178" y="144" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="210" y="144" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="242" y="144" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="176" width="30" height="30" fill="#6b3fd4" fill-opacity="0.35" stroke="#ffffff"/><rect x="82" y="176" width="30" height="30" fill="#6b3fd4" fill-opacity="0.375" stroke="#ffffff"/><rect x="114" y="176" width="30" height="30" fill="#6b3fd4" fill-opacity="0.416667" stroke="#ffffff"/><rect x="146" y="176" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="178" y="176" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="210" y="176" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="242" y="176" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.333333" stroke="#ffffff"/><rect x="82" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.35" stroke="#ffffff"/><rect x="114" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.375" stroke="#ffffff"/><rect x="146" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.416667" stroke="#ffffff"/><rect x="178" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="210" y="208" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><rect x="242" y="208" width="30" height="30" fill="#ffffff" stroke="#ccd8ec" stroke-dasharray="2 2"/><rect x="50" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.321429" stroke="#ffffff"/><rect x="82" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.333333" stroke="#ffffff"/><rect x="114" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.35" stroke="#ffffff"/><rect x="146" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.375" stroke="#ffffff"/><rect x="178" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.416667" stroke="#ffffff"/><rect x="210" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.5" stroke="#ffffff"/><rect x="242" y="240" width="30" height="30" fill="#6b3fd4" fill-opacity="0.75" stroke="#ffffff"/><text x="200" y="100" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">blocked</text><text x="200" y="118" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">(the future)</text><text x="160" y="292" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">one line in the softmax</text><text x="620" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#0b7a5a" text-anchor="middle" font-weight="700">what that makes it: a Markov chain you can sample</text><circle cx="400" cy="140" r="26" fill="#ffffff" stroke="#0b7a5a" stroke-width="2"/><text x="400" y="146" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">s1</text><line x1="428" y1="140" x2="476" y2="140" stroke="#27406e" stroke-width="2" marker-end="url(#arcd)"/><circle cx="508" cy="140" r="26" fill="#ffffff" stroke="#0b7a5a" stroke-width="2"/><text x="508" y="146" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">s2</text><line x1="536" y1="140" x2="584" y2="140" stroke="#27406e" stroke-width="2" marker-end="url(#arcd)"/><circle cx="616" cy="140" r="26" fill="#ffffff" stroke="#0b7a5a" stroke-width="2"/><text x="616" y="146" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">s3</text><line x1="644" y1="140" x2="692" y2="140" stroke="#27406e" stroke-width="2" marker-end="url(#arcd)"/><circle cx="724" cy="140" r="26" fill="#ffffff" stroke="#0b7a5a" stroke-width="2"/><text x="724" y="146" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">s4</text><line x1="752" y1="140" x2="800" y2="140" stroke="#27406e" stroke-width="2" marker-end="url(#arcd)"/><circle cx="832" cy="140" r="26" fill="#ffffff" stroke="#0b7a5a" stroke-width="2"/><text x="832" y="146" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">s5</text><text x="620" y="196" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="17" fill="#0b2559" text-anchor="middle" font-weight="700">p(s₁) · p(s₂|s₁) · p(s₃|s₂,s₁) · …</text><text x="620" y="226" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">exactly the chain rule — no approximation anywhere</text><text x="620" y="258" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">For an Ising chain this is the transfer matrix,</text><text x="620" y="276" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">and the network has to learn its entries.</text></svg>
+  <div class="notes"><p>The chain-rule factorisation is exact, which is what separates this family from
+  generative models that only approximate a distribution.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s3">
+<div class="inner">
+  <p class="kicker">The factorisation</p>
+  <h2>Chain rule, <span class="hl">enforced by a mask</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Any joint distribution factorises exactly:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>L</mi></msub><mo stretchy="false">)</mo><mo>=</mo><munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>L</mi></munderover><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>i</mi></mrow></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">p(x_1,\dots,x_L)=\prod_{i=1}^{L}p(x_i\,|\,x_{&lt;i}).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.106em;vertical-align:-1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∏</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">L</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∣</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></div>
+      <p>That is the chain rule, not an approximation. So a model that produces <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mi mathvariant="normal">∣</mi><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>i</mi></mrow></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p(x_i|x_{&lt;i})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> at every site
+      defines a proper normalised distribution over whole configurations. The only requirement is that site <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span>
+      must not see the sites after it, which one line in the softmax enforces:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn><mtext>  for </mtext><mi>j</mi><mo>&gt;</mo><mi>i</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">A_{ij}=0\ \text{ for } j&gt;i .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">ij</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mspace"> </span><span class="mord text"><span class="mord"> for </span></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span><span class="mord">.</span></span></span></span></span></div>
+      <p>One line in the softmax, and the network is a generative model. Training is unchanged &mdash; predict
+      the next value, minimise the negative log-likelihood &mdash; and the loss now has an exact meaning: the
+      cross-entropy between data and model, in nats per site.</p>
+      <p>Verified here: changing the last input leaves every earlier output identical to <b>0</b> in double
+      precision, and the gradient through the masked path matches finite differences to
+      <b>9&times;10<sup>&minus;7</sup></b>.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Two things this buys</div>
+        <p><b>An exact probability.</b> You can compute the probability of any configuration in one pass. For
+        physics that is the difference between a picture generator and a usable statistical model.</p>
+        <p><b>Independent samples.</b> Generation draws site by site with no Markov chain &mdash; no burn-in, no
+        autocorrelation time, no critical slowing down.</p></div>
+      <div class="box warn"><div class="t">The honest qualification</div>
+        <p>Those samples are independent draws from the <em>model</em>, not from the true distribution. The fix
+        is standard and should always be used: treat the model as a proposal in an independence Metropolis step,
+        or reweight by <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>β</mi><mi>E</mi></mrow></msup><mi mathvariant="normal">/</mi><msub><mi>p</mi><mi>θ</mi></msub></mrow><annotation encoding="application/x-tex">e^{-\beta E}/p_\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0991em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">βE</span></span></span></span></span></span></span></span></span><span class="mord">/</span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. Then the answer is exact and the network only affects the
+        efficiency.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The reweighting point is what makes this respectable as physics rather than as
+  approximation: the model can be wrong and the final estimator still unbiased.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s4">
+<div class="inner">
+  <p class="kicker">The physics reading</p>
+  <h2>A learned <span class="hl">transfer matrix</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>Take the 1D Ising chain, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo>=</mo><mo>−</mo><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>s</mi><mi>i</mi></msub><msub><mi>s</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">E=-\sum_i s_is_{i+1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0497em;vertical-align:-0.2997em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span>, at inverse temperature <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>. Its conditional
+      distribution is exactly Markov:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><msub><mi>s</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>s</mi><mrow><mo>&lt;</mo><mi>i</mi></mrow></msub><mo stretchy="false">)</mo><mo>=</mo><mi>p</mi><mo stretchy="false">(</mo><msub><mi>s</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>s</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="2em"/><mi>p</mi><mo stretchy="false">(</mo><msub><mi>s</mi><mi>i</mi></msub><mo>=</mo><msub><mi>s</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mn>1</mn><mo>+</mo><mi>tanh</mi><mo>⁡</mo><mi>β</mi></mrow><mn>2</mn></mfrac><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">p(s_i\,|\,s_{&lt;i})=p(s_i\,|\,s_{i-1}),\qquad
+      p(s_i=s_{i-1})=\frac{1+\tanh\beta}{2},</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∣</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∣</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mop">tanh</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>which is the transfer matrix <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><msup><mi>e</mi><mrow><mi>β</mi><msub><mi>σ</mi><mi>z</mi></msub><mo>⊗</mo><msub><mi>σ</mi><mi>z</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">T=e^{\beta\sigma_z\otimes\sigma_z}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05278em;">β</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1645em;"><span style="top:-2.357em;margin-left:-0.0359em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.04398em;">z</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mbin mtight">⊗</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1645em;"><span style="top:-2.357em;margin-left:-0.0359em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.04398em;">z</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> written as a conditional. An
+      autoregressive model over spins is therefore a <em>learned transfer matrix</em> &mdash; and in 1D it can
+      represent the truth exactly, so we know what it should converge to.</p>
+      <p>That gives a rare thing: a generative model with an analytic answer to check against. The correlation
+      function of the exact chain is</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo stretchy="false">⟨</mo><msub><mi>s</mi><mi>i</mi></msub><msub><mi>s</mi><mrow><mi>i</mi><mo>+</mo><mi>k</mi></mrow></msub><mo stretchy="false">⟩</mo><mo>=</mo><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">\langle s_i s_{i+k}\rangle=\tanh^k\beta,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">⟨</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mclose">⟩</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>and the next slide measures it on configurations the network invented.</p>
+    </div>
+    <div>
+      <div class="box physics"><div class="t">Why this generalises</div>
+        <p>In two dimensions the conditional <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><msub><mi>s</mi><mi>i</mi></msub><mi mathvariant="normal">∣</mi><msub><mi>s</mi><mrow><mo>&lt;</mo><mi>i</mi></mrow></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">p(s_i|s_{&lt;i})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> is no longer Markov &mdash; it depends on a whole
+        boundary &mdash; and that is precisely where attention earns its place: it can attend to the relevant
+        part of the boundary at any distance. This is the basis of autoregressive neural samplers for spin
+        systems and lattice field theories.</p></div>
+      <div class="box key"><div class="t">The variational route</div>
+        <p>You do not even need data. Minimising the variational free energy
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>F</mi><mi>θ</mi></msub><mo>=</mo><msub><mi mathvariant="double-struck">E</mi><msub><mi>p</mi><mi>θ</mi></msub></msub><mo stretchy="false">[</mo><mi>E</mi><mo>+</mo><msup><mi>β</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>θ</mi></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">F_\theta=\mathbb{E}_{p_\theta}[E+\beta^{-1}\log p_\theta]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathbb">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span> trains the sampler directly against the
+        Hamiltonian, using its own samples. That is a physics training objective with no dataset at all, and it
+        gives a variational bound on the free energy as a by-product.</p></div>
+      <div class="box warn"><div class="t">The known difficulty</div>
+        <p>Trained this way, models tend to mode-collapse onto one ordered phase near a first-order transition.
+        It is a real and active problem, not a solved one.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The variational free-energy objective is the cleanest example anywhere of a machine
+  learning method whose loss function is a physical quantity.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>A transformer that <span class="hl">invents spin chains</span></h2>
+  <p style="max-width:84ch">A causal transformer trained on Ising chains at inverse temperature <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>, then
+  asked to generate its own, one site at a time. The test is whether its correlation function matches
+  <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> &mdash; a number it was never shown.</p>
+  <div class="ctl">
+    <button id="g1run">Train</button>
+    <button id="g1reset" class="ghost">Reset</button>
+    <label>&beta; <input id="g1b" type="range" min="20" max="120" step="10" value="60"><span class="val" id="g1bv">0.60</span></label>
+    <span class="stat" id="g1stat">step 0</span>
+  </div>
+  <canvas id="g1" width="1160" height="320"></canvas>
+  <p class="vidcap">Left: chains the model generated, one row each, dark for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">1</span></span></span></span>. Centre: real chains drawn
+  from the exact distribution &mdash; the two panels should become statistically indistinguishable. Right: the
+  measured correlation function of the generated chains against the analytic <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>.</p>
+  <div class="notes"><p>Raising <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> lengthens the correlation length; the generated strips should grow the
+  same domain structure as the real ones, and the points should track the curve.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s6">
+<div class="inner">
+  <p class="kicker">The check</p>
+  <h2>Measured against <span class="hl">the exact answer</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></th><th>generated</th><th>exact chains</th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span></th></tr>
+        <tr><td>1</td><td>0.5517</td><td>0.5354</td><td>0.5370</td></tr>
+        <tr><td>2</td><td>0.3010</td><td>0.2921</td><td>0.2884</td></tr>
+        <tr><td>3</td><td>0.1638</td><td>0.1602</td><td>0.1549</td></tr>
+        <tr><td>4</td><td>0.0932</td><td>0.0781</td><td>0.0832</td></tr>
+        <tr><td>5</td><td>0.0492</td><td>0.0372</td><td>0.0447</td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:6px"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>=</mo><mn>0.6</mn></mrow><annotation encoding="application/x-tex">\beta=0.6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.6</span></span></span></span>, chains of 16 sites, 2,393
+      parameters, 8,000 training steps; 1,500 generated and 1,500 exact chains. The middle column is finite-size
+      truth, the last column the infinite-chain formula.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">What this shows, and what it does not</div>
+        <p>The model reproduces a correlation function it was never given, from configurations it invented, to
+        within a few per cent. It was shown nothing but sampled chains &mdash; no energy, no <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>, no
+        formula.</p>
+        <p>It is also <em>systematically over-correlated</em> at every <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span>. That bias is small but real, and it
+        is exactly the sort of thing that would propagate into a physical estimate unnoticed.</p></div>
+      <div class="box warn"><div class="t">Which is why you reweight</div>
+        <p>With the energy function in hand, importance weights <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>β</mi><mi>E</mi></mrow></msup><mi mathvariant="normal">/</mi><msub><mi>p</mi><mi>θ</mi></msub></mrow><annotation encoding="application/x-tex">e^{-\beta E}/p_\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0991em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">βE</span></span></span></span></span></span></span></span></span><span class="mord">/</span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> remove that bias
+        entirely and turn the residual mismatch into a loss of efficiency rather than an error in the answer.
+        The effective sample size then tells you how good the model is &mdash; an honest, quantitative diagnostic
+        that a generated picture never gives you.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The over-correlation is the honest headline: a generative model that looks right can be
+  biased at the few-per-cent level, which is large compared with modern statistical errors.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s7">
+<div class="inner">
+  <p class="kicker">The other families</p>
+  <h2>Where transformers sit in <span class="hl">modern generative models</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Diffusion</h3>
+      <p>Corrupt data with a forward SDE until it is noise, then learn to run it backwards. The network's job is
+      to predict the <em>score</em> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">∇</mi><mi>x</mi></msub><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>t</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\nabla_x\log p_t(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord">∇</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>, and in current models that network is a transformer
+      operating on patches (a "DiT") rather than a convolutional U-Net. Attention is the backbone; the
+      generative mathematics is stochastic differential equations.</p></div>
+    <div class="card c-green"><h3 class="green">Flows</h3>
+      <p>An invertible map from a simple distribution to the target, with a tractable Jacobian &mdash; so again
+      an exact likelihood. Used in lattice field theory to sample gauge configurations with the correct measure,
+      with the model as a proposal and an accept step restoring exactness. Flow matching trains the same object
+      by regression against a velocity field.</p></div>
+    <div class="card c-orange"><h3 class="orange">Autoregressive</h3>
+      <p>The family on this page. Exact likelihood, independent samples, natural for discrete degrees of freedom
+      &mdash; spins, occupation numbers, particle lists. Generation costs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span> forward passes, which is the main
+      practical drawback.</p></div>
+  </div>
+  <div class="box physics" style="margin-top:14px"><div class="t">The companion set</div>
+    <p>The stochastic-differential-equation document works through the diffusion-model connection properly:
+    Anderson's reverse-time SDE, the variance-preserving and variance-exploding forms, and the probability-flow
+    ODE. Everything in the first card is derived there.</p></div>
+  <div class="notes"><p>Worth stressing that "diffusion model" names the generative process, not the
+  architecture &mdash; the architecture inside is usually a transformer.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s8">
+<div class="inner">
+  <p class="kicker">In physics practice</p>
+  <h2>Four uses, <span class="hl">honestly rated</span></h2>
+  <div class="grid g2">
+    <div>
+      <div class="box key"><div class="t">Fast event and detector simulation &mdash; working</div>
+        <p>Calorimeter showers and full events generated in milliseconds instead of seconds of Geant4. The
+        physics question is not visual quality but whether the generated distributions match in the tails that
+        the analysis actually uses; the community benchmarks now test exactly that.</p></div>
+      <div class="box physics"><div class="t">Lattice configurations &mdash; promising</div>
+        <p>Flow-based samplers for gauge theories, aimed at critical slowing down. Exact when combined with an
+        accept step. Scaling to physically interesting volumes is the open question, and the honest current
+        answer is "not yet, but the trend is good".</p></div>
+    </div>
+    <div>
+      <div class="box stats"><div class="t">Simulation-based inference &mdash; working</div>
+        <p>When the likelihood is intractable but simulation is possible, learn the posterior, the likelihood or
+        a ratio directly from simulated pairs. A set-valued observation is a natural transformer input. The
+        discipline is coverage testing: a learned posterior must be shown to be calibrated, not assumed to
+        be.</p></div>
+      <div class="box warn"><div class="t">Language models for physics &mdash; mixed</div>
+        <p>Genuinely useful for code, literature search and algebraic manipulation, where output can be checked.
+        Not a source of physical truth: a fluent derivation is not a correct one, and the failure mode is
+        confident plausibility. Use them where verification is cheap, and verify.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The common thread: every legitimate use has a cheap external check &mdash; an accept
+  step, a coverage test, a compiler, a referee.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s9">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>What generation <span class="hl">adds</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Idea</th><th>Physics counterpart</th></tr>
+        <tr><td>causal mask</td><td>conditioning on the past only</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∏</mo><mi>i</mi></msub><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mi mathvariant="normal">∣</mi><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>i</mi></mrow></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\prod_i p(x_i|x_{&lt;i})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0497em;vertical-align:-0.2997em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∏</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></td><td>transfer matrix / Markov chain</td></tr>
+        <tr><td>negative log-likelihood</td><td>cross-entropy, in nats per site</td></tr>
+        <tr><td>variational training</td><td>free energy <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">⟨</mo><mi>E</mi><mo stretchy="false">⟩</mo><mo>−</mo><mi>T</mi><mi>S</mi></mrow><annotation encoding="application/x-tex">\langle E\rangle-TS</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">⟨</span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mclose">⟩</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">TS</span></span></span></span></td></tr>
+        <tr><td>importance reweighting</td><td>exactness restored, efficiency lost</td></tr>
+        <tr><td>score network</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∇</mi><mi>log</mi><mo>⁡</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">\nabla\log p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">∇</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span></span></span></span>; a Langevin drift</td></tr>
+        <tr><td>reverse-time SDE</td><td>Anderson (1982)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The one-sentence version</div>
+        <p>A generative model of a physical system is worth having when it comes with a way to check it &mdash;
+        an exact likelihood, an accept step, a conserved quantity, a known correlation function. Without one it
+        produces configurations that look right, and looking right is not a measurement.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="limits.html">Page 7</a> is the sceptical page: what transformers cannot do, where the
+        quadratic cost bites, and how to tell a real result from a benchmark artefact.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>If one line survives from this page, it is that the check matters more than the
+  sample.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- a causal transformer that generates Ising chains ---------- */
+(function(){
+  var cv=document.getElementById('g1'); if(!cv||typeof TFM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var L=16, din=3, KMAX=5;
+  var beta=0.6, model=null, opt=null, rng=null, running=false, raf=null, fi=0;
+  var gen=[], real=[], cg=null, ce=null;
+
+  function pSame(){ return (1+Math.tanh(beta))/2; }
+  function chain(r){
+    var s=[r.u()<0.5?-1:1], i, p=pSame();
+    for(i=1;i<L;i++) s.push(r.u()<p?s[i-1]:-s[i-1]);
+    return s;
+  }
+  function encode(s){
+    var X=new Float64Array(L*din), i;
+    X[1]=1;
+    for(i=1;i<L;i++){ X[i*din]=s[i-1]; X[i*din+2]=i/L; }
+    return X;
+  }
+  function targets(s){ var y=new Float64Array(L), i; for(i=0;i<L;i++) y[i]=s[i]>0?1:0; return y; }
+
+  function reset(){
+    running=false; document.getElementById('g1run').textContent='Train';
+    model=new TFM.Model({din:din,dmodel:20,dk:12,dff:32,seed:5,causal:true});
+    opt=new TFM.Adam(model.params(),5e-3); rng=new TFM.Rng(11); fi=0;
+    gen=[]; real=[]; cg=null; ce=null;
+    refresh(); draw();
+  }
+  function trainBatch(){
+    TFM.reset(); opt.zero();
+    var Ls=[],k;
+    for(k=0;k<8;k++){ var s=chain(rng);
+      Ls.push(TFM.bce(model.forwardAll(encode(s),L),targets(s))); }
+    TFM.backward(TFM.sumS(Ls)); opt.step(); TFM.reset();
+  }
+  /* autoregressive sampling: one forward pass per site */
+  function sample(r){
+    var s=[], X=new Float64Array(L*din), i;
+    X[1]=1;
+    for(i=0;i<L;i++){
+      TFM.reset(); var z=model.forwardAll(X,L).v[i]; TFM.reset();
+      s.push(r.u()<1/(1+Math.exp(-z))?1:-1);
+      if(i+1<L){ X[(i+1)*din]=s[i]; X[(i+1)*din+2]=(i+1)/L; }
+    }
+    return s;
+  }
+  function corr(list){
+    var c=new Float64Array(KMAX+1), k, j, i;
+    for(i=0;i<list.length;i++){
+      var s=list[i];
+      for(k=1;k<=KMAX;k++){ var a=0,n=0;
+        for(j=0;j+k<L;j++){ a+=s[j]*s[j+k]; n++; }
+        c[k]+=a/n; }
+    }
+    for(k=1;k<=KMAX;k++) c[k]/=Math.max(1,list.length);
+    return c;
+  }
+  function refresh(){
+    var r=new TFM.Rng(2027+opt.t), i;
+    gen=[]; for(i=0;i<100;i++) gen.push(sample(r));
+    real=[]; for(i=0;i<100;i++) real.push(chain(r));
+    cg=corr(gen); ce=corr(real);
+  }
+
+  function strip(list,x0,y0,w,h,title,col){
+    var rows=Math.min(list.length,26), cw=w/L, ch=h/rows, i, j;
+    ctx.fillStyle=col; ctx.font='bold 15px sans-serif'; ctx.fillText(title,x0,y0-8);
+    for(i=0;i<rows;i++) for(j=0;j<L;j++){
+      ctx.fillStyle=list[i][j]>0?'#1b2f56':'#e8eefb';
+      ctx.fillRect(x0+j*cw,y0+i*ch,cw-0.6,ch-0.6);
+    }
+    ctx.strokeStyle=C.rule; ctx.lineWidth=1; ctx.strokeRect(x0,y0,w,h);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var H=232, top=36;
+    strip(gen,50,top,250,H,'generated by the model',C.pink);
+    strip(real,340,top,250,H,'drawn from the exact law',C.green);
+
+    var a=new PL.Axes(ctx,680,top,440,H,{xlim:[0.5,KMAX+0.5],ylim:[-0.05,1],
+        title:'correlation 〈sᵢ sᵢ₊ₖ〉',titleColor:C.blue,xlabel:'separation k'});
+    var xs=[],ys=[],k;
+    for(k=1;k<=KMAX;k++){ xs.push(k); ys.push(Math.pow(Math.tanh(beta),k)); }
+    a.line(xs,ys,C.blue,2.4);
+    if(ce) a.dots(xs,xs.map(function(k){return ce[k];}),C.green,5);
+    if(cg) a.dots(xs,xs.map(function(k){return cg[k];}),C.pink,5);
+    a.ticks([1,2,3,4,5],[0,0.25,0.5,0.75,1]);
+    a.legend([['tanhᵏβ (exact)',C.blue],['exact chains',C.green],['generated',C.pink]]);
+
+    document.getElementById('g1stat').textContent=
+      'step '+opt.t+'   ·   〈sᵢsᵢ₊₁〉  generated '+(cg?cg[1].toFixed(3):'-')+
+      '   vs  tanhβ = '+Math.tanh(beta).toFixed(3);
+  }
+  function step(){
+    if(!running) return;
+    for(var i=0;i<8;i++) trainBatch();
+    fi++;
+    if(fi%10===0) refresh();
+    draw();
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('g1run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('g1reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('g1b').oninput=function(){
+    beta=(+this.value)/100; document.getElementById('g1bv').textContent=beta.toFixed(2);
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

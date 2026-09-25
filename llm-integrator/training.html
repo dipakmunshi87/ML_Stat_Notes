@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training One, in Front of You</title>
+<meta name="description" content="A small GPT trained live in the browser on a tokenised oscillator, with the coefficient of the underlying physical law tracked while it learns.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="question.html">1 · The question</a><a href="tokens.html">2 · Tokens</a><a href="training.html" class="here">3 · Train one</a><a href="rule.html">4 · The rule</a><a href="rollout.html">5 · Rolling out</a><a href="drift.html">6 · Why it drifts</a><a href="lesson.html">7 · The lesson</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-blue" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 3 of 8 &middot; training</p>
+  <h1>Train one,<br><span class="hl">and watch</span></h1>
+  <p class="lead" style="max-width:64ch">Nine thousand eight hundred parameters, thirty seconds, and a
+  stream of integers. While it learns, we can ask at every moment what it currently believes the law of motion
+  to be &mdash; and compare that with the exact answer.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-blue jump" href="#s2"><h3 class="blue">1 &middot; How to ask &rarr;</h3><p>Reading a physical law out of a network.</p></a>
+    <a class="card c-pink jump" href="#s3"><h3 class="pink">2 &middot; Train it &rarr;</h3><p>Live, from random numbers.</p></a>
+    <a class="card c-orange jump" href="#s4"><h3 class="orange">3 &middot; What happened &rarr;</h3><p>Measured, and it does not settle.</p></a>
+  </div>
+  <div class="notes"><p>The trick on the next slide &mdash; probing the model and fitting a linear rule to its
+  answers &mdash; is the one piece of method worth stealing.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s2">
+<div class="inner">
+  <p class="kicker">How to ask</p>
+  <h2>Reading a law out of <span class="hl">a network</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The model does not output a number. It outputs a probability for each of the 64 bins. To turn that into
+      a position, take the mean:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><munder><mo>∑</mo><mi>k</mi></munder><msub><mi>p</mi><mi>k</mi></msub><mtext> </mtext><msup><mi>x</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">\hat x_{n+1}=\sum_{k} p_k\,x^{(k)},</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9028em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3521em;vertical-align:-1.3021em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8479em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3021em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mrow><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">x^{(k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.888em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span> is the centre of bin <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span>. Now feed it many different pairs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo separator="true">,</mo><msub><mi>x</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x_{n-1},x_n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>, collect its
+      answers, and fit</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi>a</mi><mtext> </mtext><msub><mi>x</mi><mi>n</mi></msub><mo>+</mo><mi>b</mi><mtext> </mtext><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\hat x_{n+1}=a\,x_n+b\,x_{n-1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9028em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.9028em;vertical-align:-0.2083em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span></span></div>
+      <p>by least squares. If the model has found the physics, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> should come out at $2\cos(\omega\Delta t)=
+      1.960133<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>n</mi><mi>d</mi></mrow><annotation encoding="application/x-tex"> and </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">an</span><span class="mord mathnormal">d</span></span></span></span>b<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>t</mi><mi>e</mi><mi>x</mi><mi>a</mi><mi>c</mi><mi>t</mi><mi>l</mi><mi>y</mi></mrow><annotation encoding="application/x-tex"> at exactly </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">a</span><span class="mord mathnormal">t</span><span class="mord mathnormal">e</span><span class="mord mathnormal">x</span><span class="mord mathnormal">a</span><span class="mord mathnormal">c</span><span class="mord mathnormal" style="margin-right:0.01968em;">tl</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span>-1$.</p>
+      <p>Two numbers, extracted from a network, directly comparable with theory. That is what makes this
+      experiment sharp rather than impressionistic.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Why this is a fair question</div>
+        <p>We are not asking the model to be linear &mdash; we are measuring how linear it turned out to be. The
+        residual of the fit says how much of its behaviour the two-term rule fails to capture, and it is
+        small.</p></div>
+      <div class="box physics"><div class="t">And then one more number</div>
+        <p>Write the fitted rule as a matrix acting on <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>x</mi><mi>n</mi></msub><mo separator="true">,</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x_n,x_{n-1})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>. Its eigenvalues <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span></span></span></span> decide
+        everything about long runs: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> is a rotation that keeps the amplitude forever, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|&lt;1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+        spirals in, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>&gt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|&gt;1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> spirals out. The exact rule has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> exactly.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Probing a trained model on a grid of inputs and fitting an interpretable form to the
+  answers works far more widely than this example.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s3">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>A language model, <span class="hl">learning Hooke's law</span></h2>
+  <p style="max-width:84ch">Press <strong>Train</strong>. The left panel is how often it names the right bin;
+  the right panel is the coefficient <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> it currently believes, against the exact <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.960133</mn></mrow><annotation encoding="application/x-tex">1.960133</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.960133</span></span></span></span>. It has never been
+  shown that number.</p>
+  <div class="ctl">
+    <button id="t1run">Train</button>
+    <button id="t1reset" class="ghost">Reset</button>
+    <label>new start <input id="t1seed" type="range" min="1" max="8" step="1" value="3"><span class="val" id="t1seedv">3</span></label>
+    <span class="stat" id="t1stat">step 0</span>
+  </div>
+  <canvas id="t1" width="1160" height="320"></canvas>
+  <p class="vidcap">Left: next-token accuracy. Right: the fitted coefficient <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span>, with the exact value dashed,
+  and the eigenvalue modulus <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> against 1. Move the slider for a different random start and train
+  again &mdash; the coefficient lands in a different place each time.</p>
+  <div class="notes"><p>About thirty seconds gets to 6,000 steps. The accuracy climbs smoothly; the coefficient
+  gets close quickly and then wanders, which is the point of the next slide.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">What happened</p>
+  <h2>It finds the law, and <span class="hl">does not settle</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>after</th><th>accuracy</th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span></th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span></th></tr>
+        <tr><td>1,000 steps</td><td>42.7%</td><td>1.9621</td><td>1.0434</td></tr>
+        <tr><td>2,000</td><td>50.7%</td><td>1.9702</td><td>0.9969</td></tr>
+        <tr><td>3,000</td><td>46.0%</td><td>2.0223</td><td>1.0150</td></tr>
+        <tr><td>4,000</td><td>51.0%</td><td>1.9488</td><td>0.9989</td></tr>
+        <tr><td>5,000</td><td>51.3%</td><td>2.0098</td><td>1.0232</td></tr>
+        <tr><td>6,000</td><td>54.3%</td><td>1.9715</td><td>0.9976</td></tr>
+        <tr><td><em>exact</em></td><td>&mdash;</td><td><em>1.9601</em></td><td><em>1.0000</em></td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:6px">One run, seed 5. Thirty seconds of training
+      in total.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The good news</div>
+        <p>Within a thousand steps it has the coefficient to about one per cent, from nothing but integers. It
+        was never told the frequency, the sampling interval, or that the numbers came from a physical system at
+        all. Whatever else is true, it found the law.</p></div>
+      <div class="box warn"><div class="t">The bad news</div>
+        <p>Look at the last column. It never settles on 1. It wanders either side &mdash; above means the model
+        would <em>gain</em> energy, below means lose it. Accuracy improves steadily while <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> jitters,
+        because the training objective does not know that column exists.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The non-monotonic accuracy between 2,000 and 3,000 steps is real, not a typo: this is a
+  small model on a stochastic objective.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s5">
+<div class="inner">
+  <p class="kicker">Across random starts</p>
+  <h2>Which way it fails is <span class="hl">a coin toss</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>random start</th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span></th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span></th><th>then what</th></tr>
+        <tr><td>1</td><td>1.9619</td><td>1.00096</td><td>gains energy</td></tr>
+        <tr><td>3</td><td>1.9752</td><td>1.00231</td><td>gains energy</td></tr>
+        <tr><td>5</td><td>1.9488</td><td>0.99886</td><td>loses energy</td></tr>
+        <tr><td>7</td><td>1.9648</td><td>0.99691</td><td>loses energy</td></tr>
+        <tr><td>9</td><td>1.9483</td><td>0.98741</td><td>loses energy</td></tr>
+        <tr><td>13</td><td>2.0280</td><td>1.01785</td><td>gains energy</td></tr>
+        <tr><td>17</td><td>1.9137</td><td>0.97568</td><td>loses energy</td></tr>
+        <tr><td>21</td><td>1.9390</td><td>0.99042</td><td>loses energy</td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:6px">Eight independent runs, 4,000 steps each,
+      identical in every way except the random numbers the weights started from. Mean <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>0.9963</mn></mrow><annotation encoding="application/x-tex">|\lambda|=0.9963</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9963</span></span></span></span>,
+      spread <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.0116</mn></mrow><annotation encoding="application/x-tex">0.0116</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.0116</span></span></span></span>; three of the eight sit outside the circle.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The honest reading</div>
+        <p>Nothing in "predict the next token" pins the eigenvalue to the unit circle. It lands within about
+        one and a half per cent of it &mdash; on whichever side the random start happens to leave it.</p>
+        <p>So one model will slowly bleed energy and the next will slowly gain it, and you cannot tell which
+        without running it out. Both are wrong, and they are wrong in opposite directions.</p></div>
+      <div class="box warn"><div class="t">Why this matters beyond the toy</div>
+        <p>Every report of a learned model "discovering physics" should be read with this column in mind. Fitting
+        the law well is a statement about one step. Whether the long run is stable is a different statement, and
+        it is not implied.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>This table is not in the original note &mdash; it came out of building this page, and it
+  is the strongest single result here.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/lm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- a GPT learning Hooke's law from integers, live ---------- */
+(function(){
+  var cv=document.getElementById('t1'); if(!cv||typeof LM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var V=64,K=8,D=32;
+  var O=LM.Osc({vocab:V,dt:0.2,w:1});
+  var m=null,opt=null,rng=null,running=false,raf=null,seed=3,fi=0;
+  var hAcc=[],hA=[],hLam=[];
+
+  function reset(){
+    running=false; document.getElementById('t1run').textContent='Train';
+    m=new LM.GPT({vocab:V,ctx:K,dmodel:D,dk:16,dff:48,layers:1,seed:seed});
+    opt=new TFM.Adam(m.params(),4e-3); rng=new TFM.Rng(11+seed);
+    hAcc=[];hA=[];hLam=[];fi=0;
+    measure(); draw();
+  }
+  function batch(){
+    TFM.reset(); opt.zero();
+    var Ls=[],b;
+    for(b=0;b<8;b++){
+      var tr=O.traj(K+1,rng), tk=O.tokens(tr.x);
+      Ls.push(LM.ce(m.forward(tk.slice(0,K)),tk.slice(1)));
+    }
+    TFM.backward(TFM.sumS(Ls)); opt.step(); TFM.reset();
+  }
+  function accuracy(){
+    var r=new TFM.Rng(777), hit=0, N=120, i, j;
+    for(i=0;i<N;i++){
+      var tr=O.traj(K+1,r), tk=O.tokens(tr.x);
+      var p=m.next(tk.slice(0,K)), best=-1, bj=0;
+      for(j=0;j<V;j++) if(p[j]>best){best=p[j];bj=j;}
+      if(bj===tk[K]) hit++;
+    }
+    return hit/N;
+  }
+  function fitRule(){
+    var prev=[],cur=[],ys=[],k,j;
+    for(k=0;k<150;k++){
+      var tr=O.traj(K,new TFM.Rng(3000+k)), tk=O.tokens(tr.x);
+      var p=m.next(tk), ev=0;
+      for(j=0;j<V;j++) ev+=p[j]*O.val(j);
+      prev.push(O.val(tk[K-2])); cur.push(O.val(tk[K-1])); ys.push(ev);
+    }
+    var s11=0,s12=0,s22=0,t1=0,t2=0;
+    for(k=0;k<ys.length;k++){ s11+=cur[k]*cur[k]; s12+=cur[k]*prev[k]; s22+=prev[k]*prev[k];
+      t1+=cur[k]*ys[k]; t2+=prev[k]*ys[k]; }
+    var det=s11*s22-s12*s12;
+    if(Math.abs(det)<1e-14) return {a:NaN,b:NaN,lam:NaN};
+    var a=(t1*s22-t2*s12)/det, b=(t2*s11-t1*s12)/det;
+    return {a:a,b:b,lam:LM.lambdaMod(a,b)};
+  }
+  function measure(){
+    hAcc.push(accuracy());
+    var f=fitRule();
+    hA.push(isFinite(f.a)?f.a:0); hLam.push(isFinite(f.lam)?f.lam:1);
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var n=hAcc.length, H=236;
+    var a1=new PL.Axes(ctx,62,34,470,H,{xlim:[0,Math.max(6,n-1)],ylim:[0,70],
+        title:'how often it names the right bin (%)',titleColor:C.blue,xlabel:'training'});
+    if(n>1) a1.line(PL.range(n),hAcc.map(function(v){return 100*v;}),C.blue,2.4);
+    a1.ticks([0,Math.max(6,n-1)],[0,25,50]);
+
+    var a2=new PL.Axes(ctx,640,34,300,H,{xlim:[0,Math.max(6,n-1)],ylim:[1.6,2.3],
+        title:'the coefficient it believes',titleColor:C.green,xlabel:'training'});
+    a2.hline(O.c2,C.rule,[5,4]);
+    if(n>1) a2.line(PL.range(n),hA,C.green,2.4);
+    a2.ticks([0,Math.max(6,n-1)],[1.6,1.96,2.3]);
+    a2.legend([['exact 1.9601',C.rule]]);
+
+    var a3=new PL.Axes(ctx,1000,34,130,H,{xlim:[0,Math.max(6,n-1)],ylim:[0.93,1.07],
+        title:'|λ|',titleColor:C.pink,xlabel:''});
+    a3.hline(1,C.rule,[5,4]);
+    if(n>1) a3.line(PL.range(n),hLam,C.pink,2.4);
+    a3.ticks(null,[0.95,1,1.05]);
+
+    var f=n?{a:hA[n-1],lam:hLam[n-1]}:{a:0,lam:1};
+    document.getElementById('t1stat').textContent=
+      'step '+(opt?opt.t:0)+'   ·   a = '+(n?f.a.toFixed(4):'-')+
+      '  (exact '+O.c2.toFixed(4)+')   ·   |λ| = '+(n?f.lam.toFixed(5):'-')+
+      '   ·   9,808 parameters';
+  }
+  function step(){
+    if(!running) return;
+    for(var i=0;i<25;i++) batch();
+    fi++;
+    if(fi%2===0) measure();
+    draw();
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('t1run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('t1reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('t1seed').oninput=function(){
+    seed=+this.value; document.getElementById('t1seedv').textContent=seed;
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

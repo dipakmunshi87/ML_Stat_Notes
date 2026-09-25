@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Limits: What Transformers Cannot Do</title>
+<meta name="description" content="The quadratic cost measured live, the absence of physical guarantees, out-of-distribution failure, benchmark artefacts, and an honest list of problems where a transformer is the wrong choice.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html">4 · Examples</a><a href="surrogates.html">5 · Surrogates</a><a href="generative.html">6 · Generative AI</a><a href="limits.html" class="here">7 · Limits</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-orange" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 7 of 8 &middot; the limits</p>
+  <h1>The sceptical <span class="hl">page</span></h1>
+  <p class="lead" style="max-width:64ch">Everything so far argued the case. This is the other side: what the
+  method costs, what it does not promise, and how a published improvement can be an artefact of the comparison
+  rather than a fact about the method.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-orange jump" href="#s2"><h3 class="orange">1 &middot; The cost &rarr;</h3><p>The quadratic, measured in this page.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">2 &middot; No guarantees &rarr;</h3><p>Conservation, symmetry, extrapolation.</p></a>
+    <a class="card c-blue jump" href="#s7"><h3 class="blue">3 &middot; When not to &rarr;</h3><p>Problems where something else is simply better.</p></a>
+  </div>
+  <div class="notes"><p>A method is only usable when its failure modes are as well known as its successes; this
+  page is the other half of the set.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s2">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>The quadratic, <span class="hl">measured here</span></h2>
+  <p style="max-width:84ch">The network on this page, timed in your own browser at a range of set sizes. The
+  all-pairs part costs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>T</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">T^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> and the rest costs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span>, so the measured slope should climb towards 2 once the set
+  is bigger than the model is wide.</p>
+  <div class="ctl">
+    <button id="m1run">Measure</button>
+    <span class="stat" id="m1stat">not run</span>
+  </div>
+  <canvas id="m1" width="1160" height="320"></canvas>
+  <p class="vidcap">Time per forward pass against set size, both axes logarithmic, for two model widths. The
+  dashed line is an exact <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>T</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">T^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> slope for reference; the fitted exponent over the last three points is printed
+  on the right. Timings are from this machine, so the absolute numbers are yours, not ours.</p>
+  <div class="notes"><p>Running this on a phone and on a workstation gives visibly different absolute times and
+  the same exponent, which is the point.</p></div>
+</div>
+</section>
+
+
+<section class="slide s-orange" id="s3">
+<div class="inner">
+  <p class="kicker">The picture</p>
+  <h2>Every pair, or <span class="hl">only the near ones</span></h2>
+  <svg class="fig" viewBox="0 0 920 300" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arct" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armct" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="430" height="250" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="225" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">attention: every pair</text><line x1="329" y1="158" x2="300.488" y2="194.353" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="259.027" y2="200.668" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="238.749" y2="218.24" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="204.036" y2="249.849" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="161.762" y2="237.297" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="329" y1="158" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="259.027" y2="200.668" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="238.749" y2="218.24" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="204.036" y2="249.849" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="161.762" y2="237.297" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="300.488" y1="194.353" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="238.749" y2="218.24" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="204.036" y2="249.849" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="161.762" y2="237.297" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="200.668" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="204.036" y2="249.849" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="161.762" y2="237.297" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="218.24" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="161.762" y2="237.297" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="249.849" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="159.937" y2="189.333" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="237.297" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="173" y2="158" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="189.333" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="159.937" y2="126.667" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="173" y1="158" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="126.667" x2="161.762" y2="78.7026" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="126.667" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="126.667" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="126.667" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="159.937" y1="126.667" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="78.7026" x2="204.036" y2="66.1513" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="78.7026" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="78.7026" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="161.762" y1="78.7026" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="66.1513" x2="238.749" y2="97.7599" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="66.1513" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="204.036" y1="66.1513" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="97.7599" x2="259.027" y2="115.332" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="238.749" y1="97.7599" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><line x1="259.027" y1="115.332" x2="300.488" y2="121.647" stroke="#b3246b" stroke-width="0.7" opacity="0.28"/><circle cx="329" cy="158" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="300.488" cy="194.353" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="259.027" cy="200.668" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="238.749" cy="218.24" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="204.036" cy="249.849" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="161.762" cy="237.297" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="159.937" cy="189.333" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="173" cy="158" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="159.937" cy="126.667" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="161.762" cy="78.7026" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="204.036" cy="66.1513" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="238.749" cy="97.7599" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="259.027" cy="115.332" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><circle cx="300.488" cy="121.647" r="7" fill="#ffffff" stroke="#b3246b" stroke-width="1.8"/><text x="225" y="276" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">91 pairs for 14 objects — and 5×10⁷ for 10⁴</text><rect x="480" y="34" width="430" height="250" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="695" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#0b7a5a" text-anchor="middle" font-weight="700">with a cutoff: only near pairs</text><circle cx="799" cy="158" r="62" fill="#0b7a5a" fill-opacity="0.09" stroke="#0b7a5a" stroke-width="1.6" stroke-dasharray="5 4"/><line x1="799" y1="158" x2="770.488" y2="194.353" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="799" y1="158" x2="770.488" y2="121.647" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="770.488" y1="194.353" x2="729.027" y2="200.668" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="729.027" y1="200.668" x2="708.749" y2="218.24" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="708.749" y1="218.24" x2="674.036" y2="249.849" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="674.036" y1="249.849" x2="631.762" y2="237.297" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="631.762" y1="237.297" x2="629.937" y2="189.333" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="629.937" y1="189.333" x2="643" y2="158" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="643" y1="158" x2="629.937" y2="126.667" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="629.937" y1="126.667" x2="631.762" y2="78.7026" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="631.762" y1="78.7026" x2="674.036" y2="66.1513" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="674.036" y1="66.1513" x2="708.749" y2="97.7599" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="708.749" y1="97.7599" x2="729.027" y2="115.332" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><line x1="729.027" y1="115.332" x2="770.488" y2="121.647" stroke="#0b7a5a" stroke-width="1.4" opacity="0.6"/><circle cx="799" cy="158" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="770.488" cy="194.353" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="729.027" cy="200.668" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="708.749" cy="218.24" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="674.036" cy="249.849" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="631.762" cy="237.297" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="629.937" cy="189.333" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="643" cy="158" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="629.937" cy="126.667" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="631.762" cy="78.7026" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="674.036" cy="66.1513" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="708.749" cy="97.7599" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="729.027" cy="115.332" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><circle cx="770.488" cy="121.647" r="7" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.8"/><text x="695" y="276" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">linear in the number of objects — and a physical statement</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>This is the same choice you already make in an N-body code. Direct summation is exact and quadratic;
+      a cutoff or a tree is cheap and approximate.</p>
+    </div>
+    <div>
+      <p>The difference is that here you also get to <em>choose</em> the cutoff on physical grounds &mdash; and
+      if your system has a correlation length, that choice is a statement you can defend.</p>
+    </div>
+  </div>
+  <div class="notes"><p>Physicists usually find this slide reassuring: the cost problem and its solutions are
+  ones they have met before under other names.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">The cost</p>
+  <h2>What is actually <span class="hl">done about it</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>At <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mn>1</mn><msup><mn>0</mn><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">T=10^4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span> &mdash; a modest galaxy field or a detector event &mdash; the attention matrix has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>8</mn></msup></mrow><annotation encoding="application/x-tex">10^8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">8</span></span></span></span></span></span></span></span></span></span></span>
+      entries: 400 MB in single precision, for one head, one layer, one example. That is why most physics
+      applications modify the architecture.</p>
+      <ul>
+        <li><strong>Restrict the neighbourhood.</strong> Attend only within a radius, a patch, or the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span>
+        nearest neighbours. Cost becomes linear, and the restriction is a <em>physical</em> statement about the
+        correlation length &mdash; often a better model, not just a cheaper one.</li>
+        <li><strong>Change the kernel.</strong> Replace the softmax with a factorised kernel and the sum can
+        be reassociated as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo stretchy="false">(</mo><msup><mi>K</mi><mrow><mtext> ⁣</mtext><mi mathvariant="normal">⊤</mi></mrow></msup><mi>V</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">Q(K^{\!\top}V)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0991em;vertical-align:-0.25em;"></span><span class="mord mathnormal">Q</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight" style="margin-right:-0.1952em;"></span><span class="mord mtight">⊤</span></span></span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mclose">)</span></span></span></span>, which is linear in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span>. Genuinely cheaper, generally less
+        accurate.</li>
+        <li><strong>State-space models.</strong> Mamba and its relatives: linear in length, with a learned
+        recurrence. Strong where the data really is a sequence; they give up permutation equivariance.</li>
+        <li><strong>Pool first.</strong> Cluster constituents, attend over clusters. The oldest idea in the list
+        and frequently the best one.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">What FlashAttention is not</div>
+        <p>An exact attention implementation with better memory traffic: it removes the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>T</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(T^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> <em>memory</em>
+        cost by never materialising <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span>, but the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>T</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(T^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> <em>arithmetic</em> is unchanged. Treating it as a
+        complexity fix is a common and expensive misunderstanding.</p></div>
+      <div class="box physics"><div class="t">Choose the restriction physically</div>
+        <p>If your system has a correlation length, the neighbourhood should be a few of them &mdash; a
+        statement you can defend. A window chosen to fit in memory is not.</p></div>
+      <div class="box key"><div class="t">The practical order</div>
+        <p>Pool, then restrict, then reach for an efficient-attention variant &mdash; in that order. The first
+        two are physics; the third is engineering with an accuracy cost.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The 400 MB figure is worth quoting in talks: it makes the constraint concrete far better
+  than the symbol does.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s5">
+<div class="inner">
+  <p class="kicker">No guarantees</p>
+  <h2>What the architecture <span class="hl">does not promise</span></h2>
+  <div class="grid g2">
+    <div>
+      <div class="box warn"><div class="t">Conservation laws</div>
+        <p>Nothing in a transformer conserves energy, mass, momentum, charge or probability. A learned
+        surrogate will drift, and the drift usually grows with rollout length. Either impose the constraint
+        architecturally, project onto it after each step, or measure and report the violation. Ignoring it is
+        not an option, and the violation is often the most sensitive diagnostic you have.</p></div>
+      <div class="box key"><div class="t">Extrapolation</div>
+        <p>Set <em>size</em> extrapolates well &mdash; page 3 measured no degradation from 5 tokens to 12.
+        Parameter-range extrapolation does not. Outside the training distribution the model returns a confident
+        number with no indication that it is now guessing, and this is the single most common way a physics
+        application fails in the field.</p></div>
+    </div>
+    <div>
+      <div class="box physics"><div class="t">Symmetry</div>
+        <p>Only permutation symmetry is exact. Rotations, boosts, gauge invariance, parity: absent unless built
+        in. A model that respects them approximately, learned from augmented data, will violate them at the
+        percent level &mdash; which may or may not matter, but must be measured rather than assumed.</p></div>
+      <div class="box stats"><div class="t">Interpretability</div>
+        <p>Attention weights are not explanations. They show where information could flow, not what was used;
+        a head can attend strongly to something it then discards. The reliable test is intervention &mdash;
+        ablate the head, perturb the input, and measure the change in the output.</p></div>
+      <div class="box warn"><div class="t">Data appetite</div>
+        <p>Weak inductive bias is the price of generality. Where labelled data is scarce and the physics is
+        well understood, a parametric fit or a physics-informed model will usually win &mdash; and will come
+        with error bars you can defend.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The conservation point is the one that most often turns a promising rollout into an
+  unpublishable one.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s6">
+<div class="inner">
+  <p class="kicker">Reading the literature</p>
+  <h2>How an improvement can be <span class="hl">an artefact</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>The baseline was not tuned.</strong> A new architecture tuned for months against a
+        baseline tuned for an afternoon will win, and the result says nothing.</li>
+        <li><strong>The comparison is not compute-matched.</strong> More parameters, more training, more
+        augmentation: compare at equal compute or the claim is about budget, not architecture.</li>
+        <li><strong>The ablation was run at the wrong scale.</strong> Page 2 removed the residual connection
+        at <em>no</em> cost &mdash; in a one-layer model. At 24 layers it is fatal.</li>
+        <li><strong>The test set leaks.</strong> Correlated runs split at random; the same object in train and
+        test under different noise; preprocessing fitted on everything.</li>
+        <li><strong>The metric is not the physics.</strong> RMSE-optimal forecasts are over-smoothed: they
+        win on the score and lose on the extremes the forecast exists for.</li>
+        <li><strong>Only the best seed is shown.</strong> Small models vary a great deal between seeds; one
+        number with no spread is not a measurement.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The questions to ask</div>
+        <p>How was the baseline tuned, and by whom? Equal compute? How many seeds, and what spread? How was the
+        split made? What does the metric miss?</p>
+        <p>These five dispose of most disputed results, in either direction.</p></div>
+      <div class="box warn"><div class="t">Applies here too</div>
+        <p>Every measurement on this site is a small model on a toy task, run on one or two seeds: an honest
+        illustration of a mechanism, not evidence about what works at scale. The distinction is exactly the one
+        this slide is about.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Point 5 is the one most specific to physics: the metric being optimised is rarely the
+  quantity the science depends on.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s7">
+<div class="inner">
+  <p class="kicker">When not to</p>
+  <h2>Problems where something else <span class="hl">is better</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Use a convolution</h3>
+      <p>Regular grid, local physics, translation invariance that you want enforced rather than learned. Images,
+      fields on a lattice, anything where a stencil is the natural operator. Cheaper, more sample-efficient, and
+      it encodes the locality you already know is there.</p></div>
+    <div class="card c-green"><h3 class="green">Use a Gaussian process</h3>
+      <p>Few inputs, smooth output, small data, and uncertainty that has to be calibrated. Exact posterior,
+      principled error bars, and interpretable hyperparameters. For a low-dimensional emulator this is usually
+      the right answer and is too often skipped.</p></div>
+    <div class="card c-orange"><h3 class="orange">Use the physics</h3>
+      <p>If you know the model, fit its parameters. Page 5's arithmetic applies in reverse: a three-parameter
+      fit with a likelihood beats a flexible network on accuracy, uncertainty and defensibility whenever the
+      model is right.</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card c-purple"><h3 class="purple">Use a graph network</h3>
+      <p>When the connectivity is genuinely known &mdash; a mesh, a molecule, a detector geometry &mdash; a
+      fixed graph is a stronger prior than an all-pairs attention that must rediscover it, and it is linear in
+      edges rather than quadratic in nodes.</p></div>
+    <div class="card c-pink"><h3 class="pink">Use a classical algorithm</h3>
+      <p>Sorting, matching, clustering, integration. A learned approximation to a solved problem is slower,
+      less accurate and unverifiable. Surprisingly often proposed anyway.</p></div>
+    <div class="card c-blue"><h3 class="blue">Use an equivariant model</h3>
+      <p>When the symmetry group is central and data is limited &mdash; molecular energies, gauge fields.
+      Harder to build, considerably more sample-efficient, and the symmetry is exact rather than
+      approximate.</p></div>
+  </div>
+  <div class="notes"><p>The honest summary of the set: transformers are the right default for unordered,
+  variable-size, heterogeneous data, and the wrong default for everything else.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s8">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>The cost <span class="hl">side of the ledger</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Limit</th><th>What to do about it</th></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>T</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(T^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> time</td><td>pool, restrict the neighbourhood, then efficient attention</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>T</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(T^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> memory</td><td>FlashAttention removes this one exactly</td></tr>
+        <tr><td>no conservation</td><td>impose, project, or measure the violation</td></tr>
+        <tr><td>no symmetry but permutation</td><td>invariant features or an equivariant model</td></tr>
+        <tr><td>no extrapolation</td><td>detect out-of-distribution and refuse</td></tr>
+        <tr><td>data appetite</td><td>pretraining, or use a physical model instead</td></tr>
+        <tr><td>opaque</td><td>intervene and measure; do not read attention maps</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The balance</div>
+        <p>None of these is a reason not to use a transformer on set-structured physics data, where the case
+        remains strong. They are the list of things to measure and report alongside the result &mdash; and a
+        paper that reports them is more convincing than one that does not, regardless of the headline
+        number.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="software.html">Page 8</a> has the libraries, the reading and a short checklist for a first
+        implementation.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The table is the page; everything above it is justification.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- time the forward pass against set size, in this browser ---------- */
+(function(){
+  var cv=document.getElementById('m1'); if(!cv||typeof TFM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var TS=[16,32,64,128,256,512], din=8;
+  var res={16:[],64:[]}, running=false;
+
+  function timeOne(T,dm){
+    var m=new TFM.Model({din:din,dmodel:dm,dk:dm/2,dff:2*dm,seed:5});
+    var X=new Float64Array(T*din), i;
+    for(i=0;i<X.length;i++) X[i]=Math.random();
+    TFM.reset(); m.forward(X,T); TFM.reset();                 /* warm up */
+    var reps=T>=256?3:(T>=64?10:30), t0=performance.now();
+    for(i=0;i<reps;i++){ TFM.reset(); m.forward(X,T); TFM.reset(); }
+    return (performance.now()-t0)/reps;
+  }
+  function slope(ts,ys){
+    if(ys.length<3) return null;
+    var n=Math.min(3,ys.length), i, sx=0, sy=0, sxx=0, sxy=0;
+    for(i=ys.length-n;i<ys.length;i++){
+      var x=Math.log(ts[i]), y=Math.log(ys[i]);
+      sx+=x; sy+=y; sxx+=x*x; sxy+=x*y;
+    }
+    return (n*sxy-sx*sy)/(n*sxx-sx*sx);
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var H=236;
+    var a=new PL.Axes(ctx,74,34,700,H,{xlim:[12,700],ylim:[0.05,400],logx:true,logy:true,
+        title:'time per forward pass (ms)',titleColor:C.blue,xlabel:'set size T'});
+    /* an exact T^2 reference through the first measured point */
+    if(res[16].length){
+      var t0=TS[0], y0=res[16][0];
+      var xs=[16,700], ys=xs.map(function(x){return y0*Math.pow(x/t0,2);});
+      a.line(xs,ys,C.rule,2);
+    }
+    [[16,C.blue],[64,C.orange]].forEach(function(c){
+      var ys=res[c[0]];
+      if(ys.length>1) a.line(TS.slice(0,ys.length),ys,c[1],2.4);
+      if(ys.length) a.dots(TS.slice(0,ys.length),ys,c[1],4);
+    });
+    a.ticks([16,64,256],[0.1,1,10,100]);
+    a.legend([['d = 16',C.blue],['d = 64',C.orange],['exact T²',C.rule]]);
+
+    ctx.fillStyle=C.ink2; ctx.font='bold 15px sans-serif';
+    ctx.fillText('fitted exponent',830,54);
+    ctx.font='13px sans-serif'; ctx.fillStyle=C.muted;
+    ctx.fillText('over the last three points',830,74);
+    var y=112;
+    [[16,C.blue],[64,C.orange]].forEach(function(c){
+      var s=slope(TS,res[c[0]]);
+      ctx.fillStyle=c[1]; ctx.font='bold 15px sans-serif';
+      ctx.fillText('d = '+c[0],830,y);
+      ctx.font='26px ui-monospace,Menlo,monospace';
+      ctx.fillText(s===null?'–':('T^'+s.toFixed(2)),900,y+4);
+      y+=52;
+    });
+    ctx.fillStyle=C.muted; ctx.font='13px sans-serif';
+    ctx.fillText('The exponent rises towards 2',830,232);
+    ctx.fillText('once T exceeds d: below that,',830,250);
+    ctx.fillText('the O(T d²) projections still',830,268);
+    ctx.fillText('dominate the O(T²d) attention.',830,286);
+  }
+  function runAll(){
+    if(running) return; running=true;
+    res={16:[],64:[]};
+    document.getElementById('m1run').textContent='Measuring…';
+    var i=0;
+    function next(){
+      if(i>=TS.length){
+        running=false;
+        document.getElementById('m1run').textContent='Measure again';
+        document.getElementById('m1stat').textContent=
+          'largest set: T = 512, '+res[16][5].toFixed(1)+' ms at d = 16, '+
+          res[64][5].toFixed(1)+' ms at d = 64';
+        draw(); return;
+      }
+      res[16].push(timeOne(TS[i],16));
+      res[64].push(timeOne(TS[i],64));
+      document.getElementById('m1stat').textContent='T = '+TS[i]+' done';
+      i++; draw();
+      setTimeout(next,30);                  /* let the page repaint */
+    }
+    next();
+  }
+  document.getElementById('m1run').onclick=runAll;
+  draw();
+})();
+
+</script>
+
+</body>
+</html>

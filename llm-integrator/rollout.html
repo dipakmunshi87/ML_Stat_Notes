@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rolling It Out: the Model as an Integrator</title>
+<meta name="description" content="Feeding a trained language model its own output for a thousand steps and comparing the result with the exact motion, with leapfrog and with explicit Euler.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="question.html">1 · The question</a><a href="tokens.html">2 · Tokens</a><a href="training.html">3 · Train one</a><a href="rule.html">4 · The rule</a><a href="rollout.html" class="here">5 · Rolling out</a><a href="drift.html">6 · Why it drifts</a><a href="lesson.html">7 · The lesson</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-pink" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 5 of 8 &middot; the long run</p>
+  <h1>Now run it<br><span class="hl">a thousand steps</span></h1>
+  <p class="lead" style="max-width:64ch">Feed the model its own output and keep going. This is exactly how text
+  is generated, and exactly how an integrator advances. Thirty-two periods later, the answer is clear.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-pink jump" href="#s2"><h3 class="pink">1 &middot; Watch it &rarr;</h3><p>Trained, then rolled out, live.</p></a>
+    <a class="card c-blue jump" href="#s3"><h3 class="blue">2 &middot; The comparison &rarr;</h3><p>Against leapfrog and Euler.</p></a>
+    <a class="card c-orange jump" href="#s4"><h3 class="orange">3 &middot; The surprise &rarr;</h3><p>The rounding is helping it.</p></a>
+  </div>
+  <div class="notes"><p>Thirty-two periods is a modest run. Any real use of a learned integrator would want
+  thousands.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s2">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>The model as <span class="hl">an integrator</span></h2>
+  <p style="max-width:84ch">Press <strong>Train, then roll out</strong>. It trains for about twenty seconds,
+  then is given eight starting values and left to continue on its own. The true motion is drawn underneath.</p>
+  <div class="ctl">
+    <button id="v1run">Train, then roll out</button>
+    <button id="v1reset" class="ghost">Reset</button>
+    <label>show <select id="v1what">
+      <option value="all">everything</option>
+      <option value="model">just the model</option>
+      <option value="lf">model and leapfrog</option>
+    </select></label>
+    <span class="stat" id="v1stat">not started</span>
+  </div>
+  <canvas id="v1" width="1160" height="352"></canvas>
+  <p class="vidcap">Top: the first three periods, model against the true motion &mdash; note that the model's
+  period is visibly too long, which slide 4 explains. Bottom: the amplitude over the whole run, measured as the
+  largest displacement in a sliding one-period window. Flat means energy is conserved.</p>
+  <div class="notes"><p>Two separate failures are visible here: the period is wrong from the start, and the
+  amplitude decays slowly. They have different causes and the set treats them separately.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">The comparison</p>
+  <h2>Measured over <span class="hl">thirty-two periods</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>1000 steps</th><th>start</th><th>end</th><th>change</th></tr>
+        <tr><td>the exact motion</td><td>0.7499</td><td>0.7498</td><td>&minus;0.01%</td></tr>
+        <tr><td>leapfrog</td><td>0.7500</td><td>0.7501</td><td><b>+0.01%</b></td></tr>
+        <tr><td>the exact rule, in tokens</td><td>0.7635</td><td>0.7635</td><td><b>0.00%</b></td></tr>
+        <tr><td>the language model</td><td>0.8460</td><td>0.4746</td><td><b>&minus;43.9%</b></td></tr>
+        <tr><td>its rule, exact arithmetic</td><td>0.8263</td><td>0.0816</td><td><b>&minus;90.1%</b></td></tr>
+        <tr><td>explicit Euler</td><td>1.3647</td><td>2.5&times;10<sup>8</sup></td><td>diverges</td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:8px">Amplitude is the largest displacement in a
+      sliding one-period window. Same initial condition throughout; the token rows start slightly higher because
+      the starting values are rounded onto the lattice.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Leapfrog is the embarrassing row</div>
+        <p>Two lines of arithmetic. No training, no data, no parameters. Over thirty-two periods it holds the
+        amplitude to one part in ten thousand, while the model loses nearly half of it.</p>
+        <p>That is not a close contest, and it does not become one with a bigger model.</p></div>
+      <div class="box warn"><div class="t">Euler is the other lesson</div>
+        <p>Explicit Euler is the obvious scheme and it is unusable here: it injects energy every step and
+        explodes by eight orders of magnitude. Cheap, simple and first-order is not the problem. Having the
+        wrong structure is.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Euler is included because it fails in the opposite direction, which makes it clear the
+  issue is structural rather than a matter of the error being too big.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">The surprise</p>
+  <h2>The rounding is <span class="hl">helping it</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Compare the last two rows of that table. The model's own fitted rule, iterated in full precision, loses
+      <b>90%</b> of its amplitude. The model itself &mdash; running the same rule but rounding to the nearest bin
+      at every step, as it must &mdash; loses <b>44%</b>.</p>
+      <p>The tokenisation, which looks like the crude part of the setup, is <em>arresting</em> the decay.</p>
+      <p>The reason is not mysterious. Rounding is not a small random error sprinkled on top of the dynamics; it
+      is a map that pulls the state back onto the lattice every step. When the underlying drift per step is
+      smaller than half a bin width, the rounding can cancel it entirely &mdash; the state is pushed back to
+      where it already was.</p>
+      <p>So the lattice acts as a crude projection back onto the constraint, which is precisely the trick used
+      to stop constrained integrators drifting. Here it happens by accident, and only partly.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">Why this had to be measured separately</div>
+        <p>If you only ran the model, you would credit it with the 51% rather than the 92%, and conclude that a
+        finer vocabulary would make things better. It would make them <em>worse</em>, by removing the
+        accidental help &mdash; while also making the one-step accuracy look better.</p>
+        <p>Two effects pointing in opposite directions, hidden inside one number. That is why the exact rule is
+        run through the same lattice as a control.</p></div>
+      <div class="box physics"><div class="t">The general warning</div>
+        <p>Discretisation is part of the dynamics, not a layer of noise on top of it. This is familiar from
+        lattice field theory and from any fixed-point implementation of a filter, and it applies unchanged to a
+        language model over a quantised state.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>This is the least intuitive result in the set and the one most worth stating
+  carefully.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s5">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>What the long run <span class="hl">showed</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Observation</th><th>What it means</th></tr>
+        <tr><td>the period comes out too long</td><td>an ill-conditioned coefficient; page 4</td></tr>
+        <tr><td>the amplitude falls, then holds</td><td>the drift is real; the lattice arrests it</td></tr>
+        <tr><td>without rounding it falls to zero</td><td>it is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><msup><mi mathvariant="normal">∣</mi><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">|\lambda|^n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord"><span class="mord">∣</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span></span></span></span>, and page 6 shows it</td></tr>
+        <tr><td>leapfrog does not fall</td><td>structure beats accuracy over long runs</td></tr>
+        <tr><td>Euler explodes</td><td>the wrong structure fails either way</td></tr>
+        <tr><td>rounding slows the fall</td><td>discretisation is part of the dynamics</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The practical form of this</div>
+        <p>If you are going to use a learned model as a time-stepper, the quantity to plot is not the one-step
+        error. It is a conserved quantity, over the longest run you care about. Nothing shorter will show you
+        the failure, and the failure is the thing that decides whether the model is usable.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="drift.html">Page 6</a> explains the exponential in one line, and says exactly what would
+        have to be true for it to go away.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>"Plot a conserved quantity over the longest run you care about" is the single most
+  useful sentence in this set.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/lm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- train a small GPT, then let it run on its own ---------- */
+(function(){
+  var cv=document.getElementById('v1'); if(!cv||typeof LM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var V=64,K=8,D=32,W=1,DT=0.2,NROLL=900,A0=0.75,PH=0.3;
+  var O=LM.Osc({vocab:V,dt:DT,w:W});
+  var m=null,opt=null,rng=null,phase='idle',raf=null,what='all';
+  var gx=[],gamp=[],ex=[],lf=[],lfamp=[],examp=[],lin=[],linamp=[],fit=null;
+
+  function reset(){
+    phase='idle'; document.getElementById('v1run').textContent='Train, then roll out';
+    m=new LM.GPT({vocab:V,ctx:K,dmodel:D,dk:16,dff:48,layers:1,seed:5});
+    opt=new TFM.Adam(m.params(),4e-3); rng=new TFM.Rng(16);
+    gx=[];gamp=[];lin=[];linamp=[];fit=null;
+    /* the reference curves do not need the model */
+    var tr0=O.traj(2,new TFM.Rng(1),A0,PH), v0=-A0*W*Math.sin(PH);
+    ex=LM.recur(tr0.x[0],tr0.x[1],O.c2,NROLL+K);
+    lf=LM.leapfrog(tr0.x[0],v0,W,DT,NROLL+K);
+    examp=amps(ex); lfamp=amps(lf);
+    document.getElementById('v1stat').textContent='not started';
+    draw();
+  }
+  /* amplitude = the largest |x| in a sliding one-period window.  Robust, and
+     it means what a physicist means, whatever frequency the curve actually has. */
+  var WIN=32;
+  function amps(xs){
+    var out=[],i,j;
+    for(i=0;i+WIN<xs.length;i+=8){
+      var mx=0;
+      for(j=i;j<i+WIN;j++) mx=Math.max(mx,Math.abs(xs[j]));
+      out.push([i+WIN/2,mx]);
+    }
+    return out;
+  }
+  function batch(){
+    TFM.reset(); opt.zero();
+    var Ls=[],b;
+    for(b=0;b<8;b++){ var tr=O.traj(K+1,rng), tk=O.tokens(tr.x);
+      Ls.push(LM.ce(m.forward(tk.slice(0,K)),tk.slice(1))); }
+    TFM.backward(TFM.sumS(Ls)); opt.step(); TFM.reset();
+  }
+  function fitRule(){
+    var prev=[],cur=[],ys=[],k,j;
+    for(k=0;k<150;k++){
+      var tr=O.traj(K,new TFM.Rng(3000+k)), tk=O.tokens(tr.x);
+      var p=m.next(tk), ev=0;
+      for(j=0;j<V;j++) ev+=p[j]*O.val(j);
+      prev.push(O.val(tk[K-2])); cur.push(O.val(tk[K-1])); ys.push(ev);
+    }
+    var s11=0,s12=0,s22=0,t1=0,t2=0;
+    for(k=0;k<ys.length;k++){ s11+=cur[k]*cur[k]; s12+=cur[k]*prev[k]; s22+=prev[k]*prev[k];
+      t1+=cur[k]*ys[k]; t2+=prev[k]*ys[k]; }
+    var det=s11*s22-s12*s12;
+    var a=(t1*s22-t2*s12)/det, b=(t2*s11-t1*s12)/det;
+    return {a:a,b:b,lam:LM.lambdaMod(a,b)};
+  }
+  var tokens=null;
+  function startRoll(){
+    tokens=O.tokens(O.traj(K,new TFM.Rng(1),A0,PH).x);
+    gx=tokens.map(function(t){return O.val(t);});
+    fit=fitRule();
+    lin=[gx[0],gx[1]];
+    for(var i=2;i<=NROLL+K;i++) lin.push(fit.a*lin[i-1]+fit.b*lin[i-2]);
+    linamp=amps(lin);
+  }
+  function rollSome(n){
+    var j;
+    for(var i=0;i<n && gx.length<NROLL+K;i++){
+      var p=m.next(tokens.slice(Math.max(0,tokens.length-K))), best=-1, bj=0;
+      for(j=0;j<V;j++) if(p[j]>best){best=p[j];bj=j;}
+      tokens.push(bj); gx.push(O.val(bj));
+    }
+    gamp=amps(gx);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var NSHOW=110;
+    var a1=new PL.Axes(ctx,62,30,1060,120,{xlim:[0,NSHOW],ylim:[-1.05,1.05],
+        title:'the first three periods',titleColor:C.green,xlabel:''});
+    a1.hline(0,C.rule,null);
+    var xs=PL.range(NSHOW);
+    a1.line(xs,xs.map(function(i){return ex[i];}),C.green,2.2);
+    if(gx.length>2) a1.line(PL.range(Math.min(NSHOW,gx.length)),
+        gx.slice(0,NSHOW),C.pink,2.2);
+    a1.ticks([0,30,60,90],[-1,0,1]);
+    a1.legend([['the true motion',C.green],['the model',C.pink]]);
+
+    var a2=new PL.Axes(ctx,62,196,1060,110,{xlim:[0,NROLL],ylim:[0,1.0],
+        title:'amplitude over the whole run — flat means energy is conserved',
+        titleColor:C.blue,xlabel:'step   (31.4 steps to a period)'});
+    a2.hline(examp.length?examp[0][1]:0.75,C.rule,[5,4]);
+    if(what!=='model' && lfamp.length)
+      a2.line(lfamp.map(function(p){return p[0];}),lfamp.map(function(p){return p[1];}),C.blue,2.2);
+    if(what==='all' && linamp.length)
+      a2.line(linamp.map(function(p){return p[0];}),linamp.map(function(p){return p[1];}),C.orange,2.0);
+    if(gamp.length>1)
+      a2.line(gamp.map(function(p){return p[0];}),gamp.map(function(p){return p[1];}),C.pink,2.6);
+    a2.ticks([0,300,600,900],[0,0.5,1]);
+    var leg=[['the model',C.pink]];
+    if(what!=='model') leg.push(['leapfrog',C.blue]);
+    if(what==='all') leg.push(['its rule, no rounding',C.orange]);
+    leg.push(['the truth',C.rule]);
+    a2.legend(leg);
+  }
+
+  function step(){
+    if(phase==='train'){
+      for(var i=0;i<30;i++) batch();
+      document.getElementById('v1stat').textContent='training … step '+opt.t+' of 6000';
+      if(opt.t>=6000){ phase='roll'; startRoll(); }
+      draw(); raf=requestAnimationFrame(step); return;
+    }
+    if(phase==='roll'){
+      rollSome(14);
+      var n=gamp.length;
+      document.getElementById('v1stat').textContent=
+        'rolled out '+(gx.length-K)+' of '+NROLL+' steps   ·   a = '+fit.a.toFixed(4)+
+        '   |λ| = '+fit.lam.toFixed(5)+
+        (n?('   ·   amplitude '+gamp[0][1].toFixed(3)+' → '+gamp[n-1][1].toFixed(3)):'');
+      draw();
+      if(gx.length<NROLL+K){ raf=requestAnimationFrame(step); }
+      else { phase='done'; document.getElementById('v1run').textContent='Done'; }
+      return;
+    }
+  }
+  document.getElementById('v1run').onclick=function(){
+    if(phase==='done') return;
+    if(phase==='idle'){ phase='train'; this.textContent='Pause'; raf=requestAnimationFrame(step); return; }
+    if(phase==='train'||phase==='roll'){
+      if(raf) cancelAnimationFrame(raf);
+      var was=phase; phase='paused'; this._was=was; this.textContent='Resume'; return;
+    }
+    if(phase==='paused'){ phase=this._was; this.textContent='Pause'; raf=requestAnimationFrame(step); }
+  };
+  document.getElementById('v1reset').onclick=function(){
+    if(raf) cancelAnimationFrame(raf); reset();
+    document.getElementById('v1run').textContent='Train, then roll out';
+  };
+  document.getElementById('v1what').onchange=function(){ what=this.value; draw(); };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

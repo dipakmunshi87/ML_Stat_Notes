@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Has Actually Been Done in Physics</title>
+<meta name="description" content="Real published applications of transformers in physics - jet tagging, particle tracking, transient classification, galaxy surveys, weather, quantum states - with a live jet substructure classifier.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html" class="here">4 · Examples</a><a href="surrogates.html">5 · Surrogates</a><a href="generative.html">6 · Generative AI</a><a href="limits.html">7 · Limits</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-orange" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 4 of 8 &middot; the record</p>
+  <h1>What has <span class="hl">actually been done</span></h1>
+  <p class="lead" style="max-width:64ch">Not what could be done in principle. Published work, with the numbers
+  the papers report, what each one beat, and where the claim stops.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-orange jump" href="#s3"><h3 class="orange">1 &middot; Particle physics &rarr;</h3><p>Jets and tracks, where the case is strongest.</p></a>
+    <a class="card c-blue jump" href="#s4"><h3 class="blue">2 &middot; Astronomy &rarr;</h3><p>Transients, spectra, galaxy surveys.</p></a>
+    <a class="card c-pink jump" href="#s6"><h3 class="pink">3 &middot; Classify a jet &rarr;</h3><p>One prong or two, decided live.</p></a>
+  </div>
+  <div class="notes"><p>Every number on this page comes from the cited paper or from the code on this site.
+  None is an estimate.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s2">
+<div class="inner">
+  <p class="kicker">How it is set up</p>
+  <h2>A jet, turned into <span class="hl">a set of tokens</span></h2>
+  <svg class="fig" viewBox="0 0 940 320" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arjt" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armjt" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="360" height="250" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="190" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b4530a" text-anchor="middle" font-weight="700">what the detector sees</text><circle cx="131.61" cy="151.25" r="6.95964" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="111.069" cy="115.52" r="4.52423" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="162.295" cy="132.678" r="6.07483" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="135.51" cy="185.784" r="7.76211" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="139.996" cy="113.447" r="9.11255" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="144.108" cy="149.577" r="10.9444" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="237.342" cy="190.943" r="9.37129" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="291.359" cy="206.217" r="8.7288" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="263.649" cy="199.048" r="10.9242" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="238.316" cy="199.614" r="11.0305" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><circle cx="256.438" cy="157.656" r="7.15971" fill="#b4530a" fill-opacity="0.5" stroke="#b4530a" stroke-width="1.3"/><text x="190" y="266" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">a spray of particles — no natural order</text><line x1="378" y1="150" x2="430" y2="150" stroke="#27406e" stroke-width="2" marker-end="url(#arjt)"/><text x="404" y="140" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">one token</text><text x="404" y="176" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">each</text><text x="690" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">what the transformer is given</text><text x="500" y="58" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#27406e" text-anchor="middle" font-weight="700">p</text><text x="586" y="58" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#27406e" text-anchor="middle" font-weight="700">Δη</text><text x="672" y="58" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#27406e" text-anchor="middle" font-weight="700">Δφ</text><text x="758" y="58" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#27406e" text-anchor="middle" font-weight="700">ΔR²</text><rect x="460" y="68" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="499" y="87" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="546" y="68" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="585" y="87" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="632" y="68" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="671" y="87" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="718" y="68" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="757" y="87" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="460" y="102" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="499" y="121" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="546" y="102" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="585" y="121" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="632" y="102" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="671" y="121" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="718" y="102" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="757" y="121" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="460" y="136" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="499" y="155" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="546" y="136" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="585" y="155" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="632" y="136" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="671" y="155" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="718" y="136" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="757" y="155" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="460" y="170" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="499" y="189" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="546" y="170" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="585" y="189" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="632" y="170" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="671" y="189" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="718" y="170" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="757" y="189" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="460" y="204" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="499" y="223" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="546" y="204" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="585" y="223" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="632" y="204" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="671" y="223" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="718" y="204" width="78" height="28" rx="5" fill="#ffffff" stroke="#ccd8ec" stroke-width="1"/><text x="757" y="223" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6a7c9c" text-anchor="middle" font-weight="normal">·</text><rect x="460" y="238" width="336" height="28" rx="5" fill="#fdecee" stroke="#b3246b" stroke-width="1.4"/><text x="628" y="257" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#b3246b" text-anchor="middle" font-weight="normal">the question token: "one prong or two?"</text><text x="690" y="300" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">any number of rows, in any order</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>Each particle becomes one row. The columns are whatever you choose to tell the network about it &mdash;
+      momentum, position relative to the jet axis, and any pairwise quantity you think matters.</p>
+    </div>
+    <div>
+      <p>One extra row carries no kinematics and asks the question. The answer is read out of that row after the
+      network has let it listen to all the others.</p>
+    </div>
+  </div>
+  <div class="notes"><p>The "question token" is usually called a class token; the name does not help
+  anybody.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s3">
+<div class="inner">
+  <p class="kicker">Particle physics</p>
+  <h2>Jets and <span class="hl">tracks</span></h2>
+  <div class="grid g2">
+    <div>
+      <div class="box key"><div class="t">Jet tagging &mdash; the clearest case</div>
+        <p>A jet is a set of constituents with no natural order and a size that changes event to event: exactly
+        the data type attention was built for. <b>Particle Transformer</b> (Qu, Li &amp; Qian,
+        <a href="https://arxiv.org/abs/2202.03772">ICML 2022</a>) came with <b>JetClass</b> &mdash; 100 million
+        jets in 10 classes, a hundred times larger than anything public before it &mdash; and beat the previous
+        best, ParticleNet, by a clear margin.</p>
+        <p>The detail worth copying: it feeds <em>pairwise</em> physics quantities &mdash; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">\Delta R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span></span></span></span>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">k_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>,
+        pair mass &mdash; straight into the scores. The interaction is supplied, not learned.</p></div>
+      <div class="box physics"><div class="t">Tracking</div>
+        <p>Which hits belong to the same particle? <b>TrackFormers</b>
+        (<a href="https://arxiv.org/abs/2407.07179">EPJ C 2025</a>) treats hits as tokens and lets attention
+        decide the grouping, aimed at the high-luminosity LHC where classical combinatorial tracking scales
+        badly with pile-up.</p></div>
+    </div>
+    <div>
+      <div class="box stats"><div class="t">Why this field first</div>
+        <p>Three reasons. The data really is a set; simulation gives effectively unlimited labelled examples;
+        and the tasks are narrow enough to benchmark honestly. Few other fields have all three.</p></div>
+      <div class="box warn"><div class="t">What limits it</div>
+        <p>All-pairs over thousands of hits is why tracking work uses windowed or hierarchical attention rather
+        than the full matrix. At detector scale the cost is the design constraint, not a footnote.</p></div>
+      <div class="box physics"><div class="t">The pattern</div>
+        <p>The winning models are not plain transformers. They are transformers with physics pushed into the
+        scores: pairwise kinematics, locality in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">\Delta R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span></span></span></span>, symmetry-respecting features.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The pairwise-feature trick is the single most transferable idea on this slide.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Astronomy</p>
+  <h2>Uneven data, and several <span class="hl">kinds at once</span></h2>
+  <div class="grid g2">
+    <div>
+      <div class="box key"><div class="t">Photometric transients</div>
+        <p>Allam &amp; McEwen, <a href="https://arxiv.org/abs/2105.06178"><em>RASTI</em> <b>3</b>, 209
+        (2024)</a>, applied a transformer to the PLAsTiCC simulated LSST dataset: ROC AUC 0.98 and PR AUC 0.87,
+        comparable to the best hand-built classifiers with far less feature work.</p>
+        <p>The structure matters more than the number. As tokens <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>f</mi><mo separator="true">,</mo><msub><mi>σ</mi><mi>f</mi></msub><mo separator="true">,</mo><mtext>band</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(t,f,\sigma_f,\text{band})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">band</span></span><span class="mclose">)</span></span></span></span>, uneven multi-band
+        sampling is simply not a difficulty; on a grid it needs interpolation you then have to defend.</p></div>
+      <div class="box physics"><div class="t">Images and spectra together</div>
+        <p><b>AstroCLIP</b> (Parker, Lanusse, Golkar et al.,
+        <a href="https://academic.oup.com/mnras/article/531/4/4990/7697182"><em>MNRAS</em> <b>531</b>, 4990
+        (2024)</a>) puts DESI spectra and Legacy Survey images into one shared space. Without any task-specific
+        training: photometric redshifts as good as a supervised ResNet18, and physical properties better than
+        the supervised baseline by 19% in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span>.</p></div>
+    </div>
+    <div>
+      <div class="box stats"><div class="t">Why that direction is interesting</div>
+        <p>A survey gives several views of the same object &mdash; image, spectrum, light curve. Lining them up
+        in one representation turns unlabelled survey data into a training signal.</p></div>
+      <div class="box warn"><div class="t">Read that result carefully</div>
+        <p>"As good as a supervised baseline without task-specific training" is a statement about the quality of
+        the representation. It is a real result. It is not the same as a better photometric redshift.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The 19% gain is on physical properties, where the spectrum carries information the image
+  does not &mdash; which is the honest explanation of where it comes from.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s5">
+<div class="inner">
+  <p class="kicker">Elsewhere</p>
+  <h2>Three more <span class="hl">worth knowing</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Weather</h3>
+      <p><b>Pangu-Weather</b> (Bi et al.,
+      <a href="https://www.nature.com/articles/s41586-023-06185-3"><em>Nature</em> <b>619</b>, 533 (2023)</a>)
+      runs a transformer on a 0.25&deg; global grid &mdash; the same grid as the ECMWF operational model &mdash;
+      and reported better RMSE than it on geopotential, humidity, wind and temperature, from one hour to one
+      week. The first time a learned model beat operational forecasting on its own metrics.</p></div>
+    <div class="card c-purple"><h3 class="purple">Quantum many-body</h3>
+      <p>The amplitude of a spin or fermion configuration produced by a transformer, optimised variationally.
+      Attention supplies the long-range correlations a local ansatz has to work for, and sampling gives exact
+      independent configurations with no Markov chain. Active, and genuinely competitive.</p></div>
+    <div class="card c-blue"><h3 class="blue">Molecules and materials</h3>
+      <p>Attention appears throughout, but usually in <em>equivariant</em> form on a neighbourhood graph rather
+      than plain. The lesson generalises: the successful versions are the ones carrying the symmetry, not the
+      ones with the most parameters.</p></div>
+  </div>
+  <div class="box warn" style="margin-top:14px"><div class="t">A caution that applies to all three</div>
+    <p>These models are judged against the distribution they were trained on. Skill on ordinary conditions does
+    not imply skill on the extreme events that motivate the forecast in the first place, and showing the latter
+    takes a deliberate test rather than an average score.</p></div>
+  <div class="notes"><p>The weather result is the one most often over-generalised: RMSE-optimal models are
+  systematically over-smoothed.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s6">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>One prong or two, <span class="hl">decided live</span></h2>
+  <p style="max-width:84ch">A toy jet is a spray of particles in the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi mathvariant="normal">Δ</mi><mi>η</mi><mo separator="true">,</mo><mi mathvariant="normal">Δ</mi><mi>ϕ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(\Delta\eta,\Delta\phi)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">Δ</span><span class="mord mathnormal">ϕ</span><span class="mclose">)</span></span></span></span> plane. Did they
+  come from one prong or two? No single particle can tell you. Two networks train at once: one is handed
+  <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\Delta R^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">Δ</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> for each particle, the other is not.</p>
+  <div class="ctl">
+    <button id="e1run">Train both</button>
+    <button id="e1reset" class="ghost">Reset</button>
+    <button id="e1new" class="ghost">New jet</button>
+    <span class="stat" id="e1stat">step 0</span>
+  </div>
+  <canvas id="e1" width="1160" height="320"></canvas>
+  <p class="vidcap">Left: one jet, circles sized by momentum and shaded by how much the question token listens
+  to them. Right: how often each network gets the answer right. The only difference between them is one extra
+  number per particle.</p>
+  <div class="notes"><p>Press <b>New jet</b> once trained: the attention concentrates on the particles that
+  establish the two-prong structure.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s7">
+<div class="inner">
+  <p class="kicker">The lesson</p>
+  <h2>One good feature beats <span class="hl">three times the model</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>Same task, same data</th><th>parameters</th><th>right</th></tr>
+        <tr><td>given <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\Delta R^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">Δ</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> per particle</td><td>3,593</td><td>97.7%</td></tr>
+        <tr><td>not given it</td><td>3,569</td><td>62.0%</td></tr>
+        <tr><td>not given it, 2.7&times; bigger</td><td>9,801</td><td>64.0%</td></tr>
+        <tr><td>not given it, 2&times; the training</td><td>3,569</td><td>68.3%</td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:6px">Identical seeds and examples throughout.
+      Guessing gets 50%.</p>
+      <p>One extra number per particle &mdash; one the network could in principle work out for itself from
+      coordinates it already has &mdash; is worth more than tripling it or doubling the training.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Why that feature helps so much</div>
+        <p>Attention takes averages. It does not naturally form <em>second</em> moments. "One cluster or two" is
+        a question about spread, and handing it <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\Delta R^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">Δ</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> gives it a quantity whose average <em>is</em> a
+        spread. Without it, the same answer needs several layers to build up.</p></div>
+      <div class="box physics"><div class="t">This is what ParT does</div>
+        <p>Its pairwise features &mdash; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">\Delta R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span></span></span></span>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">k_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, pair mass &mdash; are the same move at production
+        scale: supply the physically meaningful quantity rather than hoping the network rebuilds it. The largest
+        single gain in jet tagging came from this, not from more parameters.</p></div>
+      <div class="box warn"><div class="t">The general form</div>
+        <p>Before making a model bigger, ask what physical quantity it is being forced to rediscover, and give
+        it that instead. It is almost always cheaper.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>This slide is the practical heart of the set: effort belongs in the representation, not
+  the parameter count.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s8">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>Where the evidence <span class="hl">is strong</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Area</th><th>Where it stands</th></tr>
+        <tr><td>jet tagging</td><td>best available, by a clear margin</td></tr>
+        <tr><td>track reconstruction</td><td>promising; cost is the open problem</td></tr>
+        <tr><td>photometric classification</td><td>competitive, much less feature work</td></tr>
+        <tr><td>survey foundation models</td><td>strong representations; task gains mixed</td></tr>
+        <tr><td>weather forecasting</td><td>beats the operational model on RMSE; extremes disputed</td></tr>
+        <tr><td>quantum states</td><td>active, competitive, not settled</td></tr>
+        <tr><td>symbolic and theory tasks</td><td>early, easy to overstate</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">What the successes have in common</div>
+        <p>Every entry in the top half has plenty of labelled data &mdash; from simulation or from a survey
+        &mdash; and an input that is genuinely a set. Where either is missing the results thin out quickly, and
+        that is the honest predictor of whether it will work on your problem.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="surrogates.html">Page 5</a> is about replacing an expensive simulation with a learned model
+        &mdash; the biggest payoff, and the most demanding validation.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The bottom three rows are where scepticism is currently warranted, which is not the same
+  as pessimism.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- jet substructure: with and without a physics feature ---------- */
+(function(){
+  var cv=document.getElementById('e1'); if(!cv||typeof TFM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var A=null,B=null,running=false,raf=null,accA=[],accB=[],fi=0,shown=null;
+  /* one long-lived stream for the displayed example.  Reseeding a small
+     xorshift generator biases its first draw, so the display advances a single
+     stream instead of starting a new one for each press. */
+  var disp=new TFM.Rng(4242);
+
+  function mk(quad){
+    var jt=TFM.makeJets({quad:quad});
+    var m=new TFM.Model({din:jt.din,dmodel:24,dk:16,dff:40,seed:5});
+    return {jt:jt,m:m,opt:new TFM.Adam(m.params(),4e-3),rng:new TFM.Rng(11)};
+  }
+  function reset(){
+    running=false; document.getElementById('e1run').textContent='Train both';
+    A=mk(true); B=mk(false); accA=[];accB=[];fi=0;
+    if(!shown){ do { shown=A.jt.sample(disp); } while(!shown.two); }
+    measure(); draw();
+  }
+  function trainOne(S){
+    TFM.reset(); S.opt.zero();
+    var L=[],b;
+    for(b=0;b<8;b++){ var s=S.jt.sample(S.rng);
+      L.push(TFM.mse(S.m.forward(s.X,s.T),new Float64Array([s.y]))); }
+    TFM.backward(TFM.sumS(L)); S.opt.step(); TFM.reset();
+  }
+  function acc(S){
+    var r=new TFM.Rng(777), hit=0, K=80, i;
+    for(i=0;i<K;i++){ var s=S.jt.sample(r); TFM.reset();
+      if((S.m.forward(s.X,s.T).v[0]>0?1:-1)===s.y) hit++; TFM.reset(); }
+    return hit/K;
+  }
+  function measure(){ accA.push(acc(A)); accB.push(acc(B)); }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var H=236;
+    var ax=new PL.Axes(ctx,62,34,300,H,{xlim:[-0.75,0.75],ylim:[-0.75,0.75],
+        title:'one jet',titleColor:C.pink,xlabel:'Δη'});
+    ax.ticks([-0.5,0,0.5],[-0.5,0,0.5]);
+    TFM.reset();
+    var out=A.m.forward(shown.X,shown.T), pred=out.v[0];
+    var At=A.m.lastAttn.v, T=shown.T, w=[], mx=1e-12, i;
+    for(i=0;i<shown.n;i++){ w.push(At[(T-1)*T+i]); if(w[i]>mx) mx=w[i]; }
+    TFM.reset();
+    ax.clip(function(){
+      for(var i=0;i<shown.n;i++){
+        var p=shown.pts[i], X=ax.X(p[0]), Y=ax.Y(p[1]);
+        var rad=4+10*p[2], a=0.15+0.85*(w[i]/mx);
+        ctx.fillStyle='rgba(179,36,107,'+a.toFixed(3)+')';
+        ctx.beginPath(); ctx.arc(X,Y,rad,0,7); ctx.fill();
+        ctx.strokeStyle='rgba(11,37,89,0.35)'; ctx.lineWidth=1; ctx.stroke();
+      }
+    });
+    ctx.font='13px sans-serif';
+    ctx.fillStyle=C.ink;  ctx.fillText('truth:  '+(shown.two?'two prongs':'one prong'),396,64);
+    ctx.fillStyle=(pred>0)===(shown.y>0)?C.green:C.red;
+    ctx.fillText('network:  '+(pred>0?'two prongs':'one prong'),396,86);
+    ctx.fillStyle=C.muted; ctx.font='12px sans-serif';
+    ctx.fillText(shown.n+' particles',396,116);
+    ctx.fillText('size = momentum',396,136);
+    ctx.fillText('shade = how much the',396,156);
+    ctx.fillText('question token listens',396,174);
+
+    var n=accA.length;
+    var a2=new PL.Axes(ctx,640,34,480,H,{xlim:[0,Math.max(10,n-1)],ylim:[45,102],
+        title:'how often it is right (%)',titleColor:C.blue,xlabel:'training'});
+    a2.hline(50,C.rule,[5,4]);
+    if(n>1){
+      a2.line(PL.range(n),accA.map(function(v){return 100*v;}),C.blue,2.4);
+      a2.line(PL.range(n),accB.map(function(v){return 100*v;}),C.red,2.4);
+    }
+    a2.ticks([0,Math.max(10,n-1)],[50,75,100]);
+    a2.legend([['given ΔR²',C.blue],['not given it',C.red],['guessing',C.rule]]);
+
+    document.getElementById('e1stat').textContent=
+      'step '+A.opt.t+'   ·   given ΔR² '+(n?(100*accA[n-1]).toFixed(1):'-')+
+      '%   ·   not '+(n?(100*accB[n-1]).toFixed(1):'-')+'%';
+  }
+  function step(){
+    if(!running) return;
+    for(var i=0;i<4;i++){ trainOne(A); trainOne(B); }
+    fi++;
+    if(fi%10===0) measure();
+    draw();
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('e1run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train both';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('e1reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('e1new').onclick=function(){ shown=A.jt.sample(disp); draw(); };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

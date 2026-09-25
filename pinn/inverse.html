@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inverse Problems: Where PINNs Genuinely Win</title>
+<meta name="description" content="Recovering unknown physical constants alongside the solution from sparse noisy data, with no change to the machinery - plus identifiability, error bars, and what the estimate is actually worth.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · What a PINN is</a><a href="theory.html">2 · Why it works</a><a href="training.html">3 · Training it</a><a href="failures.html">4 · When it fails</a><a href="inverse.html" class="here">5 · Inverse problems</a><a href="beyond.html">6 · Beyond ODEs</a><a href="software.html">7 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-purple" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 5 of 7 &middot; the winning case</p>
+  <h1>Inverse problems:<br><span class="hl">where PINNs win</span></h1>
+  <p class="lead" style="max-width:66ch">Everything so far has compared a PINN against a classical solver and
+  found it wanting. This page is the other side. Add one term to the loss and one trainable scalar, and you have
+  a method with no straightforward classical competitor.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-purple jump" href="#s2"><h3 class="purple">1 &middot; The asymmetry &rarr;</h3><p>Why the forward problem is hard for a PINN and the inverse one is not.</p></a>
+    <a class="card c-blue jump" href="#s4"><h3 class="blue">2 &middot; Watch it &rarr;</h3><p>A damping constant recovered from 24 noisy points.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">3 &middot; Believe it? &rarr;</h3><p>Identifiability and error bars, which the method does not give you.</p></a>
+  </div>
+  <div class="notes"><p>If someone asks what PINNs are actually for, this page is the answer.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s2">
+<div class="inner">
+  <p class="kicker">The asymmetry</p>
+  <h2>Why this direction is <span class="hl">different</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The forward problem &mdash; all coefficients known, find <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span> &mdash; has excellent classical methods,
+      and a PINN loses to finite differences by five orders of magnitude.</p>
+      <p>The inverse problem is not like that. Given sparse noisy observations <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>u</mi><mi>k</mi><mrow><mi mathvariant="normal">o</mi><mi mathvariant="normal">b</mi><mi mathvariant="normal">s</mi></mrow></msubsup></mrow><annotation encoding="application/x-tex">u^{\rm obs}_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1322em;vertical-align:-0.2831em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-2.4169em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">obs</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831em;"><span></span></span></span></span></span></span></span></span></span> and unknown
+      coefficients <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span>, the classical approach is <em>nested</em>: guess <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span>, solve the forward problem
+      completely, compare, adjust, repeat. Every step costs a full solve, and the gradient
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∂</mi><mi>u</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><mi>μ</mi></mrow><annotation encoding="application/x-tex">\partial u/\partial\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathnormal">u</span><span class="mord">/</span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathnormal">μ</span></span></span></span> needs an adjoint &mdash; derived and implemented afresh for each new equation.</p>
+      <p>A PINN removes the nesting. Make <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> a trainable parameter in the same optimiser:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="script">L</mi><mo stretchy="false">(</mo><mi>θ</mi><mo separator="true">,</mo><mi>μ</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><msub><mi>λ</mi><mi>r</mi></msub><msub><mi>N</mi><mi>r</mi></msub></mfrac><munder><mo>∑</mo><mi>i</mi></munder><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">∣</mo><msub><mi mathvariant="script">R</mi><mi>μ</mi></msub><mo stretchy="false">[</mo><msub><mi>u</mi><mi>θ</mi></msub><mo stretchy="false">]</mo><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><msup><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">∣</mo><mn>2</mn></msup><mo>+</mo><mfrac><msub><mi>λ</mi><mi>d</mi></msub><msub><mi>N</mi><mi>d</mi></msub></mfrac><munder><mo>∑</mo><mi>k</mi></munder><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">∣</mo><msub><mi>u</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>x</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>−</mo><msubsup><mi>u</mi><mi>k</mi><mrow><mi mathvariant="normal">o</mi><mi mathvariant="normal">b</mi><mi mathvariant="normal">s</mi></mrow></msubsup><msup><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">∣</mo><mn>2</mn></msup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathcal{L}(\theta,\mu)=\frac{\lambda_r}{N_r}\sum_i\big|\mathcal{R}_\mu[u_\theta](x_i)\big|^2
+      +\frac{\lambda_d}{N_d}\sum_k\big|u_\theta(x_k)-u^{\rm obs}_k\big|^2 .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal">L</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">μ</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.6491em;vertical-align:-1.2777em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.836em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.85em;"><span style="top:-2.85em;"><span class="pstrut" style="height:3.2em;"></span><span style="width:0.333em;height:1.200em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.333em" height="1.200em" viewBox="0 0 333 1200"><path d="M145 15 v585 v0 v585 c2.667,10,9.667,15,21,15
+c10,0,16.667,-5,20,-15 v-585 v0 v-585 c-2.667,-10,-9.667,-15,-21,-15
+c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v0 v585 h43z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathcal">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">μ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord"><span class="mord"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.85em;"><span style="top:-2.85em;"><span class="pstrut" style="height:3.2em;"></span><span style="width:0.333em;height:1.200em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.333em" height="1.200em" viewBox="0 0 333 1200"><path d="M145 15 v585 v0 v585 c2.667,10,9.667,15,21,15
+c10,0,16.667,-5,20,-15 v-585 v0 v-585 c-2.667,-10,-9.667,-15,-21,-15
+c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v0 v585 h43z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35em;"><span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.054em;"><span style="top:-3.3029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:2.6736em;vertical-align:-1.3021em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.836em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8479em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3021em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.85em;"><span style="top:-2.85em;"><span class="pstrut" style="height:3.2em;"></span><span style="width:0.333em;height:1.200em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.333em" height="1.200em" viewBox="0 0 333 1200"><path d="M145 15 v585 v0 v585 c2.667,10,9.667,15,21,15
+c10,0,16.667,-5,20,-15 v-585 v0 v-585 c-2.667,-10,-9.667,-15,-21,-15
+c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v0 v585 h43z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.404em;vertical-align:-0.35em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8991em;"><span style="top:-2.453em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">obs</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.85em;"><span style="top:-2.85em;"><span class="pstrut" style="height:3.2em;"></span><span style="width:0.333em;height:1.200em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.333em" height="1.200em" viewBox="0 0 333 1200"><path d="M145 15 v585 v0 v585 c2.667,10,9.667,15,21,15
+c10,0,16.667,-5,20,-15 v-585 v0 v-585 c-2.667,-10,-9.667,-15,-21,-15
+c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v0 v585 h43z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.35em;"><span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.054em;"><span style="top:-3.3029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>One optimisation, not two nested ones. The solution and the constant are found together, each
+      constraining the other, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∂</mi><mi mathvariant="script">L</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><mi>μ</mi></mrow><annotation encoding="application/x-tex">\partial\mathcal{L}/\partial\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathcal">L</span><span class="mord">/</span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathnormal">μ</span></span></span></span> comes from the same automatic differentiation
+      that already produced <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∂</mi><mi mathvariant="script">L</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">∂</mi><mi>θ</mi></mrow><annotation encoding="application/x-tex">\partial\mathcal{L}/\partial\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathcal">L</span><span class="mord">/</span><span class="mord" style="margin-right:0.05556em;">∂</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>. No adjoint to derive.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The four structural advantages</div>
+        <p><b>No adjoint.</b> The hardest part of classical inverse problems disappears.<br>
+        <b>No mesh.</b> Data at arbitrary scattered locations is natural, not an interpolation problem.<br>
+        <b>Gaps are free.</b> The physics term fills regions with no data at all.<br>
+        <b>Noise is regularised.</b> The residual term stops the solution chasing noisy points.</p></div>
+      <div class="box physics"><div class="t">Physics picture</div>
+        <p>A fit in which the model is the differential equation rather than a functional form. You are not
+        fitting a curve and inferring a constant from it; you are asking which constant makes a physically
+        admissible curve pass near the data.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The absence of an adjoint is the practical selling point. Anyone who has hand-derived
+  adjoint equations for a nonlinear system knows what is being saved.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">Setting it up</p>
+  <h2>One scalar, <span class="hl">one extra term</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The demonstration on the next slide solves this problem. A damped oscillator is observed at 24 points
+      with Gaussian noise of standard deviation 0.04, and the damping ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> is unknown:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>u</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup><mo>+</mo><mn>2</mn><mi>ζ</mi><mi>ω</mi><msup><mi>u</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>+</mo><msup><mi>ω</mi><mn>2</mn></msup><mi>u</mi><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="2em"/><mi>u</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mtext> </mtext><msup><mi>u</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><mn>0</mn><mo separator="true">,</mo><mspace width="2em"/><mi>ζ</mi><mtext> unknown</mtext><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">u&#x27;&#x27;+2\zeta\omega u&#x27;+\omega^2u=0,\qquad u(0)=1,\ u&#x27;(0)=0,\qquad \zeta\ \text{unknown}.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8852em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.9963em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8641em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">u</span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0519em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span><span class="mspace"> </span><span class="mord text"><span class="mord">unknown</span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>The setup:</p>
+      <ul>
+        <li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> becomes a single trainable parameter, initialised at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> &mdash; deliberately far from the
+        truth, and at the edge of the physical range.</li>
+        <li>The initial conditions are imposed hard, as always.</li>
+        <li>The data term is weighted 20 times the residual term, because 24 points must compete with 128
+        collocation points.</li>
+        <li>Everything else is unchanged from page 1: same architecture, same optimiser, same engine.</li>
+      </ul>
+      <p>Measured result: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi><mo>=</mo><mn>0.2538</mn></mrow><annotation encoding="application/x-tex">\zeta=0.2538</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.2538</span></span></span></span> against a true value of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.2500</mn></mrow><annotation encoding="application/x-tex">0.2500</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.2500</span></span></span></span>, from 24 points at 4% noise. The
+      estimate is within 1.5% of the truth, and the recovered solution passes through the data without chasing it.</p>
+    </div>
+    <div>
+      <div class="box stats"><div class="t">Convergence of the estimate</div>
+        <table class="num">
+          <tr><th>steps</th><th><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span></th></tr>
+          <tr><td>2000</td><td>0.2564</td></tr>
+          <tr><td>6000</td><td>0.2534</td></tr>
+          <tr><td>12000</td><td>0.2538</td></tr>
+          <tr><td>truth</td><td><b>0.2500</b></td></tr>
+        </table>
+        <p>It arrives early and then sits. The residual error is set by the noise, not by the optimiser.</p></div>
+      <div class="box warn"><div class="t">What this number is not</div>
+        <p>It is a point estimate with no uncertainty attached. The optimiser returns one value of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> and
+        says nothing about how well determined it is. That is the subject of slide 5, and it is the main thing
+        standing between this method and a defensible measurement.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Initialising <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> at zero is deliberate: starting it near the answer would make the
+  demonstration much less interesting and much less honest.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>Recovering a constant from <span class="hl">24 noisy points</span></h2>
+  <p style="max-width:80ch">The network learns the solution and the damping ratio simultaneously. Watch the
+  estimate on the right climb from zero to the dashed line.</p>
+  <div class="ctl">
+    <button id="d4run">Train</button>
+    <button id="d4reset" class="ghost">Reset</button>
+    <label>noise <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span></span></span></span> <input id="d4n" type="range" min="0" max="0.16" step="0.02" value="0.04">
+      <span class="val" id="d4nv">0.04</span></label>
+    <label>points <input id="d4p" type="range" min="8" max="48" step="8" value="24">
+      <span class="val" id="d4pv">24</span></label>
+    <span class="stat" id="d4stat">step 0</span>
+  </div>
+  <canvas id="d4" width="1160" height="330"></canvas>
+  <p class="vidcap">Left: the noisy observations, the network's solution and the truth. Right: the recovered
+  <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> against training step, with the true value dashed. Turn the noise up or the number of points down and
+  the estimate degrades gracefully &mdash; until it does not.</p>
+  <div class="notes"><p>With 8 points at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>0.16</mn></mrow><annotation encoding="application/x-tex">\sigma=0.16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.16</span></span></span></span> the estimate is unreliable and visibly so. That is the
+  honest regime boundary, and it is worth finding for any real problem before trusting a number.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">The hard part</p>
+  <h2>Identifiability and <span class="hl">error bars</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The optimiser will always return a number. Two questions it does not answer:</p>
+      <p><strong>Is the parameter identifiable?</strong> Different <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> can give solutions your data cannot
+      distinguish. Here <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span></span></span></span> separate only because the record spans several periods; over a
+      quarter period they trade off almost exactly and the optimiser returns a confident wrong pair. The
+      diagnostic is the curvature of the loss in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> &mdash; flat means unidentifiable, and scanning is cheap.</p>
+      <p><strong>What is the uncertainty?</strong> A point estimate is not a measurement. Three routes:</p>
+      <ul>
+        <li><strong>Profile the loss.</strong> Fix <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> on a grid, retrain, plot <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">L</mi><mo stretchy="false">(</mo><mi>μ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{L}(\mu)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal">L</span><span class="mopen">(</span><span class="mord mathnormal">μ</span><span class="mclose">)</span></span></span></span>; the width
+        where it rises by the noise level is an interval.</li>
+        <li><strong>Bootstrap the data.</strong> Resample, retrain, take the spread of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>μ</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">μ</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em;"><span></span></span></span></span></span></span></span></span>.</li>
+        <li><strong>Bayesian PINNs</strong> (Yang, Meng &amp; Karniadakis 2021). Priors on <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span>,
+        posterior by HMC &mdash; a genuine posterior, at one to two orders of magnitude more cost.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The mistake to avoid</div>
+        <p>Quoting <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi><mo>=</mo><mn>0.2538</mn></mrow><annotation encoding="application/x-tex">\zeta=0.2538</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.2538</span></span></span></span> without an interval. The number would look identical whether the data
+        constrained <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ζ</mi></mrow><annotation encoding="application/x-tex">\zeta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07378em;">ζ</span></span></span></span> to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>±</mo><mn>0.001</mn></mrow><annotation encoding="application/x-tex">\pm0.001</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">±</span><span class="mord">0.001</span></span></span></span> or <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>±</mo><mn>0.2</mn></mrow><annotation encoding="application/x-tex">\pm0.2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">±</span><span class="mord">0.2</span></span></span></span>. Profiling costs a handful of runs and is the difference
+        between a demonstration and a measurement.</p></div>
+      <div class="box key"><div class="t">Optimiser variability is real</div>
+        <p>Retrain with a different seed and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>μ</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">μ</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em;"><span></span></span></span></span></span></span></span></span> moves. That spread is part of your error budget and has
+        no counterpart in classical inverse methods &mdash; report across several seeds.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>This slide is the one most often skipped in the literature, and the one a referee will
+  ask about first.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s6">
+<div class="inner">
+  <p class="kicker">In the wild</p>
+  <h2>Where this is <span class="hl">actually used</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Flow from images</h3>
+      <p><em>Hidden fluid mechanics</em> (Raissi, Yazdani &amp; Karniadakis, <em>Science</em> <b>367</b>, 1026,
+      2020): recover velocity and pressure fields from images of a passive dye, by imposing Navier&ndash;Stokes
+      on the unobserved quantities. Pressure is never measured and never could be &mdash; it is inferred entirely
+      from the physics term.</p></div>
+    <div class="card c-orange"><h3 class="orange">Material and medium properties</h3>
+      <p>Elastic moduli from displacement fields, thermal conductivity from temperature measurements, permeability
+      in porous flow, reaction rates in kinetics. The common shape: a field you can measure sparsely, a constant
+      you cannot measure at all, and an equation linking them.</p></div>
+    <div class="card c-blue"><h3 class="blue">Instrument and interference models</h3>
+      <p>Signal-extraction problems where a physical model of the contaminant exists but its parameters do not:
+      orbits, beam shapes, emission spectra inferred jointly with the astrophysical signal. The data are sparse
+      and irregular, which is the regime that suits collocation.</p></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><div class="t">The pattern worth recognising</div>
+    <p>PINNs win when the forward solve is expensive, the data are sparse and scattered, part of the state is
+    unobservable, and an adjoint would be painful to derive. They lose when a good classical solver exists and you
+    simply want the solution. Most problems are the second kind &mdash; which is why the honest answer to "should
+    I use a PINN?" is usually no, and why the cases where it is yes are worth recognising.</p></div>
+  <div class="notes"><p>The hidden-fluid-mechanics result is the strongest single argument for the method:
+  a quantity that is not measurable at all, recovered because the equation says what it must be.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s7">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>The case, <span class="hl">stated plainly</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th></th><th>Forward problem</th><th>Inverse problem</th></tr>
+        <tr><td>Classical method</td><td>excellent</td><td>nested solves + adjoint</td></tr>
+        <tr><td>PINN cost</td><td>10³&ndash;10⁵ steps</td><td>the same</td></tr>
+        <tr><td>Scattered data</td><td>n/a</td><td>natural</td></tr>
+        <tr><td>Unobserved fields</td><td>n/a</td><td>inferred from the physics</td></tr>
+        <tr><td>Error bars</td><td>a posteriori bound</td><td>you must construct them</td></tr>
+        <tr><td>Verdict</td><td>rarely worth it</td><td><b>often the best option</b></td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Checklist before quoting a recovered parameter</div>
+        <p>1. Scan the loss in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> &mdash; is the minimum sharp?<br>
+        2. Retrain with three seeds &mdash; how much does <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>μ</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">μ</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em;"><span></span></span></span></span></span></span></span></span> move?<br>
+        3. Profile or bootstrap &mdash; what is the interval?<br>
+        4. Inject a known <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> into synthetic data with your real noise and cadence &mdash; do you get it back?<br>
+        5. Only then, quote the number, with the interval and the method beside it.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="beyond.html">Page 6</a> leaves differential equations altogether: integral and
+        integro-differential problems, where no stencil exists and collocation is the natural formulation.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Step 4 is the one that catches genuine mistakes. If you cannot recover a parameter you
+  planted yourself, nothing downstream is trustworthy.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/pinn.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- recovering an unknown damping ratio ---------- */
+(function(){
+  var cv=document.getElementById('d4'); if(!cv||typeof PINN==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var SIG=0.04, NP=24, T=6, ZTRUE=0.25, running=false, raf=null, tr=null, prob=null, net=null;
+  var xs=PINN.linspace(0,T,220), zhist=[], fi=0;
+
+  function reset(){
+    running=false; document.getElementById('d4run').textContent='Train';
+    prob=PINN.inverseOsc({w:3,zeta:ZTRUE,T:T,ndata:NP,noise:SIG,n:128,zinit:0.0,wdata:20,seed:3});
+    net=new PINN.MLP([1,24,24,1],{seed:2,domain:[0,T]});
+    tr=new PINN.Trainer(net,prob,5e-3);
+    zhist=[net.par('zeta').v[0]]; fi=0; draw();
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var top=36,h=cv.height-100,i;
+    var a=new PL.Axes(ctx,56,top,640,h,{xlim:[0,T],ylim:[-1.3,1.45],
+        title:'solution and observations',titleColor:C.ink2,xlabel:'x'});
+    a.hline(0,C.rule);
+    var ex=[]; for(i=0;i<xs.length;i++) ex.push(prob.exact(xs[i]));
+    a.line(xs,ex,C.muted,3);
+    a.line(xs,tr.curve(xs),C.blue,2.2);
+    a.dots(Array.prototype.slice.call(prob.data.x),Array.prototype.slice.call(prob.data.y),C.pink,4);
+    a.ticks([0,2,4,6],[-1,0,1]);
+    a.legend([['truth',C.muted],['network',C.blue],['data',C.pink]]);
+
+    var n=zhist.length;
+    var b=new PL.Axes(ctx,756,top,352,h,{xlim:[0,Math.max(10,n)],ylim:[-0.05,0.45],
+        title:'recovered  ζ',titleColor:C.purple,xlabel:'measurement (every 60 steps)'});
+    b.hline(ZTRUE,C.red,[5,4]);
+    b.line(PL.range(n),zhist,C.purple,2.4);
+    b.ticks([0,Math.max(10,n)],[0,0.1,0.2,0.25,0.3,0.4]);
+
+    var z=net.par('zeta').v[0];
+    document.getElementById('d4stat').textContent=
+      'step '+tr.it+'   ·   ζ = '+z.toFixed(4)+'  (true '+ZTRUE.toFixed(4)+')'+
+      '   ·   off by '+(100*Math.abs(z-ZTRUE)/ZTRUE).toFixed(1)+'%';
+  }
+  function step(){
+    if(!running) return;
+    tr.run(20); fi++;
+    if(fi%3===0){ zhist.push(net.par('zeta').v[0]); draw(); }
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('d4run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('d4reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('d4n').oninput=function(){
+    SIG=parseFloat(this.value); document.getElementById('d4nv').textContent=SIG.toFixed(2);
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  document.getElementById('d4p').oninput=function(){
+    NP=parseInt(this.value,10); document.getElementById('d4pv').textContent=NP;
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

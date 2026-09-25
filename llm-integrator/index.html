@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Language Model as a Physics Integrator</title>
+<meta name="description" content="What next-token prediction learns about a mass on a spring, and what it cannot. A small GPT trained live in your browser, rolled out as an integrator, and checked against the exact answer.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="plain";</script>
+<nav class="topbar">
+  <a class="brand" href="../" title="Back to all topics">⌂ All topics</a>
+  <a href="question.html">1 · The question</a>
+  <a href="tokens.html">2 · Tokens</a>
+  <a href="training.html">3 · Train one</a>
+  <a href="rule.html">4 · The rule</a>
+  <a href="rollout.html">5 · Rolling out</a>
+  <a href="drift.html">6 · Why it drifts</a>
+  <a href="lesson.html">7 · The lesson</a>
+  <a href="software.html">8 · Software</a>
+</nav>
+
+<div class="page">
+<header class="hero">
+  <p class="kicker">LLM set &middot; one worked example, done to the end</p>
+  <h1>A language model<br><span class="hl">as an integrator</span></h1>
+  <p class="lead">Sample a mass on a spring at even intervals, round the positions into 64 bins, and train a
+  small GPT to predict the next integer. Never mention Hooke's law, energy, or that the numbers are a
+  trajectory. Then run it forward by feeding it its own output &mdash; which is exactly how text is generated,
+  and exactly how an integrator advances.</p>
+  <p class="lead" style="font-size:1.15rem;color:var(--muted)">It learns the law almost exactly. It is still a
+  bad integrator. The gap between those two sentences is worth eight pages, and every number here is computed
+  in your browser while you watch.</p>
+</header>
+
+<section class="sec">
+  <h2>Why this is not a metaphor</h2>
+  <svg class="fig" viewBox="0 0 960 290" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arrl" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armrl" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><text x="230" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#6b3fd4" text-anchor="middle" font-weight="700">generating text</text><rect x="20" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#6b3fd4" stroke-width="1.4"/><text x="85" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#6b3fd4" text-anchor="middle" font-weight="700">context</text><text x="85" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">the tokens so far</text><line x1="152" y1="97" x2="166" y2="97" stroke="#27406e" stroke-width="1.8" marker-end="url(#arrl)"/><rect x="170" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#6b3fd4" stroke-width="1.4"/><text x="235" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#6b3fd4" text-anchor="middle" font-weight="700">the model</text><text x="235" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">scores every word</text><line x1="302" y1="97" x2="316" y2="97" stroke="#27406e" stroke-width="1.8" marker-end="url(#arrl)"/><rect x="320" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#6b3fd4" stroke-width="1.4"/><text x="385" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#6b3fd4" text-anchor="middle" font-weight="700">sample</text><text x="385" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">pick the next word</text><path d="M385 130 V 176 H 85 V 134" stroke="#6b3fd4" stroke-width="1.8" fill="none" stroke-dasharray="5 4" marker-end="url(#arrl)"/><text x="230" y="196" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6b3fd4" text-anchor="middle" font-weight="normal">feed the answer back in</text><text x="230" y="232" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">and repeat, one word at a time</text><text x="730" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#0b7a5a" text-anchor="middle" font-weight="700">stepping an integrator</text><rect x="520" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.4"/><text x="585" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#0b7a5a" text-anchor="middle" font-weight="700">state</text><text x="585" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">x and v now</text><line x1="652" y1="97" x2="666" y2="97" stroke="#27406e" stroke-width="1.8" marker-end="url(#arrl)"/><rect x="670" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.4"/><text x="735" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#0b7a5a" text-anchor="middle" font-weight="700">the scheme</text><text x="735" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">compute the update</text><line x1="802" y1="97" x2="816" y2="97" stroke="#27406e" stroke-width="1.8" marker-end="url(#arrl)"/><rect x="820" y="66" width="130" height="62" rx="8" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.4"/><text x="885" y="92" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#0b7a5a" text-anchor="middle" font-weight="700">step</text><text x="885" y="112" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">the state, later</text><path d="M885 130 V 176 H 585 V 134" stroke="#0b7a5a" stroke-width="1.8" fill="none" stroke-dasharray="5 4" marker-end="url(#arrl)"/><text x="730" y="196" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#0b7a5a" text-anchor="middle" font-weight="normal">feed the answer back in</text><text x="730" y="232" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">and repeat, one step at a time</text><rect x="20" y="250" width="900" height="34" rx="9" fill="#eaf1ff" stroke="#9dbcf5" stroke-width="1"/><text x="470" y="272" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">Same loop. So everything known about integrators applies — including the unwelcome parts.</text></svg>
+  <div class="grid g23" style="margin-top:18px">
+    <div>
+      <p>A mass on a spring, sampled every <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">\Delta t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal">t</span></span></span></span>, obeys an exactly linear two-term recurrence &mdash; from
+      the cosine addition formula and nothing else:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mn>2</mn><mi>cos</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>ω</mi><mi mathvariant="normal">Δ</mi><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><msub><mi>x</mi><mi>n</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">x_{n+1}=2\cos(\omega\Delta t)\,x_n-x_{n-1}.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mord">Δ</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>With <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\omega=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi><mo>=</mo><mn>0.2</mn></mrow><annotation encoding="application/x-tex">\Delta t=0.2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.2</span></span></span></span> the coefficient is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.960133</mn><mo>…</mo></mrow><annotation encoding="application/x-tex">1.960133\ldots</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.960133</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span></span></span></span>, so we know the exact answer to
+      any number of digits and can ask precisely what the model found.</p>
+      <p>Written as a matrix acting on <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>x</mi><mi>n</mi></msub><mo separator="true">,</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x_n,x_{n-1})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>, that rule has determinant exactly <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>: its eigenvalues
+      sit exactly on the unit circle, so it is a rotation and the amplitude can never change. The model learns
+      a determinant of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.99526</mn></mrow><annotation encoding="application/x-tex">0.99526</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.99526</span></span></span></span> instead. Over a thousand steps, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.9976</mn><msup><mn>3</mn><mn>1000</mn></msup><mo>=</mo><mn>0.09</mn></mrow><annotation encoding="application/x-tex">0.99763^{1000}=0.09</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">0.9976</span><span class="mord"><span class="mord">3</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1000</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.09</span></span></span></span>.</p>
+      <p>That one line is the whole story, and it is numerical analysis rather than machine learning.</p>
+    </div>
+    <div>
+      <div class="box physics"><div class="t">What the model is shown</div>
+        <p>Eight integers. No units, no time, no mention of a spring, and no hint that they are a trajectory.
+        Its entire task is to name the ninth.</p></div>
+      <div class="box warn"><div class="t">The sentence to remember</div>
+        <p>A learned time-stepper is a numerical scheme, so judge it as one: not by how accurate a single step
+        is, but by what it conserves over the run you intend to use.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>The eight pages</h2>
+  <div class="methods">
+    <a class="mcard c-green" href="question.html">
+      <div class="mnum">1</div>
+      <h3 class="green">The question &rarr;</h3>
+      <p>Why generating text and stepping an integrator are the same loop, the exact rule a sampled oscillator
+      obeys, and the answer given away in advance.</p>
+      <p class="need"><b>Plus:</b> the whole result, in one table, on slide 5</p>
+    </a>
+    <a class="mcard c-blue" href="tokens.html">
+      <div class="mnum">2</div>
+      <h3 class="blue">Turning a trajectory into tokens &rarr;</h3>
+      <p>Rounding a curve onto a lattice, a dictionary between machine-learning and physics vocabulary, and what
+      the rounding costs &mdash; which is not what you would guess.</p>
+      <p class="need"><b>Plus:</b> every setting used in the rest of the set, on one slide</p>
+    </a>
+    <a class="mcard c-blue" href="training.html">
+      <div class="mnum">3</div>
+      <h3 class="blue">Train one, and watch &rarr;</h3>
+      <p>How to read a physical law out of a trained network, and what happens to that law while the network is
+      still learning.</p>
+      <p class="need"><b>Interactive:</b> a GPT learning Hooke's law from integers, in thirty seconds</p>
+    </a>
+    <a class="mcard c-green" href="rule.html">
+      <div class="mnum">4</div>
+      <h3 class="green">Did it find the rule? &rarr;</h3>
+      <p>Yes &mdash; to 0.6% here, and to 0.018% with a larger model. And a trap: 0.6% in the coefficient is 15%
+      in the period, because inverting a cosine near zero is badly conditioned.</p>
+      <p class="need"><b>Plus:</b> the one coefficient that has to be exact rather than accurate</p>
+    </a>
+    <a class="mcard c-pink" href="rollout.html">
+      <div class="mnum">5</div>
+      <h3 class="pink">Rolling it out &rarr;</h3>
+      <p>A thousand steps, thirty-two periods, against the true motion, leapfrog and explicit Euler &mdash; and
+      the discovery that the rounding is helping it.</p>
+      <p class="need"><b>Interactive:</b> trained and rolled out live, with the amplitude tracked</p>
+    </a>
+    <a class="mcard c-blue" href="drift.html">
+      <div class="mnum">6</div>
+      <h3 class="blue">Why it drifts &rarr;</h3>
+      <p>The collapse in one line of linear algebra, what leapfrog has that the model does not, and three honest
+      answers to whether it could be fixed.</p>
+      <p class="need"><b>Interactive:</b> spoil the exact rule by hand and watch the eigenvalues move</p>
+    </a>
+    <a class="mcard c-orange" href="lesson.html">
+      <div class="mnum">7</div>
+      <h3 class="orange">What it means beyond the toy &rarr;</h3>
+      <p>Learned weather models, machine-learned force fields, neural solvers, emulators &mdash; and an explicit
+      account of what does and does not carry over to language models proper.</p>
+      <p class="need"><b>Plus:</b> the five checks that would have caught all of this</p>
+    </a>
+    <a class="mcard c-green" href="software.html">
+      <div class="mnum">8</div>
+      <h3 class="green">Code, reading and a checklist &rarr;</h3>
+      <p>torchdiffeq, diffrax, DifferentialEquations.jl and Hamiltonian networks &mdash; with links; six things
+      to read; and the three mistakes that actually occur.</p>
+      <p class="need"><b>Plus:</b> the classical baseline to set up on day one</p>
+    </a>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Four results from these pages</h2>
+  <div class="grid g2">
+    <div class="card c-green"><h3 class="green">It really does learn the law</h3>
+      <p>From integers alone, with no mention of a spring, the browser model recovers the recurrence coefficient
+      as <b>1.9715</b> against the exact <b>1.9601</b>; a model thirty times larger reaches <b>1.95978</b>
+      &mdash; two parts in ten thousand. It works out for itself that only the last two values matter, and that
+      the relationship between them is linear.</p></div>
+    <div class="card c-pink"><h3 class="pink">And it is still a bad integrator</h3>
+      <p>Rolled out for a thousand steps &mdash; thirty-two periods &mdash; its amplitude falls by <b>44%</b>,
+      and its own rule iterated without rounding falls by <b>90%</b>. Leapfrog, two lines of arithmetic with no
+      training at all, holds its amplitude to <b>0.01%</b> over the same run.</p></div>
+    <div class="card c-blue"><h3 class="blue">One number explains all of it</h3>
+      <p>The exact rule has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> exactly, so it is a rotation and cannot lose amplitude. The learned
+      rule has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>0.99763</mn></mrow><annotation encoding="application/x-tex">|\lambda|=0.99763</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.99763</span></span></span></span>. A defect of a quarter of one per cent, raised to the power one thousand,
+      is <b>0.09</b> &mdash; which is the observed collapse, predicted in advance.</p></div>
+    <div class="card c-orange"><h3 class="orange">Which way it fails is a coin toss</h3>
+      <p>Across eight identical runs differing only in their random start, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> landed between
+      <b>0.9757</b> and <b>1.0179</b> &mdash; three of the eight <em>outside</em> the circle, so those models
+      gain energy rather than lose it. Nothing in "predict the next token" pins the eigenvalue to 1.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Five habits worth having</h2>
+  <div class="grid g2">
+    <div class="card c-green"><h3 class="green">Do</h3>
+      <ol>
+        <li>Plot a conserved quantity over the longest run you will actually use.</li>
+        <li>Keep a classical structure-preserving integrator running alongside, from day one.</li>
+        <li>Fit a linear map to your model's answers and look at its eigenvalues.</li>
+        <li>Run the exact rule through your own pipeline as a control.</li>
+        <li>Repeat everything from several random starts before believing it.</li>
+      </ol></div>
+    <div class="card c-pink"><h3 class="pink">Don't</h3>
+      <ol>
+        <li>Judge a time-stepper by its one-step error &mdash; the failure is in the compounding.</li>
+        <li>Read a well-fitted coefficient as a well-determined physical quantity.</li>
+        <li>Assume the discretisation is hurting you; here it was helping.</li>
+        <li>Expect more parameters to fix a structural defect. They move it, not remove it.</li>
+        <li>Report one run. The direction of failure changed between runs here.</li>
+      </ol></div>
+  </div>
+</section>
+
+<footer class="sec foot">
+  <h2>About this collection</h2>
+  <p>Eight pages, each a single self-contained HTML file. Equations are pre-rendered text; the diagrams are
+  vector graphics; the demonstrations build a small GPT, differentiate it by hand-written reverse-mode
+  automatic differentiation and train it in plain JavaScript while you watch, so every number on screen is
+  computed rather than stored. Everything runs offline. With JavaScript switched off each page becomes one long
+  scrolling document with the notes shown.</p>
+  <p class="cap">Prepared by Dipak Munshi with Claude (Anthropic), September 2026. Based on the written note
+  <em>A language model as a physics integrator</em>. Companion sets: transformers and physics; stochastic
+  differential equations; physics-informed neural networks; Monte Carlo samplers; time-series analysis.</p>
+</footer>
+</div>
+
+
+</body>
+</html>

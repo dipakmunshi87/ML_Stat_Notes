@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why It Drifts, and What Would Fix It</title>
+<meta name="description" content="The collapse explained in one line of linear algebra: eigenvalues on the unit circle, symplectic integrators, and why next-token accuracy cannot see the failure.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="question.html">1 · The question</a><a href="tokens.html">2 · Tokens</a><a href="training.html">3 · Train one</a><a href="rule.html">4 · The rule</a><a href="rollout.html">5 · Rolling out</a><a href="drift.html" class="here">6 · Why it drifts</a><a href="lesson.html">7 · The lesson</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-blue" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 6 of 8 &middot; the explanation</p>
+  <h1>Why it drifts,<br>and what would <span class="hl">fix it</span></h1>
+  <p class="lead" style="max-width:64ch">The collapse is not mysterious and it is not a machine-learning
+  phenomenon. It is one line of linear algebra, and it has been understood in numerical integration for
+  fifty years.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-blue jump" href="#s2"><h3 class="blue">1 &middot; The one line &rarr;</h3><p>Eigenvalues, and a circle.</p></a>
+    <a class="card c-pink jump" href="#s3"><h3 class="pink">2 &middot; Try it &rarr;</h3><p>Set the error yourself and watch.</p></a>
+    <a class="card c-green jump" href="#s5"><h3 class="green">3 &middot; The fix &rarr;</h3><p>What leapfrog has that the model does not.</p></a>
+  </div>
+  <div class="notes"><p>This is the page that turns a curiosity into something transferable.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s2">
+<div class="inner">
+  <p class="kicker">The one line</p>
+  <h2>Everything is decided by <span class="hl">one number</span></h2>
+  <svg class="fig" viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="aruc" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armuc" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="380" height="282" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="200" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">where the one-step map sits</text><text x="200" y="62" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#1450c8" text-anchor="middle" font-weight="700">the exact rule:  |λ| = 1, exactly</text><line x1="84" y1="170" x2="316" y2="170" stroke="#ccd8ec" stroke-width="1"/><line x1="200" y1="58" x2="200" y2="282" stroke="#ccd8ec" stroke-width="1"/><circle cx="200" cy="170" r="86" fill="none" stroke="#1450c8" stroke-width="2.4"/><circle cx="267.939" cy="117.272" r="6.5" fill="#1450c8"/><circle cx="267.939" cy="222.728" r="6.5" fill="#1450c8"/><circle cx="200" cy="170" r="72.24" fill="none" stroke="#b3246b" stroke-width="1.6" stroke-dasharray="5 4"/><circle cx="251.356" cy="119.195" r="6.5" fill="#b3246b"/><circle cx="251.356" cy="220.805" r="6.5" fill="#b3246b"/><text x="200" y="282" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#b3246b" text-anchor="middle" font-weight="700">the learned rule:  |λ| = 0.9976</text><text x="200" y="302" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">drawn far inside, so that you can see it at all</text><rect x="410" y="34" width="540" height="282" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="680" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">what that does over a thousand steps</text><line x1="462" y1="260" x2="908" y2="260" stroke="#ccd8ec" stroke-width="1.2"/><line x1="462" y1="70" x2="462" y2="260" stroke="#ccd8ec" stroke-width="1.2"/><line x1="462" y1="84" x2="908" y2="84" stroke="#1450c8" stroke-width="2.4"/><polyline points="462,84 465.717,87.2123 469.433,90.3618 473.15,93.4495 476.867,96.4767 480.583,99.4447 484.3,102.354 488.017,105.207 491.733,108.004 495.45,110.746 499.167,113.435 502.883,116.071 506.6,118.655 510.317,121.188 514.033,123.672 517.75,126.107 521.467,128.495 525.183,130.836 528.9,133.131 532.617,135.381 536.333,137.587 540.05,139.749 543.767,141.87 547.483,143.949 551.2,145.987 554.917,147.985 558.633,149.944 562.35,151.865 566.067,153.748 569.783,155.594 573.5,157.404 577.217,159.178 580.933,160.918 584.65,162.624 588.367,164.296 592.083,165.936 595.8,167.543 599.517,169.119 603.233,170.664 606.95,172.179 610.667,173.664 614.383,175.12 618.1,176.548 621.817,177.947 625.533,179.319 629.25,180.665 632.967,181.984 636.683,183.277 640.4,184.544 644.117,185.787 647.833,187.006 651.55,188.201 655.267,189.372 658.983,190.52 662.7,191.646 666.417,192.75 670.133,193.832 673.85,194.893 677.567,195.933 681.283,196.953 685,197.953 688.717,198.933 692.433,199.895 696.15,200.837 699.867,201.761 703.583,202.666 707.3,203.554 711.017,204.425 714.733,205.278 718.45,206.115 722.167,206.936 725.883,207.74 729.6,208.529 733.317,209.302 737.033,210.06 740.75,210.803 744.467,211.531 748.183,212.246 751.9,212.946 755.617,213.633 759.333,214.306 763.05,214.966 766.767,215.613 770.483,216.247 774.2,216.869 777.917,217.479 781.633,218.077 785.35,218.663 789.067,219.238 792.783,219.801 796.5,220.353 800.217,220.895 803.933,221.426 807.65,221.946 811.367,222.457 815.083,222.957 818.8,223.447 822.517,223.928 826.233,224.4 829.95,224.862 833.667,225.315 837.383,225.76 841.1,226.195 844.817,226.622 848.533,227.041 852.25,227.452 855.967,227.854 859.683,228.249 863.4,228.636 867.117,229.015 870.833,229.387 874.55,229.751 878.267,230.109 881.983,230.459 885.7,230.803 889.417,231.14 893.133,231.47 896.85,231.794 900.567,232.111 904.283,232.422 908,232.728" fill="none" stroke="#b3246b" stroke-width="2.6"/><text x="612" y="76" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#1450c8" text-anchor="middle" font-weight="normal">the exact rule keeps its amplitude</text><text x="762" y="200" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#b3246b" text-anchor="middle" font-weight="normal">the learned rule loses it</text><text x="456" y="280" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">0</text><text x="908" y="280" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">1000 steps</text><text x="680" y="302" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">two parts in a thousand, raised to the power one thousand</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>Iterating a linear map <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> times multiplies by <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>λ</mi><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">\lambda^n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span></span></span></span>. If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> the map is a rotation and
+      the amplitude never changes. If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>0.99763</mn></mrow><annotation encoding="application/x-tex">|\lambda|=0.99763</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.99763</span></span></span></span>, then after a thousand steps <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><msup><mi mathvariant="normal">∣</mi><mn>1000</mn></msup><mo>=</mo><mn>0.093</mn></mrow><annotation encoding="application/x-tex">|\lambda|^{1000}=0.093</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord"><span class="mord">∣</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1000</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.093</span></span></span></span>.</p>
+    </div>
+    <div>
+      <p>The exact rule has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> <em>exactly</em>, because its determinant is exactly one. The learned
+      rule misses by a quarter of a per cent, and a thousand steps does the rest.</p>
+    </div>
+  </div>
+  <div class="notes"><p>It is worth stressing that this needs no approximation: the map really is linear, so
+  the eigenvalue really does decide everything.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s3">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>Set the error <span class="hl">yourself</span></h2>
+  <p style="max-width:84ch">Take the exact rule and spoil one coefficient by hand. The sliders move <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span>
+  away from their exact values; everything else is computed from them. No training, no waiting &mdash; this is
+  arithmetic.</p>
+  <div class="ctl">
+    <label>error in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> <input id="d1a" type="range" min="-40" max="40" step="1" value="12"><span class="val" id="d1av">+1.2%</span></label>
+    <label>error in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> <input id="d1b" type="range" min="-40" max="40" step="1" value="-5"><span class="val" id="d1bv">&minus;0.5%</span></label>
+    <button id="d1run" class="ghost">Exact rule</button>
+    <span class="stat" id="d1stat">|&lambda;| = 1</span>
+  </div>
+  <canvas id="d1" width="1160" height="330"></canvas>
+  <p class="vidcap">Left: where the eigenvalues sit relative to the unit circle. Right: the resulting
+  trajectory over thirty-two periods, with leapfrog for comparison. Note that the error in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> alone moves the
+  eigenvalues <em>along</em> the circle &mdash; it changes the frequency but not the amplitude. Only the error
+  in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> moves them off it.</p>
+  <div class="notes"><p>The separation of roles &mdash; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> sets the frequency, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> sets whether energy is
+  conserved &mdash; is the single most useful thing on this page.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">Two different errors</p>
+  <h2>One coefficient must be <span class="hl">exact</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>Write the one-step map as a matrix and the two coefficients play completely different roles:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>M</mi><mo>=</mo><mrow><mo fence="true">(</mo><mtable rowspacing="0.16em" columnalign="center center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>a</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>b</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd></mtr></mtable><mo fence="true">)</mo></mrow><mo separator="true">,</mo><mspace width="2em"/><mi>det</mi><mo>⁡</mo><mi>M</mi><mo>=</mo><mo>−</mo><mi>b</mi><mo separator="true">,</mo><mspace width="2em"/><mi mathvariant="normal">tr</mi><mo>⁡</mo><mi>M</mi><mo>=</mo><mi>a</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">M=\begin{pmatrix}a&amp;b\\1&amp;0\end{pmatrix},\qquad
+      \det M=-b,\qquad \operatorname{tr}M=a .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">a</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.95em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">b</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.95em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">det</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">−</span><span class="mord mathnormal">b</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mord mathrm">tr</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span><span class="mord">.</span></span></span></span></span></div>
+      <p>For a complex eigenvalue pair, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><msup><mi mathvariant="normal">∣</mi><mn>2</mn></msup><mo>=</mo><mi>det</mi><mo>⁡</mo><mi>M</mi><mo>=</mo><mo>−</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">|\lambda|^2=\det M=-b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord"><span class="mord">∣</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mop">det</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord mathnormal">b</span></span></span></span> and the rotation angle comes from the trace. So:</p>
+      <table class="num" style="margin-top:8px">
+        <tr><th>getting wrong</th><th>changes</th><th>over 1000 steps</th></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> only</td><td>the frequency</td><td>a phase error, bounded</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> only</td><td>the amplitude</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><msup><mi mathvariant="normal">∣</mi><mn>1000</mn></msup></mrow><annotation encoding="application/x-tex">|\lambda|^{1000}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord"><span class="mord">∣</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1000</span></span></span></span></span></span></span></span></span></span></span></span>, unbounded</td></tr>
+      </table>
+      <p style="margin-top:10px">An error in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> is survivable: your oscillation runs slightly fast or slow,
+      and the energy is fine. An error in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> is not: it compounds.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Why "exact" rather than "accurate"</div>
+        <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> has to be <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">1</span></span></span></span> to machine precision, because there is no such thing as being slightly conserved.
+        Nothing in a gradient-descent objective produces an exact value. The larger model in the companion note
+        reached <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mo>=</mo><mo>−</mo><mn>0.99953</mn></mrow><annotation encoding="application/x-tex">b=-0.99953</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">0.99953</span></span></span></span>, five times closer, and still lost a fifth of its amplitude over the same run.</p>
+        <p>Scaling the model moves the eigenvalue toward the circle. It never puts it on the circle.</p></div>
+      <div class="box physics"><div class="t">The familiar version</div>
+        <p>This is the same statement as "a symplectic integrator has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>det</mi><mo>⁡</mo><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\det=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mop">det</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> by construction". Leapfrog is
+        built so that its determinant is one identically, whatever the step size &mdash; not because it is more
+        accurate, but because of how it is assembled.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The a/b split maps onto phase error versus energy error, which every computational
+  physicist already knows in another notation.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s5">
+<div class="inner">
+  <p class="kicker">The fix</p>
+  <h2>What leapfrog has that <span class="hl">the model does not</span></h2>
+  <svg class="fig" viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arsy" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armsy" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="290" height="236" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="155" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#0b7a5a" text-anchor="middle" font-weight="700">the true motion</text><g transform="translate(155,150) rotate(0)"><rect x="-27" y="-17" width="54" height="34" fill="#0b7a5a" fill-opacity="0.55" stroke="#0b7a5a" stroke-width="1.6"/></g><g transform="translate(155,150) rotate(63.0254)"><rect x="-27" y="-17" width="54" height="34" fill="#0b7a5a" fill-opacity="0.41" stroke="#0b7a5a" stroke-width="1.6"/></g><g transform="translate(155,150) rotate(126.051)"><rect x="-27" y="-17" width="54" height="34" fill="#0b7a5a" fill-opacity="0.27" stroke="#0b7a5a" stroke-width="1.6"/></g><text x="155" y="258" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">the patch turns, and keeps its area</text><rect x="335" y="34" width="290" height="236" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="480" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">leapfrog</text><g transform="translate(480,150) rotate(0)"><rect x="-27" y="-17" width="54" height="34" fill="#1450c8" fill-opacity="0.55" stroke="#1450c8" stroke-width="1.6"/></g><g transform="translate(480,150) rotate(63.0254)"><rect x="-27" y="-17" width="54" height="34" fill="#1450c8" fill-opacity="0.41" stroke="#1450c8" stroke-width="1.6"/></g><g transform="translate(480,150) rotate(126.051)"><rect x="-27" y="-17" width="54" height="34" fill="#1450c8" fill-opacity="0.27" stroke="#1450c8" stroke-width="1.6"/></g><text x="480" y="258" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">turns, and keeps its area — exactly</text><rect x="660" y="34" width="290" height="236" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="805" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">the learned rule</text><g transform="translate(805,150) rotate(0)"><rect x="-27" y="-17" width="54" height="34" fill="#b3246b" fill-opacity="0.55" stroke="#b3246b" stroke-width="1.6"/></g><g transform="translate(805,150) rotate(63.0254)"><rect x="-21.06" y="-13.26" width="42.12" height="26.52" fill="#b3246b" fill-opacity="0.41" stroke="#b3246b" stroke-width="1.6"/></g><g transform="translate(805,150) rotate(126.051)"><rect x="-16.4268" y="-10.3428" width="32.8536" height="20.6856" fill="#b3246b" fill-opacity="0.27" stroke="#b3246b" stroke-width="1.6"/></g><text x="805" y="258" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">turns, and shrinks a little each time</text><text x="480" y="292" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#27406e" text-anchor="middle" font-weight="normal">Area in the (position, velocity) plane is what "energy does not drift" really means.</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>A symplectic map preserves area in the position&ndash;velocity plane. Leapfrog is built from two shears
+      and a translation, each of which has determinant exactly one &mdash; so their product does too, in exact
+      arithmetic and in floating point.</p>
+    </div>
+    <div>
+      <p>That is not accuracy, it is structure. Leapfrog's error at any single step is larger than the model's;
+      it simply cannot leak amplitude, because it has no way to change the area.</p>
+    </div>
+  </div>
+  <div class="notes"><p>The area picture is the one physicists remember; the determinant is the one they can
+  check.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s6">
+<div class="inner">
+  <p class="kicker">Could it be fixed?</p>
+  <h2>Three honest <span class="hl">answers</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Build the structure in</h3>
+      <p>Do not let the network output the next state. Let it output the <em>Hamiltonian</em>, or a generating
+      function, and take the step with a symplectic scheme. Then the determinant is one by construction and no
+      amount of training error can change it.</p>
+      <p>This is what Hamiltonian and symplectic networks do. The cost is that you must know the structure in
+      advance.</p></div>
+    <div class="card c-blue"><h3 class="blue">Put it in the loss</h3>
+      <p>Add a penalty on the change in a conserved quantity, or train on multi-step rollouts rather than single
+      steps, so that the compounding error becomes visible to the optimiser.</p>
+      <p>This helps, and is not exact: a penalty makes the violation small, not zero.</p></div>
+    <div class="card c-orange"><h3 class="orange">Do not use it as an integrator</h3>
+      <p>Often the right answer. Use the learned model where its strength lies &mdash; interpolating a
+      complicated one-step map, or supplying a closure term &mdash; and let a proper integrator do the time
+      stepping.</p>
+      <p>Most successful learned solvers are hybrids of this kind.</p></div>
+  </div>
+  <div class="box warn" style="margin-top:14px"><div class="t">What will not fix it</div>
+    <p>More parameters, more data, more training. All three move <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> closer to 1 and none of them puts
+    it there, because nothing in "predict the next value" refers to the determinant. The defect is invisible to
+    the objective, so making the objective smaller does not remove it.</p></div>
+  <div class="notes"><p>The three cards are roughly in order of how much you have to know about your system in
+  advance.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s7">
+<div class="inner">
+  <p class="kicker">The blind spot</p>
+  <h2>Why training could <span class="hl">never see it</span></h2>
+  <svg class="fig" viewBox="0 0 940 260" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arbs" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armbs" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="440" height="200" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="230" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b4530a" text-anchor="middle" font-weight="700">what training measures</text><text x="230" y="82" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="24" fill="#b4530a" text-anchor="middle" font-weight="700">one step</text><text x="230" y="116" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">Given eight tokens, is the ninth right?</text><text x="230" y="140" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">Averaged over millions of examples.</text><text x="230" y="180" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#27406e" text-anchor="middle" font-weight="normal">A defect of 0.2% here is</text><text x="230" y="200" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#27406e" text-anchor="middle" font-weight="normal">far below the rounding noise.</text><rect x="490" y="34" width="440" height="200" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="710" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">what you actually care about</text><text x="710" y="82" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="24" fill="#b3246b" text-anchor="middle" font-weight="700">a thousand steps</text><text x="710" y="116" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">Is the amplitude still right after</text><text x="710" y="140" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">thirty periods?</text><text x="710" y="180" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#27406e" text-anchor="middle" font-weight="normal">The same 0.2% defect, compounded,</text><text x="710" y="200" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#27406e" text-anchor="middle" font-weight="normal">has destroyed the answer.</text><text x="470" y="252" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13.5" fill="#c2273d" text-anchor="middle" font-weight="700">The training objective cannot see the failure, because the failure takes a thousand steps to appear.</text></svg>
+  <div class="notes"><p>This is the general lesson, and page 7 takes it out of the toy.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s8">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>Six lines, <span class="hl">the whole argument</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Step</th><th></th></tr>
+        <tr><td>the sampled motion obeys</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mn>2</mn><mi>cos</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>ω</mi><mi mathvariant="normal">Δ</mi><mi>t</mi><mo stretchy="false">)</mo><msub><mi>x</mi><mi>n</mi></msub><mo>−</mo><msub><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">x_{n+1}=2\cos(\omega\Delta t)x_n-x_{n-1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">cos</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mord">Δ</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span></td></tr>
+        <tr><td>as a matrix, its determinant is</td><td>exactly 1</td></tr>
+        <tr><td>so its eigenvalues have</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\lambda|=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>: a rotation</td></tr>
+        <tr><td>the model learns instead</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mo>=</mo><mo>−</mo><mn>0.99526</mn></mrow><annotation encoding="application/x-tex">b=-0.99526</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">0.99526</span></span></span></span></td></tr>
+        <tr><td>so its eigenvalues have</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>0.99763</mn></mrow><annotation encoding="application/x-tex">|\lambda|=0.99763</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.99763</span></span></span></span>: a spiral</td></tr>
+        <tr><td>after a thousand steps</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.9976</mn><msup><mn>3</mn><mn>1000</mn></msup><mo>=</mo><mn>0.093</mn></mrow><annotation encoding="application/x-tex">0.99763^{1000}=0.093</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">0.9976</span><span class="mord"><span class="mord">3</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1000</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.093</span></span></span></span></td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The transferable statement</div>
+        <p>A learned time-stepper inherits every property of a numerical scheme, including the one that matters
+        most over long runs: whether it preserves the structure of the problem. Accuracy per step and
+        conservation over many steps are different things, and optimising the first does not deliver the
+        second.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="lesson.html">Page 7</a> takes this out of the toy: what it implies for learned weather
+        models, molecular dynamics, emulators and anything else that is rolled out.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>If a reader remembers one table from this set, it should be this one.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/lm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- spoil the exact rule by hand and watch what happens ---------- */
+(function(){
+  var cv=document.getElementById('d1'); if(!cv||typeof LM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var W=1,DT=0.2,N=1000,A0=0.75,PH=0.3;
+  var O=LM.Osc({vocab:64,dt:DT,w:W});
+  var EA=O.c2, EB=-1;
+  var da=12, db=-5;                     /* in units of 0.1 per cent */
+
+  function cur(){ return {a:EA*(1+da/1000), b:EB*(1+db/1000)}; }
+
+  function series(a,b,n){
+    var x0=A0*Math.cos(PH), x1=A0*Math.cos(W*DT+PH), out=[x0,x1], i;
+    for(i=2;i<=n;i++){
+      var v=a*out[i-1]+b*out[i-2];
+      if(!isFinite(v)||Math.abs(v)>1e8) v=Math.sign(v||1)*1e8;
+      out.push(v);
+    }
+    return out;
+  }
+  var WIN=32;
+  function env(xs){
+    var out=[],i,j;
+    for(i=0;i+WIN<xs.length;i+=8){
+      var mx=0; for(j=i;j<i+WIN;j++) mx=Math.max(mx,Math.abs(xs[j]));
+      out.push([i+WIN/2,mx]);
+    }
+    return out;
+  }
+  var lfAmp=null;
+  function leapAmp(){
+    if(lfAmp) return lfAmp;
+    var v0=-A0*W*Math.sin(PH);
+    lfAmp=env(LM.leapfrog(A0*Math.cos(PH),v0,W,DT,N));
+    return lfAmp;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var c=cur(), a=c.a, b=c.b;
+    var lam=LM.lambdaMod(a,b), H=250;
+
+    /* ---- the circle ---- */
+    var cx=192, cy=34+H/2, R=96;
+    ctx.fillStyle=C.panel; ctx.fillRect(62,34,270,H);
+    ctx.strokeStyle=C.rule; ctx.lineWidth=1; ctx.strokeRect(62,34,270,H);
+    ctx.fillStyle=C.ink2; ctx.font='bold 15px sans-serif';
+    ctx.fillText('where the eigenvalues sit',62,26);
+    ctx.strokeStyle=C.rule; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx-R-28,cy); ctx.lineTo(cx+R+28,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-R-28); ctx.lineTo(cx,cy+R+28); ctx.stroke();
+    ctx.strokeStyle=C.blue; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+    var disc=a*a+4*b, th, rr=lam;
+    if(disc<0){ th=Math.atan2(Math.sqrt(-disc)/2, a/2); }
+    else { th=0; }
+    ctx.strokeStyle=lam>1?C.red:(lam<1?C.pink:C.green);
+    ctx.lineWidth=1.6; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.arc(cx,cy,R*Math.min(1.35,rr),0,7); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=lam>1?C.red:(lam<1?C.pink:C.green);
+    var rp=R*Math.min(1.35,rr);
+    if(disc<0){
+      ctx.beginPath(); ctx.arc(cx+rp*Math.cos(th),cy-rp*Math.sin(th),7,0,7); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+rp*Math.cos(th),cy+rp*Math.sin(th),7,0,7); ctx.fill();
+    } else {
+      var r1=Math.abs((a+Math.sqrt(disc))/2), r2=Math.abs((a-Math.sqrt(disc))/2);
+      ctx.beginPath(); ctx.arc(cx+R*Math.min(1.35,r1),cy,7,0,7); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+R*Math.min(1.35,r2),cy,7,0,7); ctx.fill();
+    }
+    ctx.font='12.5px sans-serif'; ctx.fillStyle=C.blue;
+    ctx.fillText('unit circle',cx-30,34+H-10);
+
+    /* ---- the trajectory envelope ---- */
+    var xs=series(a,b,N);
+    var e=env(xs), lf=leapAmp();
+    var top=Math.max(1.4, e.length?Math.min(6,e[e.length-1][1]*1.25):1.4);
+    var ax=new PL.Axes(ctx,412,34,708,H,{xlim:[0,N],ylim:[0,top],
+        title:'amplitude over thirty-two periods',titleColor:C.ink2,
+        xlabel:'step   (31.4 steps to a period)'});
+    ax.hline(A0,C.rule,[5,4]);
+    ax.line(lf.map(function(p){return p[0];}),lf.map(function(p){return p[1];}),C.blue,2.2);
+    ax.line(e.map(function(p){return p[0];}),e.map(function(p){return p[1];}),
+            lam>1?C.red:(lam<1?C.pink:C.green),2.8);
+    ax.ticks([0,250,500,750,1000],[0,A0,top]);
+    ax.legend([['your rule',lam>1?C.red:(lam<1?C.pink:C.green)],['leapfrog',C.blue],['the truth',C.rule]]);
+
+    var fin=e.length?e[e.length-1][1]:0, st=e.length?e[0][1]:0;
+    document.getElementById('d1stat').textContent=
+      'a = '+a.toFixed(5)+'   b = '+b.toFixed(5)+'   |λ| = '+lam.toFixed(6)+
+      '   ·   amplitude after 1000 steps: '+
+      (fin>1e6?fin.toExponential(1):(100*fin/st).toFixed(1)+'% of the start');
+  }
+  function labels(){
+    document.getElementById('d1av').textContent=(da>=0?'+':'−')+Math.abs(da/10).toFixed(1)+'%';
+    document.getElementById('d1bv').textContent=(db>=0?'+':'−')+Math.abs(db/10).toFixed(1)+'%';
+  }
+  document.getElementById('d1a').oninput=function(){ da=+this.value; labels(); draw(); };
+  document.getElementById('d1b').oninput=function(){ db=+this.value; labels(); draw(); };
+  document.getElementById('d1run').onclick=function(){
+    da=0; db=0;
+    document.getElementById('d1a').value=0; document.getElementById('d1b').value=0;
+    labels(); draw();
+  };
+  labels(); draw();
+})();
+
+</script>
+
+</body>
+</html>

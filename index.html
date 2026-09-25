@@ -73,6 +73,89 @@
       <span class="go">Open &rarr;</span></p>
     </a>
 
+
+    <a class="tcard c-orange" href="pinn/">
+      <div class="mnum">3</div>
+      <h3>Physics-informed neural networks</h3>
+      <p>A network whose output <em>is</em> the solution of your differential equation, found by penalising the
+      equation's own residual. Derived from the equations up, trained in front of you, and equally specific about
+      where it wins and where it has no business being used.</p>
+      <ul class="pages">
+        <li>What a PINN is</li><li>Why it works</li><li>Training it</li><li>When it fails</li>
+        <li>Inverse problems</li><li>Beyond ODEs</li><li>Software</li>
+      </ul>
+      <p class="meta">Eight pages &middot; four networks that train live in the page &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-purple" href="sde/">
+      <div class="mnum">4</div>
+      <h3>Stochastic differential equations</h3>
+      <p>Ordinary differential equations with a noise term &mdash; except the noise is rough enough to break the
+      chain rule, make the integral ambiguous, and turn the subject into statistical mechanics in different
+      notation. Brownian motion through to diffusion models.</p>
+      <ul class="pages">
+        <li>Brownian motion</li><li>It&ocirc; calculus</li><li>Numerics</li><li>Fokker&ndash;Planck</li>
+        <li>Feynman&ndash;Kac</li><li>Langevin</li><li>Applications</li><li>Software</li>
+      </ul>
+      <p class="meta">Nine pages &middot; six live simulations &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-pink" href="transformers/">
+      <div class="mnum">5</div>
+      <h3>Transformers, and physics</h3>
+      <p>One operation &mdash; every element of a set looks at every other and takes a weighted average, with the
+      weights learned from the data. Attention as a learned kernel, why unordered variable-size physics data
+      suits it, what has actually been achieved, and where it has no business being used.</p>
+      <ul class="pages">
+        <li>Attention</li><li>The block</li><li>Why physics data</li><li>Applications</li>
+        <li>Surrogates</li><li>Generative models</li><li>Limits</li><li>Software</li>
+      </ul>
+      <p class="meta">Nine pages &middot; six transformers that train live in the page &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-orange" href="llm-integrator/">
+      <div class="mnum">6</div>
+      <h3>A language model as an integrator</h3>
+      <p>One worked example, taken to the end. A mass on a spring is sampled, rounded into 64 bins and handed to
+      a small GPT that is never told what the numbers mean. It learns the law almost exactly &mdash; and is
+      still a bad integrator, for a reason that fits on one line.</p>
+      <ul class="pages">
+        <li>The question</li><li>Tokens</li><li>Train one</li><li>The rule</li>
+        <li>Rolling out</li><li>Why it drifts</li><li>The lesson</li><li>Software</li>
+      </ul>
+      <p class="meta">Nine pages &middot; a GPT trained and rolled out in the page &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-blue" href="svi/">
+      <div class="mnum">7</div>
+      <h3>Stochastic variational inference</h3>
+      <p>Turning an integral you cannot do into an optimisation you can. The ELBO derived from scratch, the
+      reparameterisation trick measured rather than asserted, and four worked examples &mdash; two in one
+      dimension, two in two &mdash; including the two cases where the method quietly lies to you.</p>
+      <ul class="pages">
+        <li>The ELBO</li><li>Why stochastic</li><li>Reparameterisation</li><li>A known answer</li>
+        <li>Bimodal</li><li>Mean-field</li><li>Banana</li><li>Diagnostics</li>
+      </ul>
+      <p class="meta">One page &middot; six figures computed live &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
+
+    <a class="tcard c-green" href="bayesopt/">
+      <div class="mnum">8</div>
+      <h3>Bayesian optimisation</h3>
+      <p>How to optimise a function so expensive you can only afford thirty evaluations. Gaussian-process
+      surrogates, the acquisition functions derived and then compared over forty runs each, and the failure
+      that nobody warns you about &mdash; the kernel is the assumption, and getting it wrong raises no error.</p>
+      <ul class="pages">
+        <li>When to use it</li><li>Gaussian processes</li><li>Acquisition</li><li>The loop</li>
+        <li>EI vs UCB vs PI</li><li>Branin</li><li>Lengthscale</li><li>Limits</li>
+      </ul>
+      <p class="meta">One page &middot; five figures computed live &middot;
+      <span class="go">Open &rarr;</span></p>
+    </a>
   </div>
 </section>
 
@@ -86,9 +169,6 @@
     <div class="scard"><h3>Running things on an HPC cluster</h3>
       <p>Parallel CPU and GPU jobs under PBS: worked examples, the commands that matter, and the mistakes that
       quietly cost you a factor of thirty.</p></div>
-    <div class="scard"><h3>Variational inference</h3>
-      <p>The evidence lower bound, mean-field and normalising-flow families, and where variational methods beat
-      sampling &mdash; and where they badly do not.</p></div>
   </div>
 </section>
 

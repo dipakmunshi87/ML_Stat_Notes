@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What This Means Beyond the Toy</title>
+<meta name="description" content="What a spring teaches about learned weather models, molecular dynamics, emulators and any model that is rolled out - and the checks that would have caught the failure.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="question.html">1 · The question</a><a href="tokens.html">2 · Tokens</a><a href="training.html">3 · Train one</a><a href="rule.html">4 · The rule</a><a href="rollout.html">5 · Rolling out</a><a href="drift.html">6 · Why it drifts</a><a href="lesson.html" class="here">7 · The lesson</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-orange" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 7 of 8 &middot; the lesson</p>
+  <h1>Out of the toy,<br>into <span class="hl">real work</span></h1>
+  <p class="lead" style="max-width:64ch">A spring is the simplest system with a conserved quantity, which is
+  why it shows the failure so cleanly. The failure itself is not simple, and it does not stay in the toy.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-orange jump" href="#s2"><h3 class="orange">1 &middot; Where it appears &rarr;</h3><p>Five places this exact problem turns up.</p></a>
+    <a class="card c-blue jump" href="#s3"><h3 class="blue">2 &middot; The checks &rarr;</h3><p>What would have caught it.</p></a>
+    <a class="card c-pink jump" href="#s4"><h3 class="pink">3 &middot; And LLMs proper &rarr;</h3><p>What does and does not carry over.</p></a>
+  </div>
+  <div class="notes"><p>The generalisation has to be made carefully: some of it transfers exactly and some of it
+  does not.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s2">
+<div class="inner">
+  <p class="kicker">Where it appears</p>
+  <h2>The same failure, <span class="hl">in production</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Learned weather models</h3>
+      <p>Trained to predict the next six hours, then rolled out for ten days &mdash; forty steps of a map they
+      were never scored on. Fields lose variance over long rollouts; multi-step training and noise injection
+      exist precisely because of it.</p></div>
+    <div class="card c-blue"><h3 class="blue">Machine-learned force fields</h3>
+      <p>Fitted to energies and forces, then used for millions of steps of molecular dynamics. Energy drift is
+      a standard diagnostic, and a well-fitted force field can still heat or cool a simulation that should
+      conserve.</p></div>
+    <div class="card c-orange"><h3 class="orange">Learned solvers and closures</h3>
+      <p>A network standing in for one step of a fluid or plasma solver. Tiny single-step error, unstable
+      rollout &mdash; the most commonly reported difficulty in the field, and it is this problem.</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card c-purple"><h3 class="purple">Emulators used inside a chain</h3>
+      <p>An emulator called <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><msup><mn>0</mn><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">10^6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span> times inside a sampler is not rolled out, so it escapes this trap. The same
+      logic applies to its <em>bias</em>, though: a small systematic error invisible in one call shifts a
+      posterior when repeated.</p></div>
+    <div class="card c-pink"><h3 class="pink">Video and world models</h3>
+      <p>Generate a frame, feed it back, repeat. Objects drift, sizes creep, quantities that should be constant
+      are not. The complaint is the same one: the objective is per-step and the failure is cumulative.</p></div>
+    <div class="card c-blue"><h3 class="blue">Anything autoregressive</h3>
+      <p>If your model consumes its own output, it is an integrator, and the question "what does it conserve?"
+      is a fair one to ask of it.</p></div>
+  </div>
+  <div class="notes"><p>The weather and force-field examples are the ones where the community already has
+  standard mitigations, which is itself evidence that the problem is real.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">The checks</p>
+  <h2>What would have <span class="hl">caught it</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>Plot a conserved quantity over the longest run you care about.</strong> Not the loss, not
+        the one-step error. Energy, mass, momentum, norm &mdash; whatever your system should keep. Flat or not
+        flat is the whole test.</li>
+        <li><strong>Extract the map and look at its eigenvalues.</strong> Where the dynamics are nearly
+        linear, fit a linear map to the model's answers and compute <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span>. It predicts the long run
+        before you do it.</li>
+        <li><strong>Compare against a cheap, structured method.</strong> Leapfrog, or the standard
+        structure-preserving scheme for your problem. If the crude classical method holds and the learned one
+        does not, that is your answer.</li>
+        <li><strong>Separate the discretisation from the model.</strong> Run the exact rule through the same
+        pipeline. The gap is the model's contribution; without that control you cannot tell them apart.</li>
+        <li><strong>Check several random starts.</strong> Page 3 found <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> on both sides of 1 across
+        eight identical runs. One run tells you about one run.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The cheapest one first</div>
+        <p>Number 1. It takes one plot and it would have revealed everything on these pages. It is skipped
+        constantly, because the training curve looks healthy and the one-step error is small &mdash; and both of
+        those are true and neither is the question.</p></div>
+      <div class="box warn"><div class="t">What a good loss curve does not tell you</div>
+        <p>Nothing about stability, nothing about conservation, nothing about what happens at step one thousand.
+        A loss is an average over single steps. The failure lives in the compounding, which the average cannot
+        see.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Check 2 is the one worth advertising: a linear probe of a nearly linear system gives you
+  the rollout behaviour in advance.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s4">
+<div class="inner">
+  <p class="kicker">Honest generalisation</p>
+  <h2>What carries over to <span class="hl">real language models</span></h2>
+  <div class="grid g2">
+    <div>
+      <div class="box key"><div class="t">What does carry over</div>
+        <p><b>The loop.</b> A large language model generating text is doing the same thing: consuming its own
+        output, step after step. Whatever small bias exists per token compounds over a long generation.</p>
+        <p><b>The blind spot.</b> Training scores one token at a time. Anything that only appears after hundreds
+        of tokens &mdash; drifting style, a quantity that stops adding up, a constraint silently dropped &mdash;
+        is invisible to the objective, exactly as the eigenvalue was here.</p>
+        <p><b>The remedy.</b> Measure the thing you care about over the length you care about, rather than
+        trusting a per-step score.</p></div>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">What does not carry over</div>
+        <p>Text has no conserved quantity, no eigenvalue, and no exact rule to be measured against. The clean
+        linear-algebra argument of <a href="drift.html">page 6</a> works <em>because</em> the system is a
+        harmonic oscillator, and it does not survive the trip to natural language.</p>
+        <p>So this set is a precise statement about learned dynamics, and a loose analogy about language. Treat
+        it as the first, and be careful with the second.</p></div>
+      <div class="box physics"><div class="t">The version worth keeping</div>
+        <p>Ask what a model is supposed to preserve, and then check whether it does, over the horizon you will
+        actually use. Physics gives you conserved quantities to check. Where they exist, use them &mdash; they
+        are the sharpest instrument you have.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Being explicit about where the analogy stops is what separates this from the usual
+  "LLMs and physics" argument.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s5">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>The set in <span class="hl">one page</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Finding</th><th>Evidence</th></tr>
+        <tr><td>it learns the law</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>=</mo><mn>1.9715</mn></mrow><annotation encoding="application/x-tex">a=1.9715</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.9715</span></span></span></span> against <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.9601</mn></mrow><annotation encoding="application/x-tex">1.9601</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.9601</span></span></span></span>; a larger model to 0.018%</td></tr>
+        <tr><td>a good coefficient is not good physics</td><td>0.6% in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span> is 15% in the period</td></tr>
+        <tr><td>it is a poor integrator</td><td>&minus;44% amplitude over 32 periods</td></tr>
+        <tr><td>the reason is structural</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi><mo>=</mo><mn>0.9976</mn></mrow><annotation encoding="application/x-tex">|\lambda|=0.9976</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9976</span></span></span></span>, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.997</mn><msup><mn>6</mn><mn>1000</mn></msup><mo>=</mo><mn>0.09</mn></mrow><annotation encoding="application/x-tex">0.9976^{1000}=0.09</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">0.997</span><span class="mord"><span class="mord">6</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1000</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.09</span></span></span></span></td></tr>
+        <tr><td>leapfrog beats it</td><td>+0.01% over the same run</td></tr>
+        <tr><td>which way it fails is random</td><td>3 of 8 runs gain energy instead</td></tr>
+        <tr><td>rounding helps, unexpectedly</td><td>&minus;44% with it, &minus;90% without</td></tr>
+        <tr><td>the objective cannot see any of this</td><td>accuracy rises while <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><mi>λ</mi><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">|\lambda|</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathnormal">λ</span><span class="mord">∣</span></span></span></span> wanders</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The sentence</div>
+        <p>A learned time-stepper is a numerical scheme, so judge it as one: not by how accurate a single step
+        is, but by what it conserves over the run you intend to use.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="software.html">Page 8</a> has the code, the reading and the checks in a form you can apply
+        to your own model. The companion sets cover <b>transformers in physics</b> and the
+        <b>stochastic differential equations</b> behind diffusion models.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Every row of the left table is measured somewhere in this set, by code that runs in the
+  reader's own browser.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/lm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* no demonstration on this page */
+
+</script>
+
+</body>
+</html>

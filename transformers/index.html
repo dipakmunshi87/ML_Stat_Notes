@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transformers in Physics: an Illustrated Introduction</title>
+<meta name="description" content="Transformers for physicists: attention as a learned kernel, the architecture piece by piece, why physics data suits it, real applications, surrogates, generative models and honest limits - with a real transformer trained live in every demonstration.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="plain";</script>
+<nav class="topbar">
+  <a class="brand" href="../" title="Back to all topics">⌂ All topics</a>
+  <a href="attention.html">1 · Attention</a>
+  <a href="architecture.html">2 · Architecture</a>
+  <a href="physics.html">3 · Why physics</a>
+  <a href="examples.html">4 · Examples</a>
+  <a href="surrogates.html">5 · Surrogates</a>
+  <a href="generative.html">6 · Generative AI</a>
+  <a href="limits.html">7 · Limits</a>
+  <a href="software.html">8 · Software</a>
+</nav>
+
+<div class="page">
+<header class="hero">
+  <p class="kicker">Transformer set &middot; attention, architecture, physics, generation</p>
+  <h1>Transformers,<br><span class="hl">and physics</span></h1>
+  <p class="lead">A transformer does one thing: the all-pairs sum you already write when you compute a force
+  on a particle from every other particle. The only difference is that the kernel is learned from data instead
+  of handed to you by Newton. That turns out to be the right operation for data that arrives as an unordered,
+  variable-size collection of things &mdash; which is most of what physics produces.</p>
+  <p class="lead" style="font-size:1.15rem;color:var(--muted)">Six demonstrations, each training a real
+  transformer in your browser while you watch. Nothing here is a stored result.</p>
+</header>
+
+<section class="sec">
+  <h2>The one equation everything follows from</h2>
+  <svg class="fig" viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arnb" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armnb" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="450" height="286" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="235" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">What you already do: an all-pairs sum</text><line x1="120" y1="110" x2="214.3" y2="167.4" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="120" cy="110" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="330" y1="95" x2="252.1" y2="164.7" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="330" cy="95" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="380" y1="210" x2="261.1" y2="185.4" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="380" cy="210" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="150" y1="250" x2="219.7" y2="192.6" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="150" cy="250" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="300" y1="285" x2="246.7" y2="198.9" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="300" cy="285" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="90" y1="190" x2="208.9" y2="181.8" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="90" cy="190" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><circle cx="235" cy="180" r="12" fill="#1450c8"/><text x="235" y="185" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#ffffff" text-anchor="middle" font-weight="700">i</text><text x="235" y="313" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">every particle feels every other one</text><rect x="500" y="34" width="450" height="286" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="725" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">What a transformer does: the same sum</text><line x1="510" y1="110" x2="704.3" y2="167.4" stroke="#b3246b" stroke-width="1.55" opacity="0.38" marker-end="url(#armnb)"/><circle cx="510" cy="110" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="720" y1="95" x2="742.1" y2="164.7" stroke="#b3246b" stroke-width="4.14" opacity="0.602" marker-end="url(#armnb)"/><circle cx="720" cy="95" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="770" y1="210" x2="751.1" y2="185.4" stroke="#b3246b" stroke-width="1.76" opacity="0.398" marker-end="url(#armnb)"/><circle cx="770" cy="210" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="540" y1="250" x2="709.7" y2="192.6" stroke="#b3246b" stroke-width="3.3" opacity="0.53" marker-end="url(#armnb)"/><circle cx="540" cy="250" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="690" y1="285" x2="736.7" y2="198.9" stroke="#b3246b" stroke-width="1.55" opacity="0.38" marker-end="url(#armnb)"/><circle cx="690" cy="285" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="480" y1="190" x2="698.9" y2="181.8" stroke="#b3246b" stroke-width="1.9" opacity="0.41" marker-end="url(#armnb)"/><circle cx="480" cy="190" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><circle cx="725" cy="180" r="12" fill="#b3246b"/><text x="725" y="185" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#ffffff" text-anchor="middle" font-weight="700">i</text><text x="725" y="313" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">thickness = how much element i listens to element j</text></svg>
+  <div class="grid g23" style="margin-top:18px">
+    <div>
+      <p>Stack your objects as rows of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span>, make three copies of each row, score every pair, and average with
+      those scores as weights:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">n</mi></mrow><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">x</mi></mrow><mtext> ⁣</mtext><mrow><mo fence="true">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mrow><mtext> ⁣</mtext><mi mathvariant="normal">⊤</mi></mrow></msup></mrow><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mfrac><mo fence="true">)</mo></mrow><mi>V</mi><mo separator="true">,</mo><mspace width="2em"/><mi>Q</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>Q</mi></msub><mo separator="true">,</mo><mtext> </mtext><mi>K</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>K</mi></msub><mo separator="true">,</mo><mtext> </mtext><mi>V</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>V</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathrm{Attn}(X)=\mathrm{softmax}\!\left(\frac{QK^{\!\top}}{\sqrt{d_k}}\right)V,
+      \qquad Q=XW_Q,\ K=XW_K,\ V=XW_V .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">Attn</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4761em;vertical-align:-0.95em;"></span><span class="mord"><span class="mord mathrm">softmax</span></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5261em;"><span style="top:-2.2528em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight" style="margin-right:-0.1952em;"></span><span class="mord mtight">⊤</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">Q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>Everything else follows. Each row of the weight matrix sums to one, so the output is an average of the
+      values with coefficients decided by the data &mdash; a kernel, learned rather than assumed.</p>
+      <p>Nothing in the equation refers to order, so attention sees a <strong>set</strong>: shuffle the inputs
+      and the outputs shuffle with them, exactly. Every pair is summed, so the cost grows as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>T</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">T^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> &mdash; the
+      one real practical constraint. Forbid each object from seeing the ones after it and the same network
+      becomes a generative model, which for a physicist is a transfer matrix with its entries left blank.</p>
+    </div>
+    <div>
+      <div class="box physics"><div class="t">Physics picture</div>
+        <p>A Boltzmann weight. The scores are energies, the softmax is a partition function, and the size of
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mtext> ⁣</mtext><mo>⋅</mo><mtext> ⁣</mtext><mi>k</mi></mrow><annotation encoding="application/x-tex">q\!\cdot\!k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span> is an inverse temperature the network sets for itself. Cold means one term dominates
+        &mdash; a lookup. Hot means everything contributes &mdash; an average. Training is cooling.</p></div>
+      <div class="box warn"><div class="t">The sentence to remember</div>
+        <p>A transformer is the right default when your data is an unordered, variable-size collection of things
+        that need not be alike, and the wrong default otherwise. On <a href="physics.html">page 3</a> an
+        ordinary network with thirty times the parameters never leaves the baseline on a task the transformer
+        solves completely.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>The eight pages</h2>
+  <div class="methods">
+    <a class="mcard c-blue" href="attention.html">
+      <div class="mnum">1</div>
+      <h3 class="blue">Attention &rarr;</h3>
+      <p>The N-body sum, and the two things that make it attention. What the three projections mean, and a
+      lookup worked through by hand before the network is asked to find it.</p>
+      <p class="need"><b>Interactive:</b> 845 numbers trained live, the attention collapsing onto one token</p>
+    </a>
+    <a class="mcard c-green" href="architecture.html">
+      <div class="mnum">2</div>
+      <h3 class="green">The block &rarr;</h3>
+      <p>Several kernels at once, position, residual connections, normalisation, and the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{d_k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1072em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span></span> &mdash;
+      with an honest measurement of which of them actually matter, and at what size.</p>
+      <p class="need"><b>Interactive:</b> a race &mdash; 0.015 against 0.599 with one line removed</p>
+    </a>
+    <a class="mcard c-blue" href="physics.html">
+      <div class="mnum">3</div>
+      <h3 class="blue">Why physics data &rarr;</h3>
+      <p>Grid or set? Order that does not matter, sizes that change, coupling at any distance, uneven sampling
+      &mdash; and, just as important, what attention does <em>not</em> give you.</p>
+      <p class="need"><b>Interactive:</b> transformer against an ordinary network with twice the parameters</p>
+    </a>
+    <a class="mcard c-orange" href="examples.html">
+      <div class="mnum">4</div>
+      <h3 class="orange">What has been done &rarr;</h3>
+      <p>Jet tagging, particle tracking, photometric transients, galaxy surveys, weather forecasting, quantum
+      states &mdash; with the numbers the papers actually report, and where each claim stops.</p>
+      <p class="need"><b>Interactive:</b> a jet classified live; 97.7% with one physics feature, 62% without</p>
+    </a>
+    <a class="mcard c-green" href="surrogates.html">
+      <div class="mnum">5</div>
+      <h3 class="green">Emulators &rarr;</h3>
+      <p>When replacing a simulation pays, written as one inequality; how many training runs are enough; and the
+      checks that stop an emulator failing silently, which is the only way it fails.</p>
+      <p class="need"><b>Interactive:</b> watch it memorise ten examples and learn nothing</p>
+    </a>
+    <a class="mcard c-purple" href="generative.html">
+      <div class="mnum">6</div>
+      <h3 class="purple">Generative models &rarr;</h3>
+      <p>One triangle in the softmax turns the reader into a generator. Exact probabilities, the transfer-matrix
+      reading, free energy as a training objective, and where diffusion models fit around it.</p>
+      <p class="need"><b>Interactive:</b> invented Ising chains, checked against <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span></p>
+    </a>
+    <a class="mcard c-pink" href="limits.html">
+      <div class="mnum">7</div>
+      <h3 class="pink">Limits &rarr;</h3>
+      <p>The all-pairs cost and what is done about it, the absence of conservation laws and symmetry, confident
+      failure off-distribution, and six ways a published improvement can be an artefact.</p>
+      <p class="need"><b>Interactive:</b> the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>T</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">T^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> cost, timed in your own browser</p>
+    </a>
+    <a class="mcard c-green" href="software.html">
+      <div class="mnum">8</div>
+      <h3 class="green">Software and reading &rarr;</h3>
+      <p>PyTorch, JAX, FlashAttention, weaver, e3nn &mdash; with links; eight papers that cover all of this; and
+      a checklist aimed at the errors that actually occur.</p>
+      <p class="need"><b>Plus:</b> the three bugs that fail silently, one of which happened here</p>
+    </a>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Four results from these pages</h2>
+  <div class="grid g2">
+    <div class="card c-green"><h3 class="green">One line is load-bearing &mdash; and only sometimes</h3>
+      <p>Removing <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{d_k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1072em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span></span> at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>k</mi></msub><mo>=</mo><mn>64</mn></mrow><annotation encoding="application/x-tex">d_k=64</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">64</span></span></span></span> takes the error from <b>0.015</b> to <b>0.599</b>, worse than
+      predicting zero, with the attention at chance. At <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>k</mi></msub><mo>=</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">d_k=8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8</span></span></span></span> the identical change is invisible. Removing the
+      residual connection or the layer norm costs nothing at one layer. Architectural pieces matter at the scale
+      they were invented to fix.</p></div>
+    <div class="card c-blue"><h3 class="blue">Shape beats size</h3>
+      <p>On a lookup over a set, an ordinary network with <b>87,809</b> parameters and four times the training
+      never leaves the baseline. A transformer with <b>2,773</b> solves it completely, and then works unchanged
+      on sets more than twice the size it was trained on. Shuffling the inputs changes its answer by
+      <b>4&times;10<sup>&minus;16</sup></b> &mdash; rounding error.</p></div>
+    <div class="card c-orange"><h3 class="orange">One feature is worth three times the model</h3>
+      <p>Classifying a toy jet as one-prong or two: <b>97.7%</b> with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\Delta R^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">Δ</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> supplied per constituent,
+      <b>62.0%</b> without it, <b>64.0%</b> without it at 2.7 times the size. The effort belongs in the
+      representation, not the parameter count &mdash; which is also what Particle Transformer found at
+      production scale.</p></div>
+    <div class="card c-purple"><h3 class="purple">A generative model, checked against theory</h3>
+      <p>A causal transformer shown nothing but sampled Ising chains &mdash; no energy, no <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>, no formula
+      &mdash; generates configurations whose correlation function reproduces <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi>tanh</mi><mo>⁡</mo></mrow><mi>k</mi></msup><mi>β</mi></mrow><annotation encoding="application/x-tex">\tanh^k\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1279em;vertical-align:-0.1944em;"></span><span class="mop"><span class="mop">tanh</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9334em;"><span style="top:-3.1473em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> to a few per cent.
+      It is also systematically over-correlated, which is exactly the kind of small bias that would propagate
+      into a physical result unnoticed.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Five habits worth having</h2>
+  <div class="grid g2">
+    <div class="card c-green"><h3 class="green">Do</h3>
+      <ol>
+        <li>Gradient check the model against finite differences before training it.</li>
+        <li>Overfit ten examples deliberately; if that fails, the bug is in the model.</li>
+        <li>Put the physics in the features before putting parameters in the network.</li>
+        <li>Beat a trivial baseline &mdash; the mean, a linear fit &mdash; and quote it.</li>
+        <li>Hold out whole runs and edge regions, and report several seeds with the spread.</li>
+      </ol></div>
+    <div class="card c-pink"><h3 class="pink">Don't</h3>
+      <ol>
+        <li>Read attention maps as explanations; intervene and measure instead.</li>
+        <li>Trust an ablation run at a different scale from the model you care about.</li>
+        <li>Assume a surrogate knows it is off-distribution &mdash; it will answer confidently.</li>
+        <li>Expect conservation laws, symmetry or extrapolation unless you built them in.</li>
+        <li>Reach for a transformer when the data is a regular grid with local physics.</li>
+      </ol></div>
+  </div>
+</section>
+
+<footer class="sec foot">
+  <h2>About this collection</h2>
+  <p>Eight pages, each a single self-contained HTML file. Equations are pre-rendered text; the diagrams are
+  drawn as vector graphics; the demonstrations build a transformer, differentiate it by hand and train it in
+  plain JavaScript while you watch, so every number on screen is computed rather than stored. Everything runs
+  offline. With JavaScript switched off each page becomes one long scrolling document with the notes shown.</p>
+  <p class="cap">Prepared by Dipak Munshi with Claude (Anthropic), September 2026. Companion sets: stochastic
+  differential equations; physics-informed neural networks; Monte Carlo samplers; time-series analysis.</p>
+</footer>
+</div>
+
+
+</body>
+</html>

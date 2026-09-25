@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When Physics-Informed Networks Fail</title>
+<meta name="description" content="The failure modes of PINNs, demonstrated rather than asserted: collapse onto trivial solutions, spectral bias, propagation failure over long horizons, and competing gradients - with diagnostics.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · What a PINN is</a><a href="theory.html">2 · Why it works</a><a href="training.html">3 · Training it</a><a href="failures.html" class="here">4 · When it fails</a><a href="inverse.html">5 · Inverse problems</a><a href="beyond.html">6 · Beyond ODEs</a><a href="software.html">7 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-pink" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 4 of 7 &middot; failure</p>
+  <h1>When it <span class="hl">fails</span></h1>
+  <p class="lead" style="max-width:66ch">Not "sometimes needs tuning". Fails &mdash; confidently, with a falling
+  loss curve and a plausible-looking answer that is wrong by 100%. Every failure here is shown with numbers, most
+  of them measured for these pages.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-pink jump" href="#s2"><h3 class="pink">1 &middot; Collapse &rarr;</h3><p>Residual <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2\times10^{-7}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">7</span></span></span></span></span></span></span></span></span></span></span></span>, error 2.83. The commonest and worst failure.</p></a>
+    <a class="card c-orange jump" href="#s4"><h3 class="orange">2 &middot; Spectral bias &rarr;</h3><p>Watch the loss and the truth part company, live.</p></a>
+    <a class="card c-blue jump" href="#s5"><h3 class="blue">3 &middot; Long horizons &rarr;</h3><p>Propagation failure, and why marching beats one-shot.</p></a>
+  </div>
+  <div class="notes"><p>This is the page to show a collaborator who wants to put a PINN into production.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s2">
+<div class="inner">
+  <p class="kicker">Failure 1</p>
+  <h2>Collapse onto a <span class="hl">trivial solution</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The residual loss does not know which solution you want. If the equation admits a solution that is
+      trivially easy to represent &mdash; an equilibrium, the zero function, a constant &mdash; the optimiser will
+      find it, because it makes the loss genuinely, correctly, extremely small.</p>
+      <p>The Van der Pol oscillator over four and a half limit cycles is the clean example:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>x</mi><mo>¨</mo></mover><mo>−</mo><mi>μ</mi><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msup><mi>x</mi><mn>2</mn></msup><mo stretchy="false">)</mo><mover accent="true"><mi>x</mi><mo>˙</mo></mover><mo>+</mo><mi>x</mi><mo>=</mo><mn>0.</mn></mrow><annotation encoding="application/x-tex">\ddot x-\mu(1-x^2)\dot x+x=0 .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7512em;vertical-align:-0.0833em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">¨</span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">μ</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.1141em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1111em;"><span class="mord">˙</span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.</span></span></span></span></span></div>
+      <p>The equilibrium <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><mover accent="true"><mi>x</mi><mo>˙</mo></mover><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mn>0</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x,\dot x)=(0,0)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1111em;"><span class="mord">˙</span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span><span class="mclose">)</span></span></span></span> satisfies it exactly. A global PINN trained over <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><mn>30</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">t\in[0,30]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6542em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">30</span><span class="mclose">]</span></span></span></span> slides
+      onto it, and the numbers at iteration 62,400 are</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="script">L</mi><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">d</mi><mi mathvariant="normal">u</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow></msub><mo>=</mo><mn>2.21</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>7</mn></mrow></msup><mo separator="true">,</mo><mspace width="2em"/><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mrow><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><mn>30</mn><mo stretchy="false">]</mo></mrow></munder><mi mathvariant="normal">∥</mi><mi>u</mi><mo>−</mo><msub><mi>u</mi><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">K</mi><mn>45</mn></mrow></msub><mi mathvariant="normal">∥</mi><mo>=</mo><mn>2.83.</mn></mrow><annotation encoding="application/x-tex">\mathcal{L}_{\rm residual}=2.21\times10^{-7},\qquad
+      \max_{[0,30]}\|u-u_{\rm RK45}\|=2.83 .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathcal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">residual</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2.21</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.8301em;vertical-align:-0.966em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">7</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.4306em;"><span style="top:-2.309em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">[</span><span class="mord mtight">0</span><span class="mpunct mtight">,</span><span class="mord mtight">30</span><span class="mclose mtight">]</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">max</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.966em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∥</span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">RK45</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2.83.</span></span></span></span></span></div>
+      <p>Seven orders of magnitude of loss reduction, and an <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span> error. The initial condition was imposed
+      softly; it is the one thing the trivial solution cannot satisfy, and it was cheap to violate.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The loss will not warn you</div>
+        <p>It falls smoothly for sixty thousand iterations. Anyone monitoring convergence by watching the loss
+        reports success. Only a comparison against something external reveals it.</p></div>
+      <div class="box key"><div class="t">The fix</div>
+        <p>Impose the initial condition <strong>hard</strong>: a trivial solution that cannot satisfy <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><msub><mi>u</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">u(0)=u_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">u</span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+        leaves the search space entirely rather than being merely penalised. For eigenvalue problems, anchor the
+        normalisation explicitly.</p></div>
+      <div class="box physics"><div class="t">Not unique to ODEs</div>
+        <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ψ</mi><mo>≡</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\psi\equiv0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ψ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≡</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> solves the quasinormal-mode equation and both boundary conditions for <em>every</em>
+        complex <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span></span></span></span> &mdash; an unanchored eigenvalue search finds it every time.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>If you remember one failure mode, make it this one. It is the easiest to fall into, the
+  hardest to detect from training diagnostics, and the most embarrassing to discover late.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s3">
+<div class="inner">
+  <p class="kicker">Failure 1, watched</p>
+  <h2>What the loss sees, and <span class="hl">what is true</span></h2>
+  <video src="assets/vdp_long_pinn_collapse.mp4" controls loop muted playsinline
+         poster="" style="width:100%;max-height:60vh"></video>
+  <p class="vidcap">Van der Pol, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><mn>30</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">t\in[0,30]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6542em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">30</span><span class="mclose">]</span></span></span></span>, global PINN. <b>Left:</b> the phase portrait &mdash; the RK45
+  reference traces the limit cycle while the network runs straight to the equilibrium. <b>Centre:</b> the residual
+  loss, falling through seven decades. <b>Right:</b> the true error against RK45, flat at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span> throughout. The
+  sawtooth in the centre panel is the curriculum extending the time window; each extension is a fresh
+  opportunity that the optimiser declines.</p>
+  <div class="notes"><p>The two right-hand panels are the argument. Loss and error are not the same quantity, and
+  on this problem they are not even correlated.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">Failure 2 &middot; interactive</p>
+  <h2>Spectral bias, <span class="hl">measured live</span></h2>
+  <p style="max-width:80ch">The same decoupling, reproduced in your browser. Blue is what the optimiser sees;
+  orange is the truth. At <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\omega=2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span> they track each other down. Raise <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span></span></span></span> and watch them separate.</p>
+  <div class="ctl">
+    <button id="d3run">Train</button>
+    <button id="d3reset" class="ghost">Reset</button>
+    <label><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span></span></span></span> <input id="d3w" type="range" min="2" max="7" step="1" value="6">
+      <span class="val" id="d3wv">6</span></label>
+    <span class="stat" id="d3stat">step 0</span>
+  </div>
+  <canvas id="d3" width="1160" height="330"></canvas>
+  <p class="vidcap">Left: the solution against the exact one. Right: training loss (blue, left scale) and true
+  relative <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">L^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> error (orange, right scale), both logarithmic. At high <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi></mrow><annotation encoding="application/x-tex">\omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span></span></span></span> the network finds the decaying
+  envelope quickly &mdash; which lowers the loss &mdash; and the oscillation slowly or not at all.</p>
+  <div class="notes"><p>This is the neural-tangent-kernel prediction from page 2 made visible: high-frequency
+  eigenvectors have small eigenvalues and relax exponentially more slowly.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s5">
+<div class="inner">
+  <p class="kicker">Failure 3</p>
+  <h2>Long horizons and <span class="hl">propagation failure</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>A PINN imposes the equation everywhere at once. Nothing in the loss says information flows forward in
+      time: points at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>30</mn></mrow><annotation encoding="application/x-tex">t=30</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">30</span></span></span></span> are weighted exactly like points at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>, and the optimiser may fit the far future
+      before it has the past right. Krishnapriyan et al. (2021) call the result <em>propagation failure</em> &mdash;
+      correct near the initial condition, degrading with distance, or a compromise wrong everywhere.</p>
+      <p>Two remedies, both restoring causality:</p>
+      <ul>
+        <li><strong>Time marching.</strong> Train on <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><msub><mi>T</mi><mn>1</mn></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0,T_1]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span>, then extend to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><msub><mi>T</mi><mn>2</mn></msub><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0,T_2]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span> keeping the weights, and
+        so on. Measured here on the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">\omega=4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">ω</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4</span></span></span></span> oscillator at 18000 steps: one-shot <b>64.1%</b>, marched in four
+        windows <b>40.3%</b> &mdash; same budget, same architecture.</li>
+        <li><strong>Causal weighting</strong> (Wang, Sankaran &amp; Perdikaris 2022). Weight each time by
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mo>−</mo><mi>ϵ</mi><msub><mo>∑</mo><mrow><msup><mi>t</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>&lt;</mo><mi>t</mi></mrow></msub><mi mathvariant="script">L</mi><mo stretchy="false">(</mo><msup><mi>t</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\exp(-\epsilon\sum_{t&#x27;&lt;t}\mathcal{L}(t&#x27;))</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.079em;vertical-align:-0.3271em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord">−</span><span class="mord mathnormal">ϵ</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1783em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828em;"><span style="top:-2.786em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3271em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathcal">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">))</span></span></span></span>, so a point is only taken seriously once everything before
+        it is already satisfied. A continuous version of marching, in one training run.</li>
+      </ul>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>w</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi>exp</mi><mo>⁡</mo><mtext> ⁣</mtext><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">(</mo><mo>−</mo><mi>ϵ</mi><mtext> ⁣</mtext><mtext> ⁣</mtext><munder><mo>∑</mo><mrow><msup><mi>t</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo>&lt;</mo><mi>t</mi></mrow></munder><msub><mi mathvariant="script">L</mi><mi>r</mi></msub><mo stretchy="false">(</mo><msup><mi>t</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">)</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">)</mo><mo separator="true">,</mo><mspace width="2em"/><mi mathvariant="script">L</mi><mo>=</mo><munder><mo>∑</mo><mi>t</mi></munder><mi>w</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><msub><mi mathvariant="script">L</mi><mi>r</mi></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">w(t)=\exp\!\Big(-\epsilon\!\!\sum_{t&#x27;&lt;t}\mathcal{L}_r(t&#x27;)\Big),\qquad
+      \mathcal{L}=\sum_t w(t)\,\mathcal{L}_r(t).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.8em;vertical-align:-0.65em;"></span><span class="mop">exp</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="delimsizing size2">(</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:2.4714em;vertical-align:-1.3214em;"></span><span class="mord mathnormal">ϵ</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.856em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6828em;"><span style="top:-2.786em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">t</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathcal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord"><span class="delimsizing size2">)</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathcal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3em;vertical-align:-1.25em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.9em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathcal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></div>
+    </div>
+    <div>
+      <div class="box stats"><div class="t">The honest caveat</div>
+        <p>Marching improved the oscillator by a factor of 1.6, not a factor of 50. It is a real effect and not a
+        cure; the envelope change on page 3 mattered far more. Report both, and be suspicious of papers that
+        report only the one that worked.</p></div>
+      <div class="box physics"><div class="t">Physics picture</div>
+        <p>The difference between a boundary-value formulation and an initial-value one. A time-stepper cannot
+        get the future wrong before the past, because it never sees the future. A PINN can, and does.</p></div>
+      <div class="box warn"><div class="t">Where it bites hardest</div>
+        <p>Chaotic and stiff systems, and anything with a sharp front. The Van der Pol collapse above is a
+        long-horizon failure as much as a trivial-solution one &mdash; the two reinforce each other.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Marching has a cost: each window is a fresh optimisation, and errors from early windows
+  are frozen in. It trades one failure mode for a milder one.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s6">
+<div class="inner">
+  <p class="kicker">Failure 4</p>
+  <h2>Terms that <span class="hl">fight each other</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>With soft constraints, the gradients of the loss terms point in different directions, and early in
+      training the residual gradient is typically orders of magnitude larger. The optimiser does the rational
+      thing: it reduces the big term. The boundary condition drifts.</p>
+      <p>What makes this dangerous is that the result <em>is</em> a solution of the differential equation &mdash;
+      just the wrong one. No internal inconsistency exists for a diagnostic to catch.</p>
+      <p>Symptoms:</p>
+      <ul>
+        <li>loss plateaus at a small non-zero value and stops improving;</li>
+        <li>the solution is the right <em>family</em> of curves, wrong member;</li>
+        <li>the boundary term ends orders of magnitude above the residual term;</li>
+        <li>changing <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mi>b</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">λ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> tenfold changes the answer materially &mdash; the decisive test, and it costs
+        two training runs.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Diagnosis, in order</div>
+        <p>1. Print the loss terms <em>separately</em>, every time. An aggregate loss hides everything on this
+        page.<br>
+        2. Plot the residual against <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span> at the end of training &mdash; not the loss against step. A residual
+        concentrated in one region names the problem.<br>
+        3. Evaluate the boundary conditions explicitly and report the violation in physical units.<br>
+        4. Compare against a classical solver on a reduced problem you can afford to solve both ways.</p></div>
+      <div class="box warn"><div class="t">The meta-failure</div>
+        <p>Every diagnostic above compares the PINN against something external. There is no purely internal
+        check that a PINN has converged to the right solution. If you have nothing to compare against, you have
+        no way to know &mdash; and that is a statement about the method, not about your diligence.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Point 4 is worth insisting on with collaborators: if the problem is worth a PINN, it is
+  worth one reduced case solved classically as a control.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s7">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>Four failures, four <span class="hl">tells</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Failure</th><th>Tell</th><th>Remedy</th></tr>
+        <tr><td>Collapse to trivial solution</td><td>loss tiny, answer featureless</td><td>hard constraints; anchor the normalisation</td></tr>
+        <tr><td>Spectral bias</td><td>envelope right, oscillation missing</td><td>features matched to the scale; more steps; march</td></tr>
+        <tr><td>Propagation failure</td><td>good near <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>, degrades forward</td><td>time marching; causal weighting</td></tr>
+        <tr><td>Competing gradients</td><td>right family, wrong member</td><td>hard constraints; gradient or NTK weighting</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The common root</div>
+        <p>All four are the same statement from page 1: minimising the loss and solving the equation are
+        different problems. Every remedy on this page works by removing wrong answers from the search space, or
+        by changing which wrong answers are cheap.</p></div>
+      <div class="box stats"><div class="t">Reading</div>
+        <p>Krishnapriyan et al., <em>NeurIPS</em> <strong>34</strong> (2021) for failure modes and curriculum
+        training; Wang, Sankaran &amp; Perdikaris, arXiv:2203.07404 for causal weighting; Wang, Teng &amp;
+        Perdikaris, <em>SIAM J. Sci. Comput.</em> <strong>43</strong>, A3055 (2021) for gradient pathologies.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="inverse.html">Page 5</a> is the other side: the setting where PINNs are not competing with a
+        good classical method, and where they genuinely win.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>None of this says PINNs are bad. It says they are a non-convex optimisation wearing a
+  solver's clothing, and should be operated accordingly.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/pinn.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- loss versus truth: the decoupling, live ---------- */
+(function(){
+  var cv=document.getElementById('d3'); if(!cv||typeof PINN==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var W=6, T=6, running=false, raf=null, tr=null, prob=null, fi=0;
+  var xs=PINN.linspace(0,T,220), loss=[], err=[];
+
+  function reset(){
+    running=false; document.getElementById('d3run').textContent='Train';
+    prob=PINN.oscillator({w:W,zeta:0.05,T:T,n:150});
+    var net=new PINN.MLP([1,24,24,1],{seed:1,domain:[0,T]});
+    tr=new PINN.Trainer(net,prob,5e-3);
+    loss=[]; err=[]; fi=0; sample(); draw();
+  }
+  function sample(){
+    loss.push(Math.max(1e-10,tr.parts.total===undefined?1:tr.parts.total));
+    err.push(Math.max(1e-4,tr.err(xs)));
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var top=36,h=cv.height-100;
+    var a=new PL.Axes(ctx,56,top,600,h,{xlim:[0,T],ylim:[-1.35,1.35],
+        title:'solution  u(x)',titleColor:C.ink2,xlabel:'x'});
+    a.hline(0,C.rule);
+    var ex=[],i; for(i=0;i<xs.length;i++) ex.push(prob.exact(xs[i]));
+    a.line(xs,ex,C.muted,3);
+    a.line(xs,tr.curve(xs),C.blue,2.2);
+    a.ticks([0,2,4,6],[-1,0,1]);
+    a.legend([['exact',C.muted],['network',C.blue]]);
+
+    var n=loss.length;
+    var b=new PL.Axes(ctx,716,top,392,h,{xlim:[0,Math.max(10,n)],ylim:[1e-6,1e3],logy:true,
+        title:'what the loss sees   ·   what is true',titleColor:C.ink2,xlabel:'measurement (every 60 steps)'});
+    b.line(PL.range(n),loss,C.blue,2.2);
+    /* the true error, rescaled onto the same decade range so both fit: 1 = 100% */
+    b.line(PL.range(n),err.map(function(v){return v;}),C.orange,2.2);
+    b.hline(1,C.rule,[4,4]);
+    b.ticks([0,Math.max(10,n)],[1e-6,1e-4,1e-2,1,100],
+            function(v){return v>=1000||v<0.01?v.toExponential(0):String(v);});
+    b.legend([['residual loss',C.blue],['relative error',C.orange]]);
+
+    document.getElementById('d3stat').textContent=
+      'step '+tr.it+'   ·   loss '+loss[n-1].toExponential(2)+
+      '   ·   relative L2 error '+(100*err[n-1]).toFixed(1)+'%';
+  }
+  function step(){
+    if(!running) return;
+    tr.run(20); fi++;
+    if(fi%3===0){ sample(); draw(); }
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('d3run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('d3reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('d3w').oninput=function(){
+    W=parseFloat(this.value); document.getElementById('d3wv').textContent=W;
+    if(raf) cancelAnimationFrame(raf); reset();
+  };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

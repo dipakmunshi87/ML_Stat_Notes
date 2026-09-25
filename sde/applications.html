@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where SDEs Appear: Physics, and Then Machine Learning</title>
+<meta name="description" content="Stochastic differential equations across physics - thermal noise, finance, population dynamics, astrophysics - and the same mathematics underneath score-based diffusion models and neural SDEs.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · Brownian motion</a><a href="calculus.html">2 · Itô calculus</a><a href="numerics.html">3 · Numerics</a><a href="density.html">4 · Fokker–Planck</a><a href="feynmankac.html">5 · Feynman–Kac</a><a href="langevin.html">6 · Langevin</a><a href="applications.html" class="here">7 · Applications</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-pink" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 7 of 8 &middot; applications</p>
+  <h1>The same equation,<br><span class="hl">everywhere</span></h1>
+  <p class="lead" style="max-width:66ch">Thermal noise, stellar dynamics, quasar variability, option prices and
+  image generation are not analogies for one another. They are the same equation with different letters.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-pink jump" href="#s2"><h3 class="pink">1 &middot; In physics &rarr;</h3><p>Six places you will meet one this year.</p></a>
+    <a class="card c-blue jump" href="#s4"><h3 class="blue">2 &middot; In learning &rarr;</h3><p>Diffusion models are a reverse-time SDE.</p></a>
+    <a class="card c-green jump" href="#s5"><h3 class="green">3 &middot; Neural SDEs &rarr;</h3><p>Learning the drift, and where it pays.</p></a>
+  </div>
+  <div class="notes"><p>The machine-learning half is not a fashionable aside: the score-based formulation is
+  literally the reverse-time SDE of Anderson (1982).</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s2">
+<div class="inner">
+  <p class="kicker">In physics</p>
+  <h2>Six you will <span class="hl">actually meet</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">Thermal and electrical noise</h3>
+      <p>Brownian motion, Johnson-Nyquist noise in a resistor, thermal noise in a mirror suspension. All
+      Ornstein-Uhlenbeck or free diffusion, all with amplitude fixed by fluctuation-dissipation. The noise floor
+      of a gravitational-wave detector is this calculation done carefully.</p></div>
+    <div class="card c-green"><h3 class="green">Stellar and plasma dynamics</h3>
+      <p>Two-body relaxation in a star cluster is a Fokker-Planck problem: many small velocity kicks, described
+      by drift and diffusion coefficients in energy and angular momentum. The same formalism governs Coulomb
+      collisions in a plasma.</p></div>
+    <div class="card c-orange"><h3 class="orange">Accretion and variability</h3>
+      <p>Quasar optical light curves are well described by a damped random walk &mdash; an Ornstein-Uhlenbeck
+      process &mdash; with a characteristic timescale that correlates with black-hole mass. Fitting <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span> and
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span></span></span></span> is fitting an SDE to data.</p></div>
+    <div class="card c-purple"><h3 class="purple">Chemical kinetics</h3>
+      <p>The chemical Langevin equation: the large-copy-number limit of the discrete master equation, with noise
+      amplitude <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mtext>rate</mtext></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{\text{rate}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.04em;vertical-align:-0.1475em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8925em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord text"><span class="mord">rate</span></span></span></span><span style="top:-2.8525em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1475em;"><span></span></span></span></span></span></span></span></span>. Multiplicative, so the Ito-Stratonovich question is live and consequential.</p></div>
+    <div class="card c-pink"><h3 class="pink">Population and epidemics</h3>
+      <p>Demographic stochasticity gives <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>N</mi><mo>=</mo><mi>r</mi><mi>N</mi><mtext> </mtext><mi>d</mi><mi>t</mi><mo>+</mo><mi>σ</mi><msqrt><mi>N</mi></msqrt><mtext> </mtext><mi>d</mi><mi>W</mi></mrow><annotation encoding="application/x-tex">dN=rN\,dt+\sigma\sqrt N\,dW</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.04em;vertical-align:-0.1133em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;padding-left:0.833em;">N</span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span>; environmental noise gives
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mi>N</mi><mtext> </mtext><mi>d</mi><mi>W</mi></mrow><annotation encoding="application/x-tex">\sigma N\,dW</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span>. The two have completely different extinction behaviour, and telling them apart is the
+      scientific question.</p></div>
+    <div class="card c-blue"><h3 class="blue">Finance</h3>
+      <p>Geometric Brownian motion, Black-Scholes as a backward Kolmogorov equation, and the option price as a
+      Feynman-Kac expectation. The one field that consistently means Ito, and says so.</p></div>
+  </div>
+  <div class="notes"><p>The chemical and population examples are the ones where the calculus choice changes
+  published conclusions, because the noise is genuinely multiplicative.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s3">
+<div class="inner">
+  <p class="kicker">From a related study</p>
+  <h2>One equation, <span class="hl">many readings</span></h2>
+  <video src="assets/one_equation.mp4" controls loop muted playsinline style="width:100%;max-height:58vh"></video>
+  <p class="vidcap">The same stochastic differential equation read across several settings &mdash; the recurring
+  theme of this page, made visible.</p>
+  <div class="notes"><p>Produced separately, included here because the unifying point is easier to show than to
+  argue.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Machine learning</p>
+  <h2>Diffusion models are a <span class="hl">reverse-time SDE</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Take data <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">x_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> and destroy it with a forward SDE until nothing is left but noise:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>X</mi><mo>=</mo><mi>f</mi><mo stretchy="false">(</mo><mi>X</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>t</mi><mo>+</mo><mi>g</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>W</mi><mo separator="true">,</mo><mspace width="2em"/><msub><mi>X</mi><mn>0</mn></msub><mo>∼</mo><msub><mi>p</mi><mrow><mi mathvariant="normal">d</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi></mrow></msub><mo separator="true">,</mo><mspace width="1em"/><msub><mi>X</mi><mi>T</mi></msub><mo>≈</mo><mi mathvariant="script">N</mi><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mi>I</mi><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">dX=f(X,t)\,dt+g(t)\,dW,\qquad X_0\sim p_{\rm data},\quad X_T\approx\mathcal{N}(0,I).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">data</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.14736em;">N</span><span class="mopen">(</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></div>
+      <p>Anderson's theorem (1982) says this process run backwards is <em>also</em> an SDE:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>X</mi><mo>=</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">[</mo><mi>f</mi><mo stretchy="false">(</mo><mi>X</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mo>−</mo><msup><mi>g</mi><mn>2</mn></msup><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><msub><mi mathvariant="normal">∇</mi><mi>x</mi></msub><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>t</mi></msub><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">]</mo><mi>d</mi><mi>t</mi><mo>+</mo><mi>g</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mover accent="true"><mi>W</mi><mo>ˉ</mo></mover><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">dX=\Big[f(X,t)-g^2(t)\,\nabla_x\log p_t(X)\Big]dt+g(t)\,d\bar W,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.8em;vertical-align:-0.65em;"></span><span class="mord"><span class="delimsizing size2">[</span></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.8em;vertical-align:-0.65em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord">∇</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span><span class="mord"><span class="delimsizing size2">]</span></span><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0701em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8201em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span><span style="top:-3.2523em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>W</mi><mo>ˉ</mo></mover></mrow><annotation encoding="application/x-tex">\bar W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8201em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8201em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span><span style="top:-3.2523em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">ˉ</span></span></span></span></span></span></span></span></span></span> a Brownian motion in reversed time. The only unknown is the <strong>score</strong>
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">∇</mi><mi>x</mi></msub><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">\nabla_x\log p_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord">∇</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> &mdash; and page 6 already identified that as the drift of a Langevin sampler.</p>
+      <p>So a diffusion model is: learn the score, then integrate the reverse SDE from noise. The celebrated
+      variants are choices of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span></span></span></span> &mdash; variance-preserving, variance-exploding &mdash; and DDIM is the
+      probability-flow ODE sharing the same marginals. Every numerical concern from page 3 reappears.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Why physicists have an advantage here</div>
+        <p>Nothing above is new mathematics. It is Fokker-Planck, time reversal, and Langevin sampling &mdash;
+        subjects already in a statistical-physics course. The machine-learning contribution is that the score can
+        be estimated by regression (denoising score matching), which is genuinely clever and entirely separate
+        from the SDE theory.</p></div>
+      <div class="box physics"><div class="t">Related material</div>
+        <p>A longer treatment, with derivations of the VP and VE forms, Tweedie's formula, DDIM as a
+        probability-flow ODE and flow matching, is in the companion diffusion-models document.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Anderson's reverse-time result predates the machine-learning application by forty years
+  and is worth citing as such.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s5">
+<div class="inner">
+  <p class="kicker">Neural SDEs</p>
+  <h2>Learning the drift, and <span class="hl">where it pays</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>If the drift and diffusion are unknown functions, parameterise them by networks and fit:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mi>X</mi><mo>=</mo><msub><mi>f</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>X</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>t</mi><mo>+</mo><msub><mi>g</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>X</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>W</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">dX=f_\theta(X,t)\,dt+g_\theta(X,t)\,dW .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1076em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord">.</span></span></span></span></span></div>
+      <p>Training needs gradients through a stochastic integration, which is where the difficulty sits.
+      Two routes, with the trade-off familiar from the PINN set:</p>
+      <ul>
+        <li><strong>Backpropagate through the solver.</strong> Exact for the discretisation used, but memory
+        grows with the number of steps.</li>
+        <li><strong>Stochastic adjoint</strong> (Li et al. 2020). Constant memory, but the reverse pass must
+        reconstruct the <em>same</em> Brownian path &mdash; solved with a Brownian interval tree that regenerates
+        increments deterministically.</li>
+      </ul>
+      <p>Where it genuinely pays: irregularly sampled time series with real uncertainty, latent-state models
+      where the noise is part of what you want to learn, and generative modelling of paths rather than points.
+      Where it does not: any system whose SDE you already know &mdash; fit its parameters instead, as on page 5
+      of the PINN set.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The honest assessment</div>
+        <p>Neural SDEs are harder to train than neural ODEs and much harder than fitting a known SDE. The
+        variance of the gradient estimator is the binding constraint, not expressiveness. Reach for one when the
+        functional form is genuinely unknown &mdash; and check first that a parametric fit really fails.</p></div>
+      <div class="box key"><div class="t">The middle ground</div>
+        <p>Often the best answer is a known SDE with a few learned components &mdash; a physical drift plus a
+        learned correction, or a known structure with state-dependent noise learned from data. Fewer parameters,
+        interpretable, and far better behaved.</p></div>
+      <div class="box stats"><div class="t">Tooling</div>
+        <p><code>torchsde</code> implements the adjoint and the Brownian tree; <code>diffrax</code> does the same
+        in JAX with a wider choice of solvers. Both on <a href="software.html">page 8</a>.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The "check a parametric fit really fails first" advice mirrors the PINN set's conclusion,
+  and for the same reason: flexibility is not free.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s6">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>One structure, <span class="hl">many names</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Field</th><th>What the SDE is called</th></tr>
+        <tr><td>statistical physics</td><td>Langevin equation</td></tr>
+        <tr><td>kinetic theory</td><td>Fokker-Planck / Kramers equation</td></tr>
+        <tr><td>quantum many-body</td><td>diffusion Monte Carlo</td></tr>
+        <tr><td>chemistry</td><td>chemical Langevin equation</td></tr>
+        <tr><td>astrophysics</td><td>damped random walk</td></tr>
+        <tr><td>finance</td><td>geometric Brownian motion</td></tr>
+        <tr><td>Bayesian computation</td><td>Langevin Monte Carlo, HMC</td></tr>
+        <tr><td>generative modelling</td><td>score-based diffusion</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The transferable skill</div>
+        <p>Recognise the shape <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>X</mi><mo>=</mo><mi>a</mi><mtext> </mtext><mi>d</mi><mi>t</mi><mo>+</mo><mi>b</mi><mtext> </mtext><mi>d</mi><mi>W</mi></mrow><annotation encoding="application/x-tex">dX=a\,dt+b\,dW</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> and everything on these pages applies at once: the Fokker-Planck
+        equation for the density, the stationary state, the numerical schemes and their orders, the Feynman-Kac
+        representation, and the calculus question. Learning it once covers all eight rows.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="software.html">Page 8</a> has the libraries and the reading. The companion sets cover
+        <b>Monte Carlo samplers</b> and <b>physics-informed neural networks</b> &mdash; both of which touch this
+        material from a different side.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The table is the argument for teaching this subject once, properly, rather than eight
+  times in eight vocabularies.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/sde.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* videos only on this page */
+
+</script>
+
+</body>
+</html>

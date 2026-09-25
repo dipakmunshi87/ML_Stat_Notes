@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attention: an All-Pairs Sum You Already Know</title>
+<meta name="description" content="Attention explained for physicists with no machine-learning background: it is the all-pairs sum from an N-body calculation, with the kernel learned instead of given. With a real transformer trained live.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html" class="here">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html">4 · Examples</a><a href="surrogates.html">5 · Surrogates</a><a href="generative.html">6 · Generative AI</a><a href="limits.html">7 · Limits</a><a href="software.html">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-blue" id="s1">
+<div class="inner" style="padding-top:6vh">
+  <p class="kicker">Part 1 of 8 &middot; the one operation</p>
+  <h1>You already know<br><span class="hl">this operation</span></h1>
+  <p class="lead" style="max-width:64ch">Attention is the sum you write every time you compute a force on a
+  particle from all the other particles. Same shape, same cost, same intuition. One thing is different, and
+  that one thing is the whole subject.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-blue jump" href="#s2"><h3 class="blue">1 &middot; The picture &rarr;</h3><p>Gravity and attention, side by side.</p></a>
+    <a class="card c-green jump" href="#s4"><h3 class="green">2 &middot; A worked case &rarr;</h3><p>Five detectors, one question.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">3 &middot; Watch one learn &rarr;</h3><p>A real network, trained in this page.</p></a>
+  </div>
+  <div class="notes"><p>If a reader takes one thing from this set, it should be the N-body reframing on the next
+  slide. Everything afterwards is detail.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s2">
+<div class="inner">
+  <p class="kicker">The picture</p>
+  <h2>Gravity, and <span class="hl">attention</span></h2>
+  <svg class="fig" viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arnb" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armnb" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><rect x="10" y="34" width="450" height="286" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="235" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#1450c8" text-anchor="middle" font-weight="700">What you already do: an all-pairs sum</text><line x1="120" y1="110" x2="214.3" y2="167.4" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="120" cy="110" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="330" y1="95" x2="252.1" y2="164.7" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="330" cy="95" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="380" y1="210" x2="261.1" y2="185.4" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="380" cy="210" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="150" y1="250" x2="219.7" y2="192.6" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="150" cy="250" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="300" y1="285" x2="246.7" y2="198.9" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="300" cy="285" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="90" y1="190" x2="208.9" y2="181.8" stroke="#6a7c9c" stroke-width="1.6" opacity="0.55" marker-end="url(#armnb)"/><circle cx="90" cy="190" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><circle cx="235" cy="180" r="12" fill="#1450c8"/><text x="235" y="185" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#ffffff" text-anchor="middle" font-weight="700">i</text><text x="235" y="313" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">every particle feels every other one</text><rect x="500" y="34" width="450" height="286" rx="8" fill="#f7faff" stroke="#ccd8ec" stroke-width="1.4"/><text x="725" y="26" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#b3246b" text-anchor="middle" font-weight="700">What a transformer does: the same sum</text><line x1="510" y1="110" x2="704.3" y2="167.4" stroke="#b3246b" stroke-width="1.55" opacity="0.38" marker-end="url(#armnb)"/><circle cx="510" cy="110" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="720" y1="95" x2="742.1" y2="164.7" stroke="#b3246b" stroke-width="4.14" opacity="0.602" marker-end="url(#armnb)"/><circle cx="720" cy="95" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="770" y1="210" x2="751.1" y2="185.4" stroke="#b3246b" stroke-width="1.76" opacity="0.398" marker-end="url(#armnb)"/><circle cx="770" cy="210" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="540" y1="250" x2="709.7" y2="192.6" stroke="#b3246b" stroke-width="3.3" opacity="0.53" marker-end="url(#armnb)"/><circle cx="540" cy="250" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="690" y1="285" x2="736.7" y2="198.9" stroke="#b3246b" stroke-width="1.55" opacity="0.38" marker-end="url(#armnb)"/><circle cx="690" cy="285" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><line x1="480" y1="190" x2="698.9" y2="181.8" stroke="#b3246b" stroke-width="1.9" opacity="0.41" marker-end="url(#armnb)"/><circle cx="480" cy="190" r="9" fill="#ffffff" stroke="#6a7c9c" stroke-width="2"/><circle cx="725" cy="180" r="12" fill="#b3246b"/><text x="725" y="185" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#ffffff" text-anchor="middle" font-weight="700">i</text><text x="725" y="313" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">thickness = how much element i listens to element j</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>Each particle sums a contribution from every other one:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>F</mi><mi>i</mi></msub><mo>=</mo><munder><mo>∑</mo><mi>j</mi></munder><munder><munder><mfrac><mrow><mi>G</mi><msub><mi>m</mi><mi>j</mi></msub></mrow><msubsup><mi>r</mi><mrow><mi>i</mi><mi>j</mi></mrow><mn>2</mn></msubsup></mfrac><mo stretchy="true">⏟</mo></munder><mtext>the kernel</mtext></munder><mtext>  </mtext><msub><mover accent="true"><mi>r</mi><mo>^</mo></mover><mrow><mi>i</mi><mi>j</mi></mrow></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">F_i=\sum_j \underbrace{\frac{Gm_j}{r_{ij}^2}}_{\text{the kernel}}\;\hat r_{ij}.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.7934em;vertical-align:-2.4331em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4138em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord munder"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-0.9273em;"><span class="pstrut" style="height:3.3603em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">the kernel</span></span></span></span></span><span style="top:-3.3603em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord munder"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span class="svg-align" style="top:-1.6134em;"><span class="pstrut" style="height:3.3603em;"></span><span class="stretchy" style="height:0.548em;min-width:1.6em;"><span class="brace-left" style="height:0.548em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="0.548em" viewBox="0 0 400000 548" preserveAspectRatio="xMinYMin slice"><path d="M0 6l6-6h17c12.688 0 19.313.3 20 1 4 4 7.313 8.3 10 13
+ 35.313 51.3 80.813 93.8 136.5 127.5 55.688 33.7 117.188 55.8 184.5 66.5.688
+ 0 2 .3 4 1 18.688 2.7 76 4.3 172 5h399450v120H429l-6-1c-124.688-8-235-61.7
+-331-161C60.687 138.7 32.312 99.3 7 54L0 41V6z"/></svg></span><span class="brace-center" style="height:0.548em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="0.548em" viewBox="0 0 400000 548" preserveAspectRatio="xMidYMin slice"><path d="M199572 214
+c100.7 8.3 195.3 44 280 108 55.3 42 101.7 93 139 153l9 14c2.7-4 5.7-8.7 9-14
+ 53.3-86.7 123.7-153 211-199 66.7-36 137.3-56.3 212-62h199568v120H200432c-178.3
+ 11.7-311.7 78.3-403 201-6 8-9.7 12-11 12-.7.7-6.7 1-18 1s-17.3-.3-18-1c-1.3 0
+-5-4-11-12-44.7-59.3-101.3-106.3-170-141s-145.3-54.3-229-60H0V214z"/></svg></span><span class="brace-right" style="height:0.548em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="0.548em" viewBox="0 0 400000 548" preserveAspectRatio="xMaxYMin slice"><path d="M399994 0l6 6v35l-6 11c-56 104-135.3 181.3-238 232-57.3
+ 28.7-117 45-179 50H-300V214h399897c43.3-7 81-15 113-26 100.7-33 179.7-91 237
+-174 2.7-5 6-9 10-13 .7-1 7.3-1 20-1h17z"/></svg></span></span></span><span style="top:-3.3603em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7959em;"><span style="top:-2.4231em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">ij</span></span></span></span><span style="top:-3.0448em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.413em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">G</span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.099em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.747em;"><span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.4331em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1944em;"><span class="mord">^</span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">ij</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>Attention is the same sum, with two differences.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The two differences</div>
+        <p><b>1.</b> The weights are <em>normalised</em>: each row sums to one, so you get an average, not a
+        total.</p>
+        <p><b>2.</b> The kernel is <em>learned</em>. Newton hands you <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mi>m</mi><mi mathvariant="normal">/</mi><msup><mi>r</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">Gm/r^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mord mathnormal">m</span><span class="mord">/</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span>; here nobody hands you anything,
+        and the network works out which pairs matter.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>"Attention is gravity with the kernel left blank" is the single most useful sentence for
+  a physics audience.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">Written out</p>
+  <h2>Three projections and <span class="hl">one average</span></h2>
+  <svg class="fig" viewBox="0 0 980 300" xmlns="http://www.w3.org/2000/svg" role="img"><defs><marker id="arqk" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#27406e"/></marker><marker id="armqk" markerWidth="9" markerHeight="7" refX="8" refY="3.5" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6a7c9c"/></marker></defs><text x="64" y="28" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="start" font-weight="700">input set X</text><rect x="50" y="44" width="86" height="34" rx="8" fill="#ffffff" stroke="#ccd8ec" stroke-width="1.4"/><text x="93" y="66" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="middle" font-weight="normal">x1</text><rect x="50" y="88" width="86" height="34" rx="8" fill="#ffffff" stroke="#ccd8ec" stroke-width="1.4"/><text x="93" y="110" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="middle" font-weight="normal">x2</text><rect x="50" y="132" width="86" height="34" rx="8" fill="#ffffff" stroke="#ccd8ec" stroke-width="1.4"/><text x="93" y="154" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="middle" font-weight="normal">x3</text><rect x="50" y="176" width="86" height="34" rx="8" fill="#ffffff" stroke="#ccd8ec" stroke-width="1.4"/><text x="93" y="198" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="middle" font-weight="normal">x4</text><text x="93" y="250" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">one row per</text><text x="93" y="268" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">particle / galaxy /</text><text x="93" y="286" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">measurement</text><rect x="200" y="44" width="150" height="50" rx="8" fill="#ffffff" stroke="#1450c8" stroke-width="1.4"/><text x="275" y="70" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#1450c8" text-anchor="middle" font-weight="700">Q = X W</text><text x="275" y="88" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">what i is looking for</text><line x1="140" y1="130" x2="196" y2="69" stroke="#27406e" stroke-width="1.5" marker-end="url(#arqk)"/><rect x="200" y="114" width="150" height="50" rx="8" fill="#ffffff" stroke="#0b7a5a" stroke-width="1.4"/><text x="275" y="140" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#0b7a5a" text-anchor="middle" font-weight="700">K = X W</text><text x="275" y="158" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">what j advertises</text><line x1="140" y1="130" x2="196" y2="139" stroke="#27406e" stroke-width="1.5" marker-end="url(#arqk)"/><rect x="200" y="184" width="150" height="50" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="275" y="210" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="700">V = X W</text><text x="275" y="228" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="11.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">what j contributes</text><line x1="140" y1="130" x2="196" y2="209" stroke="#27406e" stroke-width="1.5" marker-end="url(#arqk)"/><text x="470" y="28" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#27406e" text-anchor="middle" font-weight="700">scores  q·k / √d</text><rect x="410" y="44" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="442" y="44" width="30" height="30" fill="#1450c8" fill-opacity="0.64" stroke="#ffffff"/><rect x="474" y="44" width="30" height="30" fill="#1450c8" fill-opacity="0.28" stroke="#ffffff"/><rect x="506" y="44" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="410" y="76" width="30" height="30" fill="#1450c8" fill-opacity="0.28" stroke="#ffffff"/><rect x="442" y="76" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="474" y="76" width="30" height="30" fill="#1450c8" fill-opacity="0.64" stroke="#ffffff"/><rect x="506" y="76" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="410" y="108" width="30" height="30" fill="#1450c8" fill-opacity="0.55" stroke="#ffffff"/><rect x="442" y="108" width="30" height="30" fill="#1450c8" fill-opacity="0.28" stroke="#ffffff"/><rect x="474" y="108" width="30" height="30" fill="#1450c8" fill-opacity="0.28" stroke="#ffffff"/><rect x="506" y="108" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="410" y="140" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="442" y="140" width="30" height="30" fill="#1450c8" fill-opacity="0.19" stroke="#ffffff"/><rect x="474" y="140" width="30" height="30" fill="#1450c8" fill-opacity="0.28" stroke="#ffffff"/><rect x="506" y="140" width="30" height="30" fill="#1450c8" fill-opacity="0.64" stroke="#ffffff"/><text x="472" y="196" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">one number per pair</text><line x1="356" y1="70" x2="404" y2="100" stroke="#27406e" stroke-width="1.5" marker-end="url(#arqk)"/><line x1="356" y1="140" x2="404" y2="120" stroke="#27406e" stroke-width="1.5" marker-end="url(#arqk)"/><line x1="546" y1="110" x2="596" y2="110" stroke="#27406e" stroke-width="1.8" marker-end="url(#arqk)"/><text x="571" y="100" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6b3fd4" text-anchor="middle" font-weight="700">softmax</text><text x="571" y="132" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">each row</text><text x="571" y="148" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12" fill="#6a7c9c" text-anchor="middle" font-weight="normal">sums to 1</text><text x="668" y="28" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#6b3fd4" text-anchor="middle" font-weight="700">weights A</text><rect x="606" y="44" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="638" y="44" width="30" height="30" fill="#6b3fd4" fill-opacity="0.816" stroke="#ffffff"/><rect x="670" y="44" width="30" height="30" fill="#6b3fd4" fill-opacity="0.172" stroke="#ffffff"/><rect x="702" y="44" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="606" y="76" width="30" height="30" fill="#6b3fd4" fill-opacity="0.172" stroke="#ffffff"/><rect x="638" y="76" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="670" y="76" width="30" height="30" fill="#6b3fd4" fill-opacity="0.816" stroke="#ffffff"/><rect x="702" y="76" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="606" y="108" width="30" height="30" fill="#6b3fd4" fill-opacity="0.724" stroke="#ffffff"/><rect x="638" y="108" width="30" height="30" fill="#6b3fd4" fill-opacity="0.172" stroke="#ffffff"/><rect x="670" y="108" width="30" height="30" fill="#6b3fd4" fill-opacity="0.218" stroke="#ffffff"/><rect x="702" y="108" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="606" y="140" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="638" y="140" width="30" height="30" fill="#6b3fd4" fill-opacity="0.126" stroke="#ffffff"/><rect x="670" y="140" width="30" height="30" fill="#6b3fd4" fill-opacity="0.172" stroke="#ffffff"/><rect x="702" y="140" width="30" height="30" fill="#6b3fd4" fill-opacity="0.816" stroke="#ffffff"/><text x="668" y="196" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="12.5" fill="#6a7c9c" text-anchor="middle" font-weight="normal">a Boltzmann weight</text><line x1="742" y1="110" x2="792" y2="110" stroke="#27406e" stroke-width="1.8" marker-end="url(#arqk)"/><text x="767" y="100" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#b4530a" text-anchor="middle" font-weight="700">× V</text><text x="880" y="28" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="700">output</text><rect x="834" y="44" width="92" height="34" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="880" y="66" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="normal">y1</text><rect x="834" y="88" width="92" height="34" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="880" y="110" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="normal">y2</text><rect x="834" y="132" width="92" height="34" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="880" y="154" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="normal">y3</text><rect x="834" y="176" width="92" height="34" rx="8" fill="#ffffff" stroke="#b4530a" stroke-width="1.4"/><text x="880" y="198" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#b4530a" text-anchor="middle" font-weight="normal">y4</text><text x="880" y="250" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">a weighted average</text><text x="880" y="268" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" fill="#6a7c9c" text-anchor="middle" font-weight="normal">of the values</text></svg>
+  <div class="grid g2" style="margin-top:2px">
+    <div>
+      <p>Stack your objects as rows of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span>, make three copies of each row, score every pair, average:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">n</mi></mrow><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">x</mi></mrow><mtext> ⁣</mtext><mrow><mo fence="true">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mrow><mtext> ⁣</mtext><mi mathvariant="normal">⊤</mi></mrow></msup></mrow><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mfrac><mo fence="true">)</mo></mrow><mi>V</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathrm{Attn}(X)=\mathrm{softmax}\!\left(\frac{QK^{\!\top}}{\sqrt{d_k}}\right)V .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">Attn</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4761em;vertical-align:-0.95em;"></span><span class="mord"><span class="mord mathrm">softmax</span></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5261em;"><span style="top:-2.2528em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight" style="margin-right:-0.1952em;"></span><span class="mord mtight">⊤</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mord">.</span></span></span></span></span></div>
+      <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> is what each object <strong>looks for</strong>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span> what it <strong>advertises</strong>, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span> what
+      it <strong>passes on</strong>. The pair score is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>i</mi></msub><mtext> ⁣</mtext><mo>⋅</mo><mtext> ⁣</mtext><msub><mi>k</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">q_i\!\cdot\!k_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span>.</p>
+    </div>
+    <div>
+      <div class="box physics"><div class="t">The physics reading</div>
+        <p>The softmax is a Boltzmann weight, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>∝</mo><msup><mi>e</mi><mrow><mtext> </mtext><msub><mi>q</mi><mi>i</mi></msub><mo>⋅</mo><msub><mi>k</mi><mi>j</mi></msub><mi mathvariant="normal">/</mi><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mrow></msup></mrow><annotation encoding="application/x-tex">A_{ij}\propto e^{\,q_i\cdot k_j/\sqrt{d_k}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">ij</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∝</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9666em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9666em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mspace mtight" style="margin-right:0.1952em;"></span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:-0.0359em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mbin mtight">⋅</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:-0.0315em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2819em;"><span></span></span></span></span></span></span><span class="mord mtight">/</span><span class="mord sqrt mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8622em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style="padding-left:0.833em;"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8222em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail mtight" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1778em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>: scores are
+        energies, the denominator is a partition function, and the size of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mtext> ⁣</mtext><mo>⋅</mo><mtext> ⁣</mtext><mi>k</mi></mrow><annotation encoding="application/x-tex">q\!\cdot\!k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span> is an inverse
+        temperature. Cold, one term dominates &mdash; a lookup. Hot, all contribute &mdash; an average. And
+        that temperature is learned, not set by you.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Pointing at the Boltzmann weight is usually the moment a physics audience relaxes: it is
+  a familiar object with an unfamiliar name.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s4">
+<div class="inner">
+  <p class="kicker">A worked case</p>
+  <h2>Five detectors, <span class="hl">one question</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Here is a problem small enough to follow by hand, and it is the one the demonstration solves.</p>
+      <p>Five detectors report a reading each. A sixth token asks a question: <em>what did detector&nbsp;3
+      read?</em> The network must return that reading.</p>
+      <p>Attention solves this exactly. Let the query and key projections look only at the <em>label</em> part of
+      each token, so that the score is large when the labels match and small when they do not:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>q</mi><mrow><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi></mrow></msub><mtext> ⁣</mtext><mo>⋅</mo><mtext> ⁣</mtext><msub><mi>k</mi><mi>j</mi></msub><mo>=</mo><mi>β</mi><mtext> </mtext><msub><mi>δ</mi><mrow><msub><mi mathvariant="normal">ℓ</mi><mi>j</mi></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi mathvariant="normal">ℓ</mi><mrow><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi></mrow></msub></mrow></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">q_{\rm ask}\!\cdot\!k_j=\beta\,\delta_{\ell_j,\,\ell_{\rm ask}} .</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">ask</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0418em;vertical-align:-0.3473em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03785em;">δ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0379em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3281em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2819em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right:0.1952em;"></span><span class="mord mtight"><span class="mord mtight">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">ask</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3473em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>Then the softmax over <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span> puts almost all the weight on the matching detector, and the value
+      projection &mdash; which looks at the <em>reading</em> part &mdash; copies it out. For large <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> the
+      answer is exact.</p>
+      <p>Nobody tells the network any of this. It has to find those three projections by itself, starting from
+      random numbers.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">In one line</div>
+        <p>The query asks "who has label 3?", the keys answer, and the values carry the reading. A lookup table,
+        built out of dot products.</p></div>
+      <div class="box physics"><div class="t">The temperature again</div>
+        <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> here is the same inverse temperature as before. Training makes <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span> grow &mdash; the
+        attention cools from a broad average onto a sharp lookup. You can watch that happen on the next slide:
+        the bottom row of the matrix starts flat and collapses onto one square.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The delta-function construction is worth doing on a board: it shows attention can
+  represent an exact lookup, which is not obvious from the equation.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>Watch one <span class="hl">learn</span></h2>
+  <p style="max-width:82ch">845 numbers, trained in your browser by the code on this page. Five detector tokens
+  carry a label and a reading; the sixth asks for one label. Press <strong>Train</strong> and watch the bottom
+  row of the matrix on the left.</p>
+  <div class="ctl">
+    <button id="a1run">Train</button>
+    <button id="a1reset" class="ghost">Reset</button>
+    <button id="a1new" class="ghost">New example</button>
+    <span class="stat" id="a1stat">step 0</span>
+  </div>
+  <canvas id="a1" width="1160" height="340"></canvas>
+  <p class="vidcap">Left: the weight matrix, one row per token, dark for large. Centre: the input &mdash;
+  labels as coloured squares, readings as bars, the question token outlined in red. Right: the error, falling.
+  The bottom row is the question: it starts flat and ends on the matching detector.</p>
+  <div class="notes"><p>Press <b>New example</b> after training: the spike moves to whichever token now matches,
+  which is the check that it learned the rule and not the example.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s6">
+<div class="inner">
+  <p class="kicker">What happened</p>
+  <h2>Measured, <span class="hl">not asserted</span></h2>
+  <div class="grid g2">
+    <div>
+      <table class="num">
+        <tr><th>after</th><th>error</th><th>points at the right detector</th></tr>
+        <tr><td>0 steps</td><td>0.779</td><td>5%</td></tr>
+        <tr><td>200 steps</td><td>0.076</td><td>98%</td></tr>
+        <tr><td>1,000 steps</td><td>0.046</td><td>100%</td></tr>
+        <tr><td>8,000 steps</td><td>0.012</td><td>100%</td></tr>
+        <tr><td><em>guessing zero</em></td><td><em>0.577</em></td><td><em>20%</em></td></tr>
+      </table>
+      <p style="font-size:.95rem;color:var(--muted);margin-top:8px">845 parameters, ten seconds of training.
+      The readings are of order one, so an error of 0.012 is about one per cent.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">What it found</div>
+        <p>Exactly the construction on slide 4 &mdash; match the labels, copy the reading &mdash; discovered from
+        nothing but examples of the right answer. Two hundred steps is enough for the attention to be right
+        almost every time; the remaining training is spent sharpening the copy.</p></div>
+      <div class="box warn"><div class="t">Keep it in proportion</div>
+        <p>This is a toy. It shows the mechanism honestly, and it is not evidence about anything at scale. That
+        distinction is the subject of <a href="limits.html">page 7</a>, and it applies to every number on this
+        site.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The 5% starting accuracy is chance for six tokens, and worth pointing out.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s7">
+<div class="inner">
+  <p class="kicker">Summary</p>
+  <h2>The page in <span class="hl">one table</span></h2>
+  <div class="grid g2">
+    <div>
+      <table>
+        <tr><th>Symbol</th><th>In words</th></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span></td><td>your objects, one per row</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>Q</mi></msub></mrow><annotation encoding="application/x-tex">Q=XW_Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">Q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></td><td>what each object is looking for</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>K</mi></msub></mrow><annotation encoding="application/x-tex">K=XW_K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td><td>what each object advertises</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>V</mi></msub></mrow><annotation encoding="application/x-tex">V=XW_V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td><td>what each object passes on</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>i</mi></msub><mtext> ⁣</mtext><mo>⋅</mo><mtext> ⁣</mtext><msub><mi>k</mi><mi>j</mi></msub></mrow><annotation encoding="application/x-tex">q_i\!\cdot\!k_j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0315em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></td><td>an energy for the pair <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>i</mi><mo separator="true">,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(i,j)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mclose">)</span></span></span></span></td></tr>
+        <tr><td>softmax</td><td>turn energies into Boltzmann weights</td></tr>
+        <tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>V</mi></mrow><annotation encoding="application/x-tex">AV</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></td><td>the weighted average &mdash; the answer</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Three sentences</div>
+        <p>Attention is an all-pairs sum with the kernel learned from data.<br>
+        The softmax temperature is learned too &mdash; it decides between a lookup and an average.<br>
+        Nothing in the operation refers to order, so it sees a set.</p></div>
+      <div class="box physics"><div class="t">Where next</div>
+        <p><a href="architecture.html">Page 2</a> puts the scaffolding around this one operation &mdash; and
+        measures which parts of it actually earn their place. <a href="physics.html">Page 3</a> argues that
+        seeing a set, rather than a sequence, is exactly what physics data needs.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>If someone has time for one page of this set, this is the one.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* ---------- a real transformer, trained live, with its attention map ---------- */
+(function(){
+  var cv=document.getElementById('a1'); if(!cv||typeof TFM==='undefined') return;
+  var ctx=cv.getContext('2d'), C=PL.C;
+  var task=TFM.makeTask({T:6,nlab:5});
+  var model=null, opt=null, rng=null, running=false, raf=null, hist=[], shown=null, fi=0;
+  /* one long-lived stream for the displayed example: reseeding a small
+     xorshift generator biases its first draw. */
+  var disp=new TFM.Rng(4242);
+  var LAB=[C.blue,C.orange,C.green,C.pink,C.purple];
+
+  function reset(){
+    running=false; document.getElementById('a1run').textContent='Train';
+    model=new TFM.Model({din:task.din,dmodel:16,dk:8,dff:24,seed:5});
+    opt=new TFM.Adam(model.params(),5e-3);
+    rng=new TFM.Rng(11); hist=[]; fi=0;
+    if(!shown) shown=task.sample(disp);
+    measure(); draw();
+  }
+  function trainBatch(){
+    TFM.reset(); opt.zero();
+    var losses=[],b;
+    for(b=0;b<8;b++){
+      var s=task.sample(rng);
+      var out=model.forward(s.X,task.T);
+      losses.push(TFM.mse(out,new Float64Array([s.y])));
+    }
+    var L=TFM.sumS(losses);
+    TFM.backward(L); opt.step(); TFM.reset();
+  }
+  function measure(){
+    var r=new TFM.Rng(999), se=0, K=80, i;
+    for(i=0;i<K;i++){
+      var s=task.sample(r);
+      TFM.reset(); var o=model.forward(s.X,task.T);
+      se+=(o.v[0]-s.y)*(o.v[0]-s.y); TFM.reset();
+    }
+    hist.push(Math.sqrt(se/K));
+  }
+  function attnOf(s){
+    TFM.reset();
+    var o=model.forward(s.X,task.T);
+    var A=Float64Array.from(model.lastAttn.v), pred=o.v[0];
+    TFM.reset();
+    return {A:A,pred:pred};
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var T=task.T, din=task.din, r=attnOf(shown), A=r.A;
+    var top=44, cell=40, x0=62, y0=top;
+
+    /* ---- attention matrix ---- */
+    ctx.fillStyle=C.ink2; ctx.font='bold 15px sans-serif';
+    ctx.fillText('who is listening to whom',x0,top-12);
+    for(var i=0;i<T;i++) for(var j=0;j<T;j++){
+      var a=A[i*T+j];
+      ctx.fillStyle='rgba(20,80,200,'+(0.06+0.94*Math.min(1,a)).toFixed(3)+')';
+      ctx.fillRect(x0+j*cell,y0+i*cell,cell-2,cell-2);
+      if(a>0.45){ ctx.fillStyle='#fff'; ctx.font='11px ui-monospace,monospace';
+        ctx.fillText(a.toFixed(2),x0+j*cell+4,y0+i*cell+24); }
+    }
+    ctx.strokeStyle=C.red; ctx.lineWidth=2;
+    ctx.strokeRect(x0-2,y0+(T-1)*cell-2,T*cell+2,cell+2);
+    ctx.fillStyle=C.muted; ctx.font='12px sans-serif';
+    ctx.fillText('the question',x0+T*cell+8,y0+(T-1)*cell+24);
+    ctx.save(); ctx.translate(x0-14,y0+T*cell/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('asker',-18,0); ctx.restore();
+    ctx.fillText('answerer',x0+T*cell/2-24,y0+T*cell+16);
+
+    /* ---- the input ---- */
+    var bx=430;
+    ctx.fillStyle=C.ink2; ctx.font='bold 15px sans-serif';
+    ctx.fillText('the six tokens',bx,top-12);
+    for(i=0;i<T;i++){
+      var yy=y0+i*cell;
+      var lab=-1; for(var k=0;k<task.nlab;k++) if(shown.X[i*din+k]>0.5) lab=k;
+      ctx.fillStyle=lab>=0?LAB[lab%LAB.length]:C.muted;
+      ctx.fillRect(bx,yy+8,16,16);
+      var isq=shown.X[i*din+task.nlab+1]>0.5;
+      if(isq){ ctx.strokeStyle=C.red; ctx.lineWidth=2; ctx.strokeRect(bx-3,yy+5,22,22); }
+      var val=shown.X[i*din+task.nlab];
+      ctx.fillStyle=C.ink2; ctx.font='12px ui-monospace,monospace';
+      ctx.fillText(isq?'which one? →  ?':('reading '+(val>=0?' ':'')+val.toFixed(2)),bx+26,yy+21);
+      if(!isq){
+        ctx.fillStyle='rgba(11,37,89,0.18)';
+        ctx.fillRect(bx+150,yy+12,Math.abs(val)*70,10);
+      }
+    }
+    ctx.fillStyle=C.ink; ctx.font='13px sans-serif';
+    ctx.fillText('true answer  '+shown.y.toFixed(3),bx,y0+T*cell+22);
+    ctx.fillStyle=C.blue;
+    ctx.fillText('network says  '+r.pred.toFixed(3),bx,y0+T*cell+42);
+
+    /* ---- error history ---- */
+    var n=hist.length;
+    var a2=new PL.Axes(ctx,742,top,366,T*cell-4,{xlim:[0,Math.max(10,n)],ylim:[3e-3,1.2],logy:true,
+        title:'how wrong it is',titleColor:C.orange,xlabel:'training'});
+    a2.hline(Math.sqrt(1/3),C.rule,[5,4]);
+    if(n>1) a2.line(PL.range(n),hist.map(function(v){return Math.max(3e-3,v);}),C.orange,2.4);
+    a2.ticks([0,Math.max(10,n)],[0.01,0.1,1]);
+    a2.legend([['guessing zero',C.rule],['the network',C.orange]]);
+
+    document.getElementById('a1stat').textContent=
+      'step '+(opt.t)+'   ·   error '+(n?hist[n-1].toFixed(4):'-')+
+      '   ·   845 parameters';
+  }
+  function step(){
+    if(!running) return;
+    for(var i=0;i<5;i++) trainBatch();
+    fi++;
+    if(fi%8===0){ measure(); }
+    draw();
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('a1run').onclick=function(){
+    running=!running; this.textContent=running?'Pause':'Train';
+    if(running) raf=requestAnimationFrame(step); else if(raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('a1reset').onclick=function(){ if(raf) cancelAnimationFrame(raf); reset(); };
+  document.getElementById('a1new').onclick=function(){ shown=task.sample(disp); draw(); };
+  reset();
+})();
+
+</script>
+
+</body>
+</html>

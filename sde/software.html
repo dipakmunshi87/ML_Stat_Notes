@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SDE Software and Reading List</title>
+<meta name="description" content="Open-source libraries for stochastic differential equations with links - DifferentialEquations.jl, torchsde, diffrax, sdeint - plus the standard textbooks and a checklist for a first simulation.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="basics.html">1 · Brownian motion</a><a href="calculus.html">2 · Itô calculus</a><a href="numerics.html">3 · Numerics</a><a href="density.html">4 · Fokker–Planck</a><a href="feynmankac.html">5 · Feynman–Kac</a><a href="langevin.html">6 · Langevin</a><a href="applications.html">7 · Applications</a><a href="software.html" class="here">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 8 of 8 &middot; tooling</p>
+  <h1>Software and <span class="hl">reading</span></h1>
+  <p class="lead" style="max-width:66ch">What to install, what to read, and a short checklist that catches the
+  three errors people actually make.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-green jump" href="#s2"><h3 class="green">1 &middot; Libraries &rarr;</h3><p>By language, and which is worth the trouble.</p></a>
+    <a class="card c-blue jump" href="#s3"><h3 class="blue">2 &middot; Books &rarr;</h3><p>Four that cover everything on these pages.</p></a>
+    <a class="card c-orange jump" href="#s4"><h3 class="orange">3 &middot; Checklist &rarr;</h3><p>Before you believe your own simulation.</p></a>
+  </div>
+  <div class="notes"><p>Writing Euler-Maruyama yourself is three lines; the libraries earn their place on
+  adaptivity, stiffness and gradients.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2">
+<div class="inner">
+  <p class="kicker">Libraries</p>
+  <h2>What to <span class="hl">install</span></h2>
+  <div class="grid g3">
+    <div class="card c-purple"><h3 class="purple">Julia &mdash; the best of them</h3>
+      <p><b><a href="https://github.com/SciML/DifferentialEquations.jl">DifferentialEquations.jl</a></b> has the
+      most complete SDE support anywhere: adaptive stepping, stiff solvers, high strong-order methods, Ito and
+      Stratonovich as explicit choices, jump processes. If SDE numerics is the point of your project, this is
+      worth learning Julia for.</p></div>
+    <div class="card c-orange"><h3 class="orange">Python &mdash; gradients</h3>
+      <p><b><a href="https://github.com/google-research/torchsde">torchsde</a></b> &mdash; solvers plus the
+      stochastic adjoint and the Brownian interval tree, for neural SDEs in PyTorch.</p>
+      <p><b><a href="https://github.com/patrick-kidger/diffrax">diffrax</a></b> &mdash; the JAX equivalent, with
+      a wider solver set, and the better choice for new work in JAX.</p></div>
+    <div class="card c-blue"><h3 class="blue">Python &mdash; plain</h3>
+      <p><b><a href="https://github.com/mattja/sdeint">sdeint</a></b> &mdash; small and readable: Euler-Maruyama,
+      Milstein and a few higher-order schemes, both calculi. For one equation in one or two dimensions, twenty
+      lines of NumPy is often clearer &mdash; and you will know which calculus you are in.</p></div>
+  </div>
+  <div class="notes"><p>Writing Euler-Maruyama yourself is three lines; the libraries earn their place on
+  adaptivity, stiffness and gradients.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2b">
+<div class="inner">
+  <p class="kicker">Libraries, continued</p>
+  <h2>Around the edges, and <span class="hl">one warning</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Related tooling</h3>
+      <p><b>Fokker-Planck</b>: any PDE package &mdash; FEniCS, Dedalus &mdash; in low dimension.
+      <b>Sampling</b>: NumPyro, BlackJAX and Stan for Langevin-family samplers with the accept step done
+      properly. <b>Fitting to data</b>: celerite2 and Stingray for OU-process time series.</p></div>
+    <div class="card c-pink"><h3 class="pink">Write it yourself, once</h3>
+      <p>Euler-Maruyama is three lines, Milstein four. Write them, reproduce <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>σ</mi><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>2</mn><mi>θ</mi></mrow><annotation encoding="application/x-tex">\sigma^2/2\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">/2</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>, measure the
+      strong order. An afternoon, and the libraries stop being opaque.</p></div>
+    <div class="card c-blue"><h3 class="blue">The one thing to check</h3>
+      <p>Whichever library you use, find out <em>which calculus it assumes</em> before trusting a result with
+      multiplicative noise. Some default to Ito, some to Stratonovich, some let you choose and default to one
+      without saying which.</p></div>
+  </div>
+  <div class="notes"><p>That last point is not hypothetical: the same model coded in two libraries can give
+  different answers for exactly this reason.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s3">
+<div class="inner">
+  <p class="kicker">Reading</p>
+  <h2>Four books and <span class="hl">a handful of papers</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">For physicists</h3>
+      <p><b>Gardiner</b>, <em>Stochastic Methods</em> &mdash; the standard reference. Fokker-Planck, first-passage
+      times, master equations, everything with physics conventions.</p>
+      <p><b>Van Kampen</b>, <em>Stochastic Processes in Physics and Chemistry</em> &mdash; opinionated, excellent
+      on when the diffusion approximation is legitimate and when it is not.</p>
+      <p><b>Risken</b>, <em>The Fokker-Planck Equation</em> &mdash; if you need to actually solve one.</p></div>
+    <div class="card c-green"><h3 class="green">For the numerics</h3>
+      <p><b>Kloeden &amp; Platen</b>, <em>Numerical Solution of Stochastic Differential Equations</em> &mdash;
+      the definitive treatment of schemes and convergence orders. Everything on page 3 is in chapters 9-10.</p>
+      <p><b>Higham</b>, <em>SIAM Review</em> <b>43</b>, 525 (2001) &mdash; "An algorithmic introduction": twenty
+      pages, MATLAB code, and the clearest explanation of strong versus weak convergence in print.</p></div>
+    <div class="card c-orange"><h3 class="orange">For the connections</h3>
+      <p><b>Oksendal</b>, <em>Stochastic Differential Equations</em> &mdash; rigorous but readable; the
+      Feynman-Kac chapter is the best short treatment.</p>
+      <p><b>Anderson</b>, <em>Stoch. Proc. Appl.</em> <b>12</b>, 313 (1982) &mdash; reverse-time diffusions, the
+      theorem underneath every diffusion model.</p>
+      <p><b>Song et al.</b>, <em>ICLR</em> (2021) &mdash; score-based generative modelling through SDEs.</p></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><div class="t">If you read one thing</div>
+    <p>Higham's 2001 review. It is twenty pages, it contains runnable code, and it will make the difference
+    between strong and weak convergence permanent &mdash; which is the single most useful distinction on these
+    pages and the one most often not known.</p></div>
+  <div class="notes"><p>Gardiner and Van Kampen disagree about the diffusion approximation in places; the
+  disagreement is itself instructive.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s4">
+<div class="inner">
+  <p class="kicker">Before you believe it</p>
+  <h2>A checklist that catches <span class="hl">real errors</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>State the calculus.</strong> Ito or Stratonovich, written down. If the noise is additive, say
+        that it does not matter &mdash; do not leave it unsaid.</li>
+        <li><strong>Check the noise amplitude against fluctuation-dissipation.</strong> For a thermal system the
+        amplitude is fixed by the damping and the temperature; it is not a free parameter.</li>
+        <li><strong>Halve the step.</strong> If the answer moves, you were not converged. Do this before anything
+        else, every time.</li>
+        <li><strong>Reproduce something known.</strong> The stationary variance <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>σ</mi><mn>2</mn></msup><mi mathvariant="normal">/</mi><mn>2</mn><mi>θ</mi></mrow><annotation encoding="application/x-tex">\sigma^2/2\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mord">/2</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>, the
+        equilibrium distribution, an analytic mean. If a known quantity comes out wrong, stop.</li>
+        <li><strong>Separate the two errors.</strong> Statistical error falls as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mi>N</mi></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1767em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;padding-left:0.833em;">N</span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span></span></span></span>; discretisation
+        error as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><msup><mi>t</mi><mi>β</mi></msup></mrow><annotation encoding="application/x-tex">\Delta t^\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8491em;"></span><span class="mord">Δ</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05278em;">β</span></span></span></span></span></span></span></span></span></span></span>. Quote both, and balance them rather than driving one far below the other.</li>
+        <li><strong>Use exact updates where they exist.</strong> Linear parts of the drift can be integrated
+        without discretisation error at any step size.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The three that actually bite</div>
+        <p><b>Wrong calculus</b> with multiplicative noise &mdash; changes the answer, silently.<br>
+        <b>Noise amplitude inconsistent with damping</b> &mdash; equilibrates to the wrong temperature,
+        silently.<br>
+        <b>Step size too large</b> &mdash; looks like a physical drift rather than an instability, and therefore
+        gets interpreted.</p>
+        <p>All three produce plausible output. None announces itself.</p></div>
+      <div class="box physics"><div class="t">The companion sets</div>
+        <p><b>Monte Carlo samplers</b> &mdash; Metropolis, Gibbs, HMC, NUTS and nested sampling, the algorithmic
+        side of page 6.<br>
+        <b>Time-series analysis</b> &mdash; fitting these processes to data, including the OU/AR(1)
+        correspondence.<br>
+        <b>Physics-informed neural networks</b> &mdash; the deterministic counterpart, and inverse problems.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Point 4 is the one that has saved the most time in practice: pick a limit where you know
+  the answer and check it before running the case you care about.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/sde.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* reference page - no demonstration */
+
+</script>
+
+</body>
+</html>

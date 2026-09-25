@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transformer Software and Reading List</title>
+<meta name="description" content="Libraries for transformers in physics with links - PyTorch, JAX, weaver, FlashAttention, e3nn - the papers worth reading, and a checklist for a first implementation.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../" title="Back to all topics">⌂ All topics</a><a href="index.html">Introduction</a><a href="attention.html">1 · Attention</a><a href="architecture.html">2 · Architecture</a><a href="physics.html">3 · Why physics</a><a href="examples.html">4 · Examples</a><a href="surrogates.html">5 · Surrogates</a><a href="generative.html">6 · Generative AI</a><a href="limits.html">7 · Limits</a><a href="software.html" class="here">8 · Software</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-green" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 8 of 8 &middot; tooling</p>
+  <h1>Software and <span class="hl">reading</span></h1>
+  <p class="lead" style="max-width:64ch">What to install, what to read, and six checks that catch the
+  mistakes people actually make the first time.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-green jump" href="#s2"><h3 class="green">1 &middot; Libraries &rarr;</h3><p>General, physics-specific, and what each is for.</p></a>
+    <a class="card c-blue jump" href="#s4"><h3 class="blue">2 &middot; Papers &rarr;</h3><p>Eight that cover everything on these pages.</p></a>
+    <a class="card c-orange jump" href="#s5"><h3 class="orange">3 &middot; Checklist &rarr;</h3><p>Before you believe your own model.</p></a>
+  </div>
+  <div class="notes"><p>Writing one attention layer yourself is about forty lines, as the engine behind these
+  demonstrations shows; the libraries earn their place on speed and scale.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s2">
+<div class="inner">
+  <p class="kicker">Libraries</p>
+  <h2>What to <span class="hl">install</span></h2>
+  <div class="grid g3">
+    <div class="card c-orange"><h3 class="orange">The framework</h3>
+      <p><b><a href="https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html">PyTorch</a></b>
+      &mdash; <code>nn.MultiheadAttention</code> and <code>nn.TransformerEncoderLayer</code> cover the standard
+      block, and <code>scaled_dot_product_attention</code> dispatches to a fused kernel automatically.</p>
+      <p><b><a href="https://github.com/google/flax">JAX + Flax</a></b> &mdash; the better choice when you want
+      to differentiate through a simulator as well, or need <code>vmap</code> over configurations.</p></div>
+    <div class="card c-blue"><h3 class="blue">Speed and scale</h3>
+      <p><b><a href="https://github.com/Dao-AILab/flash-attention">FlashAttention</a></b> &mdash; exact
+      attention, far less memory traffic. Use it; understand that it does not change the complexity.</p>
+      <p><b><a href="https://github.com/huggingface/transformers">HuggingFace transformers</a></b> &mdash;
+      pretrained models and a large collection of reference implementations to read.</p>
+      <p><b><a href="https://github.com/pytorch/pytorch">torch.compile</a></b> &mdash; usually a free speed-up
+      on small models, which is exactly where physics work sits.</p></div>
+    <div class="card c-purple"><h3 class="purple">Physics-specific</h3>
+      <p><b><a href="https://github.com/hqucms/weaver-core">weaver</a></b> and
+      <b><a href="https://github.com/jet-universe/particle_transformer">particle_transformer</a></b> &mdash;
+      the reference jet-tagging training pipeline and the ParT implementation, with JetClass.</p>
+      <p><b><a href="https://github.com/e3nn/e3nn">e3nn</a></b> &mdash; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo stretchy="false">(</mo><mn>3</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">E(3)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="mopen">(</span><span class="mord">3</span><span class="mclose">)</span></span></span></span>-equivariant networks, for when
+      the symmetry has to be exact.</p>
+      <p><b><a href="https://github.com/pyg-team/pytorch_geometric">PyTorch Geometric</a></b> &mdash; graph
+      attention on a known connectivity, which is often the right answer.</p></div>
+  </div>
+  <div class="notes"><p>weaver is worth reading even if you do not use it: the data pipeline is a good model for
+  how to handle variable-length physics input.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s3">
+<div class="inner">
+  <p class="kicker">Libraries, continued</p>
+  <h2>Around the edges, and <span class="hl">one recommendation</span></h2>
+  <div class="grid g3">
+    <div class="card c-green"><h3 class="green">Generative</h3>
+      <p><b><a href="https://github.com/huggingface/diffusers">diffusers</a></b> for diffusion models with
+      transformer backbones; <b><a href="https://github.com/facebookresearch/flow_matching">flow_matching</a></b>
+      for the flow formulation; <b><a href="https://github.com/sbi-dev/sbi">sbi</a></b> for
+      simulation-based inference with proper coverage diagnostics.</p></div>
+    <div class="card c-blue"><h3 class="blue">Error bars</h3>
+      <p>An ensemble needs no library &mdash; train five models and look at the spread.
+      <b><a href="https://github.com/scikit-learn-contrib/MAPIE">MAPIE</a></b> gives calibrated intervals with a
+      guarantee. And <b><a href="https://github.com/cornellius-gp/gpytorch">GPyTorch</a></b> is the baseline you
+      should beat before reaching for a network at all.</p></div>
+    <div class="card c-pink"><h3 class="pink">Write one yourself, once</h3>
+      <p>Attention is a matrix product, a row-wise softmax, and a second matrix product. Write it, check the
+      gradient against finite differences, train it on a lookup. An afternoon, and every library stops being
+      opaque. The code behind every demonstration here does exactly that, in about 500 lines of plain
+      JavaScript with no dependencies.</p></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><div class="t">If you take one recommendation</div>
+    <p>Start from <code>nn.TransformerEncoderLayer</code> with a class token, four heads, two layers, and your
+    physical features as the token vector. Get that working end to end before changing anything. Most physics
+    applications need a better <em>representation</em>, not a better architecture &mdash; which is the measured
+    lesson of <a href="examples.html">page 4</a>.</p></div>
+  <div class="notes"><p>The commonest failure of a first project is architectural elaboration before the
+  baseline works.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Reading</p>
+  <h2>Eight papers and <span class="hl">where they fit</span></h2>
+  <div class="grid g3">
+    <div class="card c-blue"><h3 class="blue">The mechanism</h3>
+      <p><b>Vaswani et al.</b>, <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a> (2017) &mdash;
+      the original. Short, readable, and the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt{d_k}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1072em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span></span> argument is in a footnote.</p>
+      <p><b>Lee et al.</b>, <a href="https://arxiv.org/abs/1810.00825">Set Transformer</a> (2019) &mdash;
+      attention for sets, which is the physics case; induced set attention for the quadratic cost.</p>
+      <p><b>Dao et al.</b>, <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a> (2022) &mdash; how
+      exact attention is actually computed on a GPU.</p></div>
+    <div class="card c-orange"><h3 class="orange">In physics</h3>
+      <p><b>Qu, Li &amp; Qian</b>, <a href="https://arxiv.org/abs/2202.03772">Particle Transformer</a> (2022)
+      &mdash; jet tagging, JetClass, and pairwise physics features in the attention scores.</p>
+      <p><b>Allam &amp; McEwen</b>, <a href="https://arxiv.org/abs/2105.06178">arXiv:2105.06178</a> (2021)
+      &mdash; transformers for photometric transient classification.</p>
+      <p><b>Bi et al.</b>, <a href="https://www.nature.com/articles/s41586-023-06185-3"><em>Nature</em>
+      <b>619</b>, 533</a> (2023) &mdash; Pangu-Weather, the first learned model to beat operational NWP.</p></div>
+    <div class="card c-green"><h3 class="green">Generative</h3>
+      <p><b>Wu, Wang &amp; Zhang</b>, <a href="https://arxiv.org/abs/1809.10606"><em>Phys. Rev. Lett.</em>
+      <b>122</b>, 080602</a> (2019) &mdash; variational autoregressive networks: the free-energy objective of
+      page 6, and the cleanest bridge between the two fields.</p>
+      <p><b>Song et al.</b>, <a href="https://arxiv.org/abs/2011.13456">Score-Based Generative Modeling through
+      SDEs</a> (2021) &mdash; diffusion models as reverse-time SDEs.</p></div>
+  </div>
+  <div class="notes"><p>If there is time for one paper beyond the original, make it the Set Transformer: it is
+  the one that states the physics case explicitly.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s5">
+<div class="inner">
+  <p class="kicker">Before you believe it</p>
+  <h2>A checklist that catches <span class="hl">real errors</span></h2>
+  <div class="grid g2">
+    <div>
+      <ol>
+        <li><strong>Gradient check the whole model.</strong> Finite differences against the analytic gradient
+        on a few parameters: ten minutes, and it catches sign errors, off-tape nodes and broken masks &mdash;
+        each of which fails <em>silently</em>.</li>
+        <li><strong>Overfit ten examples deliberately.</strong> If the loss will not go to zero on ten examples,
+        the bug is in the model, not the data. Do this before any real training run.</li>
+        <li><strong>Check the mask.</strong> For a causal model, change the last input and confirm every
+        earlier output is bit-identical. An off-by-one leaks the answer and looks like brilliance.</li>
+        <li><strong>Compare against a permutation.</strong> Shuffle the tokens; the prediction should be
+        unchanged to floating-point precision. If it is not, something depends on order that should not.</li>
+        <li><strong>Beat a trivial baseline first.</strong> The mean, a linear fit, a nearest neighbour
+        &mdash; and quote it. A model that does not beat the mean is a bug, not a result.</li>
+        <li><strong>Hold out properly, and report seeds.</strong> Whole runs, edge regions; several seeds with
+        the spread.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The three that actually bite</div>
+        <p><b>A node built outside the tape</b> &mdash; the gradient is silently zero, training freezes, no
+        error is raised. This happened while building these pages: the gradient check passed and the loss did
+        not move for 8,000 steps.<br>
+        <b>A leaky causal mask</b> &mdash; performance that looks extraordinary.<br>
+        <b>A correlated train/test split</b> &mdash; a test error that means nothing.</p>
+        <p>All three produce plausible output. None announces itself.</p></div>
+      <div class="box physics"><div class="t">The companion sets</div>
+        <p><b>Physics-informed neural networks</b> &mdash; the same autodiff machinery pointed at differential
+        equations.<br>
+        <b>Stochastic differential equations</b> &mdash; where the diffusion-model connection is derived.<br>
+        <b>Monte Carlo samplers</b> and <b>time-series analysis</b> &mdash; the statistical background.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Point 2 is the highest-value habit on the list: it separates modelling bugs from data
+  problems in minutes rather than days.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A−</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">↩ All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">⌂ Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">←</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">→</button>
+  </div>
+  <span class="hint">← → or swipe to move · N: notes · A−/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/tfm.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* reference page - no demonstration */
+
+</script>
+
+</body>
+</html>
