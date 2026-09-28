@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning the Distribution</title>
+<meta name="description" content="Neural density estimation as the common core of generative AI, large language models, diffusion models, simulation-based inference and hierarchical Bayesian models - pedagogical, with runnable toy-example animations.">
+<style>
+:root{--blue2:#245a95;--blue:#3D7EBF;--red:#c0392b;--ink:#22303f;--mut:#5b6b7a;
+      --bg:#f4f7fb;--card:#ffffff;--line:#dbe4ee;--palered:#e39a92;--palered-t:#cf6a5e;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 22px 40px;min-height:100%}
+.topnav{position:sticky;top:0;z-index:46;background:rgba(244,247,251,.96);backdrop-filter:blur(6px);
+        border-bottom:1px solid var(--line);padding:9px 0;margin-bottom:10px;
+        display:flex;gap:10px;align-items:center}
+.topnav .brand{color:var(--blue);font-weight:800;letter-spacing:.02em;font-size:.92rem}
+.tocbtn{border:1px solid var(--line);background:#fff;color:var(--blue2);border-radius:999px;
+        padding:5px 14px;font-size:.84rem;cursor:pointer;font-weight:650;transition:.15s;white-space:nowrap}
+.tocbtn:hover{border-color:var(--blue);color:var(--blue)}
+.pagenum{margin-left:auto;color:var(--mut);font-size:.84rem;font-variant-numeric:tabular-nums}
+.tocback{position:fixed;inset:0;background:rgba(20,40,70,.28);z-index:45;display:none}
+.tocback.open{display:block}
+.toc{display:none;position:fixed;top:52px;left:50%;transform:translateX(-50%);
+     width:min(940px,93vw);max-height:72vh;overflow-y:auto;background:#fff;
+     border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(20,50,90,.22);
+     padding:12px;z-index:47;gap:6px}
+.toc.open{display:flex;flex-wrap:wrap}
+.navbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;
+        padding:5px 12px;font-size:.82rem;cursor:pointer;transition:.15s;text-align:left}
+.navbtn:hover{border-color:var(--blue);color:var(--blue2)}
+.navbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:650}
+.page{display:none;animation:fade .25s ease}
+.page.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.kick{color:var(--blue);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem;margin:14px 0 8px}
+h1{color:var(--blue2);font-size:1.94rem;line-height:1.16;margin:0 0 12px;font-weight:800;letter-spacing:-.01em}
+h2{color:var(--blue2);font-size:1.4rem;margin:6px 0 6px;font-weight:770}
+h3{color:var(--blue2);font-size:1.05rem;margin:22px 0 2px;font-weight:700}
+.sub{color:var(--mut);font-size:1.07rem;margin:0 0 6px;max-width:76ch}
+p{margin:11px 0;max-width:82ch}
+.eqbox{background:#ffffff;border:1.5px solid var(--palered);border-radius:10px;
+       color:var(--palered-t);text-align:center;padding:15px 18px;margin:18px auto;max-width:720px;
+       font-size:1.08rem;box-shadow:0 1px 2px rgba(200,60,50,.05)}
+.eqbox small{display:block;color:var(--mut);font-size:.82rem;margin-top:8px;font-style:italic}
+.res{color:var(--red);font-weight:650}
+b,strong{color:var(--ink)}
+.take{background:#fbfdff;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:13px 18px;margin:20px 0}
+.take b{color:var(--blue2)}
+.exbox{background:#f2f8f4;border:1px solid #bfe0cc;border-left:4px solid #2e9c68;border-radius:0 10px 10px 0;
+       padding:13px 18px;margin:20px 0}
+.exbox .extag{display:inline-block;background:#2e9c68;color:#fff;border-radius:5px;padding:1px 9px;
+       font-size:.68rem;font-weight:700;letter-spacing:.07em;margin-bottom:8px;vertical-align:2px}
+.exbox h4{margin:2px 0 7px;color:#1f6e49;font-size:1.04rem;font-weight:750;display:inline-block;margin-left:8px}
+.exbox p{margin:8px 0;max-width:82ch}
+.exbox b{color:#1f6e49}
+.exnum{background:#fff;border:1px dashed #a9d3bd;border-radius:8px;padding:8px 12px;margin:9px 0;
+       font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;color:#1c5a3c;line-height:1.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:720px){.two,.three{grid-template-columns:1fr}}
+.mcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mcard h3{margin-top:2px}
+code{background:#eef3f9;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em}
+.foot{color:var(--mut);font-size:.86rem;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+.pager{display:flex;justify-content:space-between;margin-top:26px;gap:10px}
+.pager button{border:1px solid var(--line);background:#fff;color:var(--blue2);border-radius:10px;
+        padding:9px 18px;font-size:.92rem;cursor:pointer;font-weight:600}
+.pager button:hover{border-color:var(--blue)}
+.pager button:disabled{opacity:.35;cursor:default}
+ul{max-width:84ch}li{margin:5px 0}
+.plate{background:#fbfdff;border:1.5px dashed #b9cbe0;border-radius:10px;padding:12px 16px;margin:14px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;color:var(--ink);line-height:1.5}
+.reflist{max-width:90ch}
+.reflist .ref{margin:9px 0;padding-left:1.4em;text-indent:-1.4em;font-size:.95rem}
+.reflist a{color:var(--blue);text-decoration:none;border-bottom:1px solid #cfe0f0}
+.reflist a:hover{color:var(--blue2);border-color:var(--blue)}
+.refhead{color:var(--blue2);font-weight:750;font-size:1.02rem;margin:20px 0 4px;border-bottom:1px solid var(--line);padding-bottom:3px}
+.iwrap{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(20,50,90,.05);padding:16px;margin:18px 0}
+.iwrap canvas{display:block;width:100%;height:auto;background:#fff;border-radius:8px;touch-action:none}
+.ctrls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-top:12px;font-size:.9rem;color:var(--mut)}
+.ctrls label{display:flex;align-items:center;gap:8px}
+.ctrls input[type=range]{accent-color:var(--blue);width:150px}
+.ctrls .val{color:var(--blue2);font-weight:700;min-width:40px;display:inline-block}
+.ibtn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:8px;padding:6px 14px;font-size:.88rem;font-weight:650;cursor:pointer}
+.ibtn:hover{background:var(--blue2)}
+.ibtn.alt{background:#fff;color:var(--blue2)}
+.readout{margin-top:12px;font-size:.95rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.hint{color:var(--mut);font-size:.85rem;margin-top:8px}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:18px 0}
+.fbox{flex:1;min-width:150px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+.fbox .ft{font-weight:750;color:var(--blue2);font-size:.98rem}
+.fbox .fd{color:var(--mut);font-size:.86rem;margin-top:3px}
+.fbox.hl{border-color:var(--blue);background:#f5f9fd}
+.farr{display:flex;align-items:center;color:var(--blue);font-weight:800;font-size:1.3rem}
+.tag{display:inline-block;background:#eaf2fb;color:var(--blue2);border:1px solid #cfe0f0;border-radius:5px;padding:0 7px;font-size:.78rem;font-weight:650}
+</style></head><body>
+<div class="wrap">
+  <div class="topnav"><span class="brand">Learning the distribution</span><button class="tocbtn" onclick="toggleTOC()">&#9776; Contents</button><span class="pagenum" id="pagenum"></span></div>
+  <div class="tocback" id="tocback" onclick="toggleTOC()"></div>
+  <div class="toc" id="toc"><button class="navbtn" onclick="show(0)">1. Overview</button><button class="navbtn" onclick="show(1)">2. What is a density?</button><button class="navbtn" onclick="show(2)">3. Two jobs: evaluate &amp; sample</button><button class="navbtn" onclick="show(3)">4. Classic estimation: histograms &amp; kernels</button><button class="navbtn" onclick="show(4)">5. Why neural? the curse of dimensionality</button><button class="navbtn" onclick="show(5)">6. Mixture density networks</button><button class="navbtn" onclick="show(6)">7. Normalizing flows I: change of variables</button><button class="navbtn" onclick="show(7)">8. Normalizing flows II: stacking in 2D</button><button class="navbtn" onclick="show(8)">9. Autoregressive models: one piece at a time</button><button class="navbtn" onclick="show(9)">10. LLMs as density estimators</button><button class="navbtn" onclick="show(10)">11. Diffusion models: denoise into being</button><button class="navbtn" onclick="show(11)">12. Conditional density: p(&theta; | x)</button><button class="navbtn" onclick="show(12)">13. A two-minute Bayesian recap</button><button class="navbtn" onclick="show(13)">14. Hierarchical models in one page</button><button class="navbtn" onclick="show(14)">15. Simulation-based inference</button><button class="navbtn" onclick="show(15)">16. Amortized inference</button><button class="navbtn" onclick="show(16)">17. Calibration: are the error bars honest?</button><button class="navbtn" onclick="show(17)">18. The unifying picture</button><button class="navbtn" onclick="show(18)">19. Tools, pitfalls &amp; further reading</button><button class="navbtn" onclick="show(19)">20. References &amp; further reading</button></div>
+  <section class="page" id="p0">
+<p class="kick">Machine learning &mdash; the shape of a probability</p>
+<h1>Learning the distribution<br>Generative AI, language models, diffusion &amp; Bayesian inference, one idea</h1>
+<p class="sub">A surprising amount of modern machine learning is one task wearing different hats: <b>learn a probability distribution from examples, then use it</b>. An image generator learns the distribution of pictures. A language model learns the distribution of the next word. A Bayesian inference engine learns the distribution of parameters that could have produced your data. The machine that does this is a <b>neural density estimator</b>, and it is the thread running through all of them.</p>
+<div class="flow">
+  <div class="fbox hl"><div class="ft">Density estimation</div><div class="fd">learn p(x) from samples &mdash; evaluate it, and draw new samples</div></div>
+  <div class="farr">&rarr;</div>
+  <div class="fbox"><div class="ft">Generative AI</div><div class="fd">sample p(image), p(audio)</div></div>
+  <div class="fbox"><div class="ft">LLMs</div><div class="fd">p(next token | context)</div></div>
+  <div class="fbox"><div class="ft">SBI &amp; HBM</div><div class="fd">p(parameters | data)</div></div>
+</div>
+<div class="two" style="margin-top:6px">
+  <div class="mcard"><h3>What you will build up</h3><p style="margin:6px 0">From &ldquo;what is a density&rdquo; to histograms and kernels, to the neural versions &mdash; mixtures, normalizing flows, autoregressive models, diffusion &mdash; and then how the very same objects power language models and simulation-based Bayesian inference.</p></div>
+  <div class="mcard"><h3>How to read it</h3><p style="margin:6px 0">Every idea comes with a <b>toy example you can run</b>: sample a histogram into existence, watch a flow bend a Gaussian, generate text from a tiny character model, denoise a diffusion cloud, and infer a posterior purely from simulations.</p></div>
+</div>
+<p style="margin-top:16px;color:var(--mut)">The <b>Contents</b> menu (top), or Prev / Next (or &larr; &rarr; arrow keys), move through the pages. Nothing here needs any libraries &mdash; every animation is a few lines of arithmetic drawn on a canvas.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p1">
+<h2>A probability density, from scratch</h2>
+<p>A <b>probability density</b> p(x) says how much probability sits near each value of x. It must be non-negative and integrate to one: <code>&#8747; p(x) dx = 1</code>. You almost never get p(x) handed to you &mdash; instead you get <em>samples</em> drawn from it (measurements, pixels, words) and must work backwards to the density that produced them. That backwards step is <b>density estimation</b>.</p>
+<div class="eqbox">
+  p(x) &ge; 0, &nbsp;&nbsp; &#8747; p(x)&thinsp;dx = 1, &nbsp;&nbsp; P(a &lt; x &lt; b) = &#8747;<sub>a</sub><sup>b</sup> p(x)&thinsp;dx
+  <small>a density is a shape whose area is probability &mdash; the histogram of infinitely many samples, infinitely finely binned</small>
+</div>
+<h3>Interactive: sample a density into existence</h3>
+<p>The true density below (blue curve) is a mixture of two bumps &mdash; think &ldquo;two kinds of object.&rdquo; Press <b>Stream</b> and samples rain down; their histogram (grey) climbs toward the true curve. With a handful of samples the estimate is noisy; with thousands it locks on. <em>That convergence is the whole game.</em></p>
+<div class="iwrap">
+  <canvas id="dnC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="dnGo">&#9654; Stream</button>
+    <button class="ibtn alt" id="dnOne">+1 sample</button>
+    <button class="ibtn alt" id="dnReset">&#8635; Reset</button>
+    <span class="readout" id="dnOut"></span>
+  </div>
+  <div class="hint">Blue curve: the true density p(x). Grey bars: the histogram of the samples so far (normalised to an area of 1). Watch the bars converge to the curve.</div>
+</div>
+<div class="take"><b>The key move.</b> Samples are all you ever see; the density is what you want. Every method in this deck is a different way to turn a pile of samples into a usable p(x) &mdash; one you can both <em>evaluate</em> and <em>sample from</em>.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p2">
+<h2>The two things a density model must do</h2>
+<p>&ldquo;Having&rdquo; a distribution means being able to do two different jobs, and models differ in which they make easy:</p>
+<div class="two">
+  <div class="mcard"><h3>Evaluate</h3><p style="margin:6px 0">Given a point x, return the number p(x) &mdash; how probable is this exact image / sentence / parameter value? Needed for likelihoods, for comparing models, for anomaly detection (&ldquo;p(x) is tiny &rArr; weird&rdquo;).</p></div>
+  <div class="mcard"><h3>Sample</h3><p style="margin:6px 0">Produce a fresh x drawn from p(x) &mdash; a new face, a paragraph, a plausible parameter. This is what &ldquo;generative&rdquo; means: run the learned distribution forward to make new data.</p></div>
+</div>
+<p>A plain neural network outputs a <em>number</em> or a <em>label</em>. A density model is built so its output is a whole distribution &mdash; and crucially one that stays valid: non-negative and integrating to one. The architectures in this deck are exactly the tricks that guarantee that while keeping one or both jobs cheap.</p>
+<div class="exbox">
+  <span class="extag">TOY EXAMPLE</span><h4>Evaluate vs sample on a coin-and-Gaussian</h4>
+  <p>Let p(x) = &frac12; N(x; &minus;1, 0.5) + &frac12; N(x; +1, 0.5). Two jobs, two operations:</p>
+  <div class="exnum"><b>Evaluate</b> at x = 0: &nbsp; p(0) = &frac12;(0.108) + &frac12;(0.108) = <b>0.108</b><br>
+  <b>Sample</b>: &nbsp; flip a fair coin &rarr; heads: draw N(&minus;1, 0.5); tails: draw N(+1, 0.5)</div>
+  <p>Sampling here is a two-step recipe (pick a bump, then draw from it) &mdash; a mixture. Evaluating is a plug-in. Notice they use the model in opposite directions; some neural models make one direction far cheaper than the other.</p>
+</div>
+<div class="take"><b>Remember the pair.</b> As each model appears, ask: is <em>evaluate</em> easy, is <em>sample</em> easy, or both? Flows do both; diffusion samples beautifully but evaluates awkwardly; energy models evaluate up to a constant but sample slowly.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p3">
+<h2>The pre-neural toolkit</h2>
+<p>Before neural anything, two methods already estimate a density from samples. They are worth knowing because the neural versions are their scalable descendants.</p>
+<div class="two">
+  <div class="mcard"><h3>Histogram</h3><p style="margin:6px 0">Chop x into bins, count samples per bin, normalise. Simple and assumption-free &mdash; but blocky, and it dies in high dimensions (bins grow as (resolution)<sup>d</sup>).</p></div>
+  <div class="mcard"><h3>Kernel density estimate</h3><p style="margin:6px 0">Drop a little smooth bump (a &ldquo;kernel&rdquo;) on every sample and add them up. Smooth and consistent, but you must choose the <b>bandwidth</b> h, and it needs all the data at evaluation time.</p></div>
+</div>
+<div class="eqbox">
+  p&#770;(x) = (1 / Nh) &nbsp; &#8721;<sub>i</sub> &nbsp; K( (x &minus; x<sub>i</sub>) / h )
+  <small>the kernel density estimate: a bump K of width h on each of the N samples, averaged</small>
+</div>
+<h3>Interactive: the bandwidth is everything</h3>
+<p>Nine samples sit on the axis (ticks). Each wears a Gaussian bump; their sum (blue) is the estimate. <b>Drag the bandwidth h</b>: too small and the estimate is spiky (it memorises the samples); too large and it is a featureless blob (it over-smooths). The sweet spot in between is the eternal bias&ndash;variance trade-off.</p>
+<div class="iwrap">
+  <canvas id="kdC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>bandwidth h <input id="kdH" type="range" min="0.08" max="1.6" step="0.02" value="0.35"><span class="val" id="kdHv">0.35</span></label>
+    <button class="ibtn alt" id="kdNew">&#8635; New samples</button>
+  </div>
+  <div class="hint">Grey ticks: the samples. Thin curves: the per-sample kernels. Blue: their sum, the density estimate. Small h &rarr; spiky; large h &rarr; over-smoothed.</div>
+</div>
+<div class="take"><b>Why go neural.</b> Histograms and KDE are perfect in 1&ndash;2 dimensions and hopeless in 100. Images live in tens of thousands of dimensions; you cannot bin or carry all the data. Neural density estimators are what replace them there.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p4">
+<h2>Why the classic tools break</h2>
+<p>In high dimensions, space is almost all empty and almost all &ldquo;edge.&rdquo; A histogram with 10 bins per axis needs 10<sup>d</sup> bins &mdash; 10<sup>100</sup> for a small image. No dataset fills that. KDE needs every sample at evaluation and its bumps become vanishingly local. The data you have is a razor-thin sliver of the space, so you cannot estimate the density by <em>filling</em> the space; you must <b>learn its structure</b>.</p>
+<div class="exbox">
+  <span class="extag">TOY EXAMPLE</span><h4>Where does the volume go?</h4>
+  <p>Take the unit cube in d dimensions and ask what fraction of its volume lies in the outer 5% shell near the surface:</p>
+  <div class="exnum">fraction in the shell = 1 &minus; 0.90<sup>d</sup><br>
+  d = 1: &nbsp;10% &nbsp;&nbsp;|&nbsp;&nbsp; d = 10: &nbsp;65% &nbsp;&nbsp;|&nbsp;&nbsp; d = 100: &nbsp;<b>99.997%</b></div>
+  <p>By d = 100 essentially all the volume is in a thin skin, and points are all roughly the same (large) distance apart. &ldquo;Nearby samples&rdquo; &mdash; the thing histograms and KDE rely on &mdash; stops meaning anything. A neural network sidesteps this by sharing structure across the space instead of partitioning it.</p>
+</div>
+<h3>What a neural density estimator buys you</h3>
+<p>A neural network is a flexible, parameter-efficient function approximator. Wire one up so that its output is guaranteed to be a valid distribution, train it to make the observed samples probable, and you get a density that <em>generalises</em> &mdash; it puts probability on plausible new points it never saw, because it learned the shape rather than memorising locations. The rest of the deck is four ways to do exactly that.</p>
+<div class="three" style="margin-top:6px">
+  <div class="mcard"><h3>Mixtures</h3><p style="margin:6px 0">a network outputs the weights, means and spreads of a sum of Gaussians</p></div>
+  <div class="mcard"><h3>Flows</h3><p style="margin:6px 0">bend a simple distribution through invertible neural maps</p></div>
+  <div class="mcard"><h3>Autoregressive / diffusion</h3><p style="margin:6px 0">build the sample up piece by piece, or denoise it into being</p></div>
+</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p5">
+<h2>The gentlest neural density: a learned mixture</h2>
+<p>The simplest flexible density is a <b>mixture of Gaussians</b>: a weighted sum of bumps. Enough bumps can approximate almost any shape. A <b>mixture density network</b> is just a neural net whose outputs <em>are</em> the mixture&rsquo;s parameters &mdash; the weights &pi;<sub>k</sub>, means &mu;<sub>k</sub> and widths &sigma;<sub>k</sub> &mdash; possibly as a function of some input. Train it and it learns where to place the bumps.</p>
+<div class="eqbox">
+  p(x) = &#8721;<sub>k</sub> &nbsp; &pi;<sub>k</sub> &nbsp; N(x; &mu;<sub>k</sub>, &sigma;<sub>k</sub>), &nbsp;&nbsp; &#8721;<sub>k</sub> &pi;<sub>k</sub> = 1
+  <small>a valid density for free: non-negative weights that sum to one, each bump already normalised</small>
+</div>
+<h3>Interactive: watch a mixture learn the data</h3>
+<p>The grey samples come from a two-bump distribution. Press <b>Run</b> and a two-component mixture is fitted by the classic EM algorithm: each step re-assigns points softly to bumps and moves each bump to its points. Watch the two components (light) slide into place and their sum (blue) snap onto the data. The number bottom-right is the log-likelihood &mdash; it only ever goes up.</p>
+<div class="iwrap">
+  <canvas id="mdC" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="mdRun">&#9654; Run EM</button>
+    <button class="ibtn alt" id="mdStep">Step</button>
+    <button class="ibtn alt" id="mdNew">&#8635; New data</button>
+    <span class="readout" id="mdOut"></span>
+  </div>
+  <div class="hint">Grey bars: data histogram. Light curves: the two Gaussian components. Blue: their weighted sum. Each EM step raises the log-likelihood until the fit stops improving.</div>
+</div>
+<div class="take"><b>Strengths &amp; limits.</b> Mixtures are cheap and interpretable and give you <em>both</em> jobs (evaluate and sample) easily. But in very high dimensions you need unwieldy numbers of components; that is where flows and autoregressive models take over.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p6">
+<h2>Bend a simple distribution into a complex one</h2>
+<p>A <b>normalizing flow</b> starts from something trivial &mdash; a standard Gaussian &mdash; and pushes it through an <b>invertible</b> transformation g. Because g is invertible, you can track exactly how probability mass stretches and squeezes, so the output is a genuine, normalised density you can evaluate <em>and</em> sample. The bookkeeping is the change-of-variables formula:</p>
+<div class="eqbox">
+  p<sub>Y</sub>(y) = p<sub>X</sub>(g<sup>&minus;1</sup>(y)) &nbsp; | d g<sup>&minus;1</sup>/dy |
+  <small>the Jacobian factor is the &ldquo;conservation of probability&rdquo; &mdash; stretch the axis, thin the density</small>
+</div>
+<p>Sampling is trivial: draw x from the Gaussian, output y = g(x). Evaluating is the formula above. A single 1D map can only reshape (skew, sharpen, spread); the power comes from <b>stacking</b> many, which the next page shows in 2D.</p>
+<h3>Interactive: a Gaussian through an invertible map</h3>
+<p>The base is a standard normal (grey). The transform is g(x) = sinh(&alpha;x)/&alpha; &mdash; invertible for any &alpha;, and the identity at &alpha; = 0. <b>Drag &alpha;</b> and watch the transformed density (blue) sharpen its peak and grow heavy tails. Same Gaussian underneath; the map does all the shaping, and the area stays exactly one.</p>
+<div class="iwrap">
+  <canvas id="nfC" width="920" height="340"></canvas>
+  <div class="ctrls">
+    <label>nonlinearity &alpha; <input id="nfA" type="range" min="0.01" max="1.4" step="0.01" value="0.7"><span class="val" id="nfAv">0.70</span></label>
+    <button class="ibtn alt" id="nfSweep">&#9654; Sweep</button>
+  </div>
+  <div class="hint">Grey: the base standard normal p<sub>X</sub>. Blue: the transformed density p<sub>Y</sub> from the change-of-variables formula. The Jacobian keeps the blue area equal to one at every &alpha;.</div>
+</div>
+<div class="take"><b>Why flows are prized.</b> They give an <em>exact</em> likelihood (unlike diffusion or GANs) and fast sampling &mdash; which is exactly what simulation-based inference wants from a posterior. They are the workhorse of neural posterior estimation.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p7">
+<h2>Depth makes flows universal</h2>
+<p>One invertible map reshapes; a <b>stack</b> of them, each simple, composes into an arbitrarily complex warp &mdash; the same reason deep networks beat shallow ones. Modern flows (RealNVP, MAF, neural spline flows) use clever invertible layers whose Jacobian is cheap to compute, so you can stack dozens. The result can turn a featureless Gaussian blob into a ring, two moons, or the manifold of natural images.</p>
+<h3>Interactive: morph a Gaussian into a target</h3>
+<p>Left is a cloud of points from a 2D Gaussian; right is the target shape. Press <b>Morph</b> and the flow carries every point from blob to target and back &mdash; a normalizing flow is exactly this learned, invertible transport of probability mass. Switch the target between a <b>ring</b> and <b>two moons</b>.</p>
+<div class="iwrap">
+  <canvas id="f2C" width="920" height="360"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="f2Go">&#9654; Morph</button>
+    <button class="ibtn alt" id="f2Tgt">Target: ring</button>
+    <span class="readout" id="f2Out"></span>
+  </div>
+  <div class="hint">Each dot is one sample carried by the flow. At the blob end it is a plain Gaussian; at the target end it matches the data. A real flow learns this map so both directions &mdash; sample and evaluate &mdash; are exact.</div>
+</div>
+<div class="take"><b>The mental picture.</b> A flow is a smooth, reversible re-arrangement of probability &mdash; a change of coordinates in which your complicated data looks like a plain Gaussian. Training finds the coordinates; sampling runs them backwards.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p8">
+<h2>Factorise the joint into a chain of conditionals</h2>
+<p>Any joint distribution factorises exactly, with no approximation, by the product (chain) rule:</p>
+<div class="eqbox">
+  p(x<sub>1</sub>, x<sub>2</sub>, &hellip;, x<sub>n</sub>) = p(x<sub>1</sub>) &nbsp; p(x<sub>2</sub> | x<sub>1</sub>) &nbsp; p(x<sub>3</sub> | x<sub>1</sub>, x<sub>2</sub>) &nbsp; &hellip; &nbsp; p(x<sub>n</sub> | x<sub>&lt;n</sub>)
+  <small>predict each coordinate from the ones before it &mdash; a density built out of ordinary next-step predictors</small>
+</div>
+<p>An <b>autoregressive model</b> learns each conditional p(x<sub>i</sub> | x<sub>&lt;i</sub>) with a single network and multiplies them. Evaluating a density becomes a sequence of ordinary predictions; sampling becomes: draw x<sub>1</sub>, feed it back to draw x<sub>2</sub>, and so on. This is how PixelCNN generates images pixel by pixel &mdash; and, with &ldquo;coordinates&rdquo; being words, exactly how a language model works.</p>
+<div class="exbox">
+  <span class="extag">TOY EXAMPLE</span><h4>A sentence as a product of conditionals</h4>
+  <p>The probability a model assigns to a short phrase is literally the chain rule, one token at a time:</p>
+  <div class="exnum">p(&ldquo;the sky is dark&rdquo;) =<br>
+  &nbsp;&nbsp;p(the) &times; p(sky | the) &times; p(is | the sky) &times; p(dark | the sky is)</div>
+  <p>Training maximises this probability on real text; generating text samples it left to right. The next page turns this into something you can watch run.</p>
+</div>
+<div class="take"><b>The bridge to language models.</b> An LLM is an autoregressive density estimator over token sequences. &ldquo;Learning to write&rdquo; is learning p(next token | everything so far); &ldquo;generating&rdquo; is sampling that density one token at a time.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p9">
+<h2>A language model is a next-symbol density</h2>
+<p>Strip a large language model to its essence and it is doing the autoregressive trick on text: it models <b>p(next token | the tokens so far)</b>, a valid distribution over the vocabulary at every step. Train it to make real text probable; then <em>generate</em> by repeatedly sampling the next token and feeding it back. The only differences from the toy below are scale (billions of parameters, tokens not characters) and a Transformer doing the conditioning &mdash; the principle is identical.</p>
+<h3>Interactive: a tiny character-level language model</h3>
+<p>This model was &ldquo;trained&rdquo; (its counts tallied) on a short passage. It predicts the next <em>character</em> from the previous few. Press <b>Generate</b>: it samples one character at a time, feeds it back, and writes. The bars show p(next char | context) &mdash; the very distribution being sampled. Raise the <b>context</b> and the text gets more word-like; raise the <b>temperature</b> and it gets wilder (flatter distribution); lower it and it gets repetitive (peakier).</p>
+<div class="iwrap">
+  <canvas id="llC" width="920" height="360"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="llGo">&#9654; Generate</button>
+    <button class="ibtn alt" id="llPause">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="llReset">&#8635; Reset</button>
+    <label>context <input id="llK" type="range" min="1" max="4" step="1" value="3"><span class="val" id="llKv">3</span></label>
+    <label>temperature <input id="llT" type="range" min="0.3" max="1.6" step="0.05" value="0.8"><span class="val" id="llTv">0.80</span></label>
+  </div>
+  <div class="hint">Top: the text being generated (the growing context is highlighted). Bottom: p(next character | context), with the sampled character marked. This is an autoregressive density over sequences &mdash; the same object as an LLM, shrunk to characters.</div>
+</div>
+<div class="take"><b>So &ldquo;generative AI&rdquo; = density estimation.</b> Text, images and audio generators all learn p(data) and sample it. An LLM is the autoregressive-over-tokens case; a diffusion image model (next page) is another case of the same goal.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p10">
+<h2>Destroy structure, then learn to undo it</h2>
+<p><b>Diffusion models</b> &mdash; the engines behind modern image generators &mdash; learn a density by a beautiful trick. <b>Forward:</b> gradually add noise to data until it becomes pure Gaussian static; this direction is easy and needs no learning. <b>Reverse:</b> train a network to <em>remove</em> a little noise at each step; run it from static back to data and you have generated a fresh sample. The thing the network learns is the <b>score</b> &mdash; the gradient of the log-density, &nabla; log p<sub>t</sub>(x) &mdash; which points &ldquo;toward where the data is.&rdquo;</p>
+<div class="eqbox">
+  forward: add noise &nbsp;&rarr;&nbsp; p<sub>t</sub> smooths toward a Gaussian &nbsp;&nbsp;|&nbsp;&nbsp; reverse: x &larr; x + &epsilon; &nabla; log p<sub>t</sub>(x) + noise
+  <small>generation is following the learned score back up the density, from noise to a sample</small>
+</div>
+<h3>Interactive: forward noising and reverse denoising</h3>
+<p>The target is a two-bump density. Press <b>Noise</b> and a cloud of points diffuses out until it is a shapeless blob (forward). Press <b>Denoise</b> and the points follow the score back down into the two bumps (reverse) &mdash; generating samples of the target from noise. The histogram tracks where the points are.</p>
+<div class="iwrap">
+  <canvas id="dfC" width="920" height="340"></canvas>
+  <div class="ctrls">
+    <button class="ibtn alt" id="dfNoise">&#9654; Noise (forward)</button>
+    <button class="ibtn" id="dfDenoise">&#9654; Denoise (reverse)</button>
+    <button class="ibtn alt" id="dfReset">&#8635; Reset</button>
+    <span class="readout" id="dfOut"></span>
+  </div>
+  <div class="hint">Dots: a cloud of points. Grey curve: the target two-bump density. Forward spreads the cloud into noise; reverse follows the score &nabla;&thinsp;log&thinsp;p back into the two bumps &mdash; that is generation.</div>
+</div>
+<div class="take"><b>Evaluate vs sample, again.</b> Diffusion samples superbly but its exact likelihood is awkward &mdash; the opposite trade-off from a flow. Same overall goal (learn p(x)), different corner of the design space.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p11">
+<h2>From modelling data to answering questions</h2>
+<p>Everything so far learned p(x) &mdash; the distribution of the data itself. Turn the knob one notch and you get a <b>conditional</b> density p(&theta; | x): the distribution of some <em>quantity of interest</em> &theta; given observed data x. Every architecture in this deck has a conditional version &mdash; a mixture density network, a conditional flow, a conditional diffusion model &mdash; where the network simply takes x as an extra input and outputs the distribution over &theta;.</p>
+<div class="eqbox">
+  learn &nbsp; q<sub>&phi;</sub>(&theta; | x) &nbsp; &asymp; &nbsp; p(&theta; | x)
+  <small>a neural density estimator with an input: give it data x, it returns the whole distribution over &theta;</small>
+</div>
+<p>Why does this matter? Because p(&theta; | x) is exactly what <b>Bayesian inference</b> wants: the <em>posterior</em> &mdash; what the data tell you about the unknown &theta;. If a neural density estimator can learn a conditional distribution, it can learn a posterior. That is the door from generative modelling into inference, and the next pages walk through it.</p>
+<div class="two">
+  <div class="mcard"><h3>Generative use</h3><p style="margin:6px 0">x = an image, &theta; = its class or caption; or x = a prompt, &theta; = the continuation. Conditioning is how &ldquo;text-to-image&rdquo; and &ldquo;prompted&rdquo; models work.</p></div>
+  <div class="mcard"><h3>Inference use</h3><p style="margin:6px 0">x = your measured data, &theta; = the physical parameters that produced it. The learned q(&theta;|x) <em>is</em> the posterior &mdash; error bars included.</p></div>
+</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p12">
+<h2>Posterior &prop; likelihood &times; prior</h2>
+<p>Bayesian inference asks: given data x, what do we believe about the parameters &theta;? The answer is the <b>posterior</b> p(&theta; | x), assembled from the <b>likelihood</b> p(x | &theta;) (how probable the data is for each &theta;) and the <b>prior</b> p(&theta;) (what we believed beforehand):</p>
+<div class="eqbox">
+  p(&theta; | x) = p(x | &theta;) &nbsp; p(&theta;) &nbsp; / &nbsp; p(x)
+  <small>Bayes&rsquo; theorem &mdash; the posterior is the prior reshaped by how well each &theta; explains the data</small>
+</div>
+<div class="exbox">
+  <span class="extag">TOY EXAMPLE</span><h4>Inferring a mean, by hand</h4>
+  <p>One measurement x = 1.6 of an unknown mean &theta;, with known noise &sigma; = 1, and a prior &theta; ~ N(0, &tau;=2). The posterior is Gaussian with a tidy closed form:</p>
+  <div class="exnum">precision = 1/&sigma;<sup>2</sup> + 1/&tau;<sup>2</sup> = 1 + 0.25 = 1.25<br>
+  posterior mean = (x/&sigma;<sup>2</sup>) / precision = 1.6 / 1.25 = <b>1.28</b><br>
+  posterior sd = 1/&#8730;precision = <b>0.89</b> &nbsp;&rarr;&nbsp; &theta; = 1.28 &plusmn; 0.89</div>
+  <p>The data pull &theta; up from the prior mean 0 toward 1.6; the prior holds it back a little. We will reproduce this <em>same</em> answer on the next page without ever using this formula &mdash; purely from simulations.</p>
+</div>
+<h3>The catch: intractable likelihoods</h3>
+<p>That worked because p(x | &theta;) had a formula. In real science the &ldquo;likelihood&rdquo; is often a <b>simulator</b> &mdash; a physics code, an instrument model, a stochastic process &mdash; that you can <em>run</em> (given &theta;, produce plausible x) but whose probability you cannot <em>write down</em>. Classical Bayesian computation (MCMC) needs to evaluate the likelihood, so it stalls. This is where neural density estimation returns as the hero.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p13">
+<h2>When the parameters have a population</h2>
+<p>Often you are not inferring one &theta; but many related ones &mdash; the true masses of many clusters, the effects in many trials, the properties of many galaxies &mdash; drawn from a shared <b>population</b>. A <b>hierarchical Bayesian model</b> (HBM) infers the individual parameters and the population that generated them at the same time, so each estimate borrows strength from the rest.</p>
+<div class="plate">
+&phi;  ~  hyperprior<br>
+&nbsp;&nbsp;&#9492;&#9472; for each object i:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&theta;<sub>i</sub>  ~  p(&theta;<sub>i</sub> | &phi;)&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#5b6b7a">(population)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x<sub>i</sub>  ~  p(x<sub>i</sub> | &theta;<sub>i</sub>)&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#5b6b7a">(measurement)</span>
+</div>
+<p>An HBM is itself a <b>generative model</b>: it says exactly how to <em>simulate</em> data &mdash; draw the population, draw each object, draw each measurement. And a generative model you can sample from but perhaps not write a likelihood for is precisely what simulation-based inference consumes. HBMs and neural density estimation meet here: the hierarchy defines the simulator; the neural density estimator learns the posterior over its parameters.</p>
+<div class="take"><b>One-sentence link.</b> HBM says <em>what</em> to infer (a population behind noisy, latent data); SBI says <em>how</em> when the likelihood is intractable (simulate, then learn the posterior with a neural density estimator). A companion deck covers HBMs in full.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p14">
+<h2>Infer without a likelihood &mdash; just simulate</h2>
+<p><b>Simulation-based inference</b> (SBI, also &ldquo;likelihood-free&rdquo; inference) needs only a simulator: a black box that turns parameters &theta; into data x. The recipe:</p>
+<div class="plate">
+1.  draw many &theta; from the prior<br>
+2.  for each, run the simulator to get x  &nbsp;&rarr;&nbsp;  a pile of (&theta;, x) pairs<br>
+3.  train a conditional neural density estimator q(&theta; | x) on those pairs<br>
+4.  feed in the real data x<sub>0</sub>  &nbsp;&rarr;&nbsp;  out comes the posterior p(&theta; | x<sub>0</sub>)
+</div>
+<p>No likelihood is ever evaluated. The simulator supplies examples; the neural density estimator &mdash; the very object from the generative-AI pages &mdash; learns the posterior from them. This is <b>neural posterior estimation</b>. (Older SBI, called ABC, keeps only simulations whose x lands near x<sub>0</sub>; the toy below shows that intuition, which the neural version scales up.)</p>
+<h3>Interactive: a posterior built from simulations</h3>
+<p>Simulator: x = &theta; + noise (&sigma; = 1); prior &theta; ~ N(0, 2). <b>Set the observed x&#8320;</b> and press <b>Simulate</b>: dots are (&theta;, x) pairs; those landing in the band near x&#8320; are &ldquo;accepted,&rdquo; and their &theta; values (histogram, right) build the posterior. The blue curve is the exact answer from the last page &mdash; watch the simulation-only histogram converge to it.</p>
+<div class="iwrap">
+  <canvas id="sbC" width="920" height="340"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="sbGo">&#9654; Simulate</button>
+    <button class="ibtn alt" id="sbReset">&#8635; Reset</button>
+    <label>observed x&#8320; <input id="sbX" type="range" min="-3" max="3" step="0.1" value="1.6"><span class="val" id="sbXv">1.6</span></label>
+    <label>band <input id="sbB" type="range" min="0.1" max="1.0" step="0.05" value="0.3"><span class="val" id="sbBv">0.30</span></label>
+    <span class="readout" id="sbOut"></span>
+  </div>
+  <div class="hint">Left: (&theta;, x) simulations; green = accepted (x within the band of x&#8320;). Right: histogram of accepted &theta; &mdash; the posterior &mdash; against the exact Gaussian (blue). Narrow band = more exact but fewer accepted.</div>
+</div>
+<div class="take"><b>The pay-off.</b> Any simulator you can run becomes a Bayesian likelihood. The neural version replaces &ldquo;keep near-misses&rdquo; with &ldquo;learn q(&theta;|x),&rdquo; so it uses <em>every</em> simulation and works in many dimensions.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p15">
+<h2>Train once, infer forever</h2>
+<p>There is a subtle, powerful bonus. The conditional estimator q(&theta; | x) takes the data x as an <em>input</em>. So once it is trained, you can feed it <b>any</b> dataset and read off the posterior instantly &mdash; no re-running the sampler. This is <b>amortized inference</b>: pay a large training cost once, then each new inference is a single fast network evaluation.</p>
+<div class="two">
+  <div class="mcard"><h3>Classical (per-dataset)</h3><p style="margin:6px 0">MCMC re-runs from scratch for every new dataset &mdash; hours each. Accurate, but it does not reuse effort.</p></div>
+  <div class="mcard"><h3>Amortized (per-problem)</h3><p style="margin:6px 0">Train q(&theta;|x) once over the whole prior; then a new dataset&rsquo;s posterior is one forward pass &mdash; milliseconds. Ideal when you must fit thousands of objects.</p></div>
+</div>
+<div class="exbox">
+  <span class="extag">WHY IT MATTERS</span><h4>The same idea you already met</h4>
+  <p>An LLM is amortized too: it was trained once, and answering a new prompt is a forward pass, not a retraining. Amortized posterior estimation is that trick pointed at inference &mdash; the network has &ldquo;pre-solved&rdquo; the inference problem for every dataset the prior can produce, and just looks up the answer for yours.</p>
+</div>
+<div class="take"><b>The trade.</b> Amortization front-loads all the cost and risk into training and into how well the simulator matches reality. Get those right and inference becomes essentially free &mdash; which is what makes population-scale science feasible.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p16">
+<h2>The one check that matters</h2>
+<p>A generated image only has to <em>look</em> right. A posterior has to <em>be</em> right &mdash; its error bars must mean what they say, or every scientific conclusion drawn from it is wrong. So SBI comes with a mandatory test: <b>simulation-based calibration</b> (SBC). The logic is simple: if you draw a true &theta;* from the prior, simulate data, and infer a posterior, then across many repeats the <b>rank</b> of &theta;* within its posterior samples should be <em>uniform</em>. Anything else exposes a miscalibrated model.</p>
+<h3>Interactive: a calibration histogram forming</h3>
+<p>Each trial: draw a truth, infer a posterior, record where the truth falls among the posterior samples (its rank). Press <b>Run</b> and the rank histogram fills. <b>Well-calibrated</b> &rarr; flat. Toggle to <b>Overconfident</b> (too-narrow posteriors) &rarr; a &#8746;-shape: the truth keeps landing in the tails because the posterior is too sure of itself.</p>
+<div class="iwrap">
+  <canvas id="scC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="scGo">&#9654; Run trials</button>
+    <button class="ibtn alt" id="scMode">Model: calibrated</button>
+    <button class="ibtn alt" id="scReset">&#8635; Reset</button>
+    <span class="readout" id="scOut"></span>
+  </div>
+  <div class="hint">Bars: how often the true value lands at each rank within its posterior. Flat = calibrated (honest error bars). &#8746;-shaped = overconfident. Dashed line: the flat target.</div>
+</div>
+<div class="take"><b>The discipline.</b> This is the line between a pretty generative model and a trustworthy inference. &ldquo;It samples nice pictures&rdquo; is not enough; &ldquo;its 90% interval contains the truth 90% of the time&rdquo; is the bar.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p17">
+<h2>One core, many faces</h2>
+<p>Pull it together. A single capability &mdash; a neural network that represents a probability distribution you can evaluate and sample &mdash; underlies all of it. Point it at data and it is generative AI; add an input and it is inference.</p>
+<div class="flow">
+  <div class="fbox"><div class="ft">HBM</div><div class="fd"><span class="tag">what</span> a population behind noisy, latent data</div></div>
+  <div class="farr">&rarr;</div>
+  <div class="fbox"><div class="ft">SBI</div><div class="fd"><span class="tag">how</span> simulate, don&rsquo;t write the likelihood</div></div>
+  <div class="farr">&rarr;</div>
+  <div class="fbox hl"><div class="ft">Neural density estimator</div><div class="fd"><span class="tag">engine</span> learn q(&theta;|x) or p(x)</div></div>
+</div>
+<div class="flow">
+  <div class="fbox"><div class="ft">Normalizing flows</div><div class="fd">exact likelihood, fast sampling</div></div>
+  <div class="fbox"><div class="ft">Autoregressive / LLMs</div><div class="fd">p(next token | context)</div></div>
+  <div class="fbox"><div class="ft">Diffusion</div><div class="fd">denoise noise into data</div></div>
+  <div class="fbox"><div class="ft">Mixtures</div><div class="fd">a learned sum of bumps</div></div>
+</div>
+<p>Read across the top row and you have the plan of a modern inference pipeline. Read the bottom row and you have the toolbox of generative AI. They are the <em>same</em> toolbox: the flow that generates faces is the flow that gives you a posterior; the autoregressive model that writes text is the chain rule that scores a sentence; the conditional density that captions an image is the conditional density that infers a parameter.</p>
+<div class="take"><b>The whole deck in a line.</b> Learn a distribution from examples, then use it &mdash; forwards to <em>generate</em>, or conditioned to <em>infer</em>. Generative AI and Bayesian inference are two uses of one machine.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p18">
+<h2>Where to go next</h2>
+<div class="two">
+  <div class="mcard"><h3>Libraries</h3><p style="margin:6px 0"><b>sbi</b> and <b>LAMPE</b> for neural posterior/likelihood estimation; <b>nflows</b> / <b>zuko</b> for normalizing flows; <b>Pyro</b>, <b>NumPyro</b> and <b>PyMC</b> for probabilistic programming; <b>diffusers</b> for diffusion models. Most are a few lines to a working posterior.</p></div>
+  <div class="mcard"><h3>Good defaults</h3><p style="margin:6px 0">Start with a masked autoregressive flow or neural spline flow for the density; always run simulation-based calibration; check posterior predictive samples look like real data; and watch that your simulator actually matches the world.</p></div>
+</div>
+<h3>Pitfalls worth naming</h3>
+<ul>
+  <li><b>Model misspecification.</b> If the simulator is wrong, an amortized posterior is confidently wrong &mdash; and it will not tell you. Calibration on <em>real-adjacent</em> data and posterior-predictive checks are your guardrails.</li>
+  <li><b>Mode collapse / missed modes.</b> A flexible density can still miss a far-off mode it rarely saw in training; widen the prior and the simulation budget.</li>
+  <li><b>Calibration is not optional.</b> A great-looking sample says nothing about whether the uncertainty is honest. Test the ranks.</li>
+  <li><b>Summary statistics.</b> High-dimensional x is often compressed to summaries before inference; a bad summary throws away the very information the posterior needed.</li>
+</ul>
+<div class="take"><b>The mindset.</b> Treat every generative model as a density and ask the two questions &mdash; can I evaluate it, can I sample it &mdash; and, for inference, the third: are its probabilities calibrated? Those three questions organise the entire field.</div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p19">
+<h2>References &amp; further reading</h2>
+<div class="refhead">Density estimation &amp; normalizing flows</div>
+<div class="reflist">
+  <div class="ref">Bishop, C. M. (1994). <i>Mixture Density Networks.</i> Aston University technical report.</div>
+  <div class="ref">Papamakarios, G., Nalisnick, E., Rezende, D., Mohamed, S., Lakshminarayanan, B. (2021). <i>Normalizing Flows for Probabilistic Modeling and Inference.</i> JMLR 22(57). <a href="https://arxiv.org/abs/1912.02762">arXiv:1912.02762</a></div>
+  <div class="ref">Rezende, D. &amp; Mohamed, S. (2015). <i>Variational Inference with Normalizing Flows.</i> ICML. <a href="https://arxiv.org/abs/1505.05770">arXiv:1505.05770</a></div>
+  <div class="ref">Papamakarios, G., Pavlakou, T., Murray, I. (2017). <i>Masked Autoregressive Flow for Density Estimation.</i> NeurIPS. <a href="https://arxiv.org/abs/1705.07057">arXiv:1705.07057</a></div>
+</div>
+<div class="refhead">Autoregressive &amp; diffusion generative models</div>
+<div class="reflist">
+  <div class="ref">van den Oord, A. et al. (2016). <i>Pixel Recurrent Neural Networks.</i> ICML. <a href="https://arxiv.org/abs/1601.06759">arXiv:1601.06759</a></div>
+  <div class="ref">Vaswani, A. et al. (2017). <i>Attention Is All You Need.</i> NeurIPS. <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a></div>
+  <div class="ref">Ho, J., Jain, A., Abbeel, P. (2020). <i>Denoising Diffusion Probabilistic Models.</i> NeurIPS. <a href="https://arxiv.org/abs/2006.11239">arXiv:2006.11239</a></div>
+  <div class="ref">Song, Y. et al. (2021). <i>Score-Based Generative Modeling through Stochastic Differential Equations.</i> ICLR. <a href="https://arxiv.org/abs/2011.13456">arXiv:2011.13456</a></div>
+</div>
+<div class="refhead">Simulation-based inference &amp; calibration</div>
+<div class="reflist">
+  <div class="ref">Cranmer, K., Brehmer, J., Louppe, G. (2020). <i>The frontier of simulation-based inference.</i> PNAS 117(48). <a href="https://arxiv.org/abs/1911.01429">arXiv:1911.01429</a></div>
+  <div class="ref">Papamakarios, G. &amp; Murray, I. (2016). <i>Fast &epsilon;-free Inference of Simulation Models with Bayesian Conditional Density Estimation.</i> NeurIPS. <a href="https://arxiv.org/abs/1605.06376">arXiv:1605.06376</a></div>
+  <div class="ref">Greenberg, D., Nonnenmacher, M., Macke, J. (2019). <i>Automatic Posterior Transformation for Likelihood-Free Inference.</i> ICML. <a href="https://arxiv.org/abs/1905.07488">arXiv:1905.07488</a></div>
+  <div class="ref">Talts, S. et al. (2018). <i>Validating Bayesian Inference Algorithms with Simulation-Based Calibration.</i> <a href="https://arxiv.org/abs/1804.06788">arXiv:1804.06788</a></div>
+  <div class="ref">Cranmer, K. et al. (2020). <i>sbi: A toolkit for simulation-based inference.</i> JOSS 5(52). <a href="https://joss.theoj.org/papers/10.21105/joss.02505">JOSS:02505</a></div>
+</div>
+<p class="foot">A companion deck develops hierarchical Bayesian models in full. Every animation here is self-contained JavaScript &mdash; no external libraries, no tracking, works offline.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+
+</div>
+<script>
+var cur=0, N=20;
+function show(k){
+  if(k<0)k=0; if(k>=N)k=N-1; cur=k;
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('on',i===k));
+  document.querySelectorAll('.toc .navbtn').forEach((b,i)=>b.classList.toggle('on',i===k));
+  var pn=document.getElementById('pagenum'); if(pn) pn.textContent=(k+1)+' / '+N;
+  document.querySelectorAll('#prev').forEach(b=>b.disabled=(k===0));
+  document.querySelectorAll('#next').forEach(b=>b.disabled=(k===N-1));
+  closeTOC();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');var open=t.classList.toggle('open');b.classList.toggle('open',open);}
+function closeTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');if(t)t.classList.remove('open');if(b)b.classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);if(e.key==='Escape')closeTOC();});
+show(0);
+</script>
+<script>
+function randn(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function gpdf(x,m,s){var z=(x-m)/s;return Math.exp(-0.5*z*z)/(s*Math.sqrt(2*Math.PI));}
+var C_BLUE="#3D7EBF",C_BL2="#245a95",C_GREY="#b9c6d6",C_INK="#22303f",C_GRN="#2e9c68",C_RED="#c0392b",C_MUT="#8a99a8";
+
+/* target mixture reused by several widgets */
+var MIX=[{w:0.5,m:-1.3,s:0.55},{w:0.5,m:1.45,s:0.62}];
+function mixpdf(x){var p=0;for(var k=0;k<MIX.length;k++)p+=MIX[k].w*gpdf(x,MIX[k].m,MIX[k].s);return p;}
+function mixsample(){var k=Math.random()<MIX[0].w?0:1;return MIX[k].m+MIX[k].s*randn();}
+
+/* ---- dnC: sampling -> histogram ---- */
+(function(){var c=document.getElementById('dnC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,x0=-4,x1=4,NB=48,bins=new Array(NB).fill(0),n=0,run=null;
+ function X(v){return (v-x0)/(x1-x0)*W;}
+ function draw(){x.clearRect(0,0,W,H);var base=H-30;
+   var pmax=0.42;
+   /* histogram */
+   var bw=(x1-x0)/NB;
+   for(var i=0;i<NB;i++){var dens=n>0?bins[i]/(n*bw):0;var h=dens/pmax*(base-20);
+     x.fillStyle="#dbe4ee";x.fillRect(X(x0+i*bw)+1,base-h,W/NB-2,h);}
+   /* true curve */
+   x.strokeStyle=C_BLUE;x.lineWidth=2.4;x.beginPath();
+   for(var px=0;px<=W;px+=2){var xv=x0+px/W*(x1-x0);var y=base-mixpdf(xv)/pmax*(base-20);
+     if(px===0)x.moveTo(px,y);else x.lineTo(px,y);}x.stroke();
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(0,base);x.lineTo(W,base);x.stroke();
+   var o=document.getElementById('dnOut');if(o)o.textContent=n+" samples";
+ }
+ function add(k){for(var i=0;i<k;i++){var s=mixsample();var b=Math.floor((s-x0)/(x1-x0)*NB);
+   if(b>=0&&b<NB){bins[b]++;n++;}}}
+ document.getElementById('dnOne').onclick=function(){add(1);draw();};
+ document.getElementById('dnReset').onclick=function(){bins=new Array(NB).fill(0);n=0;if(run){clearInterval(run);run=null;}draw();};
+ document.getElementById('dnGo').onclick=function(){if(run){clearInterval(run);run=null;return;}
+   run=setInterval(function(){add(6);draw();if(n>6000){clearInterval(run);run=null;}},40);};
+ draw();
+})();
+
+/* ---- kdC: KDE bandwidth ---- */
+(function(){var c=document.getElementById('kdC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,x0=-4,x1=4,pts=[];
+ function X(v){return (v-x0)/(x1-x0)*W;}
+ function gen(){pts=[];for(var i=0;i<9;i++)pts.push(mixsample());}
+ function draw(){var h=+document.getElementById('kdH').value;
+   document.getElementById('kdHv').textContent=h.toFixed(2);
+   x.clearRect(0,0,W,H);var base=H-26;var pmax=0.6;
+   /* individual kernels */
+   x.strokeStyle="#cfe0f0";x.lineWidth=1;
+   for(var j=0;j<pts.length;j++){x.beginPath();
+     for(var px=0;px<=W;px+=3){var xv=x0+px/W*(x1-x0);var y=base-(gpdf(xv,pts[j],h)/pts.length)/pmax*(base-16);
+       if(px===0)x.moveTo(px,y);else x.lineTo(px,y);}x.stroke();}
+   /* sum */
+   x.strokeStyle=C_BLUE;x.lineWidth=2.6;x.beginPath();
+   for(var px2=0;px2<=W;px2+=2){var xv2=x0+px2/W*(x1-x0);var s=0;
+     for(var k=0;k<pts.length;k++)s+=gpdf(xv2,pts[k],h)/pts.length;
+     var y2=base-s/pmax*(base-16);if(px2===0)x.moveTo(px2,y2);else x.lineTo(px2,y2);}x.stroke();
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(0,base);x.lineTo(W,base);x.stroke();
+   /* ticks */
+   x.strokeStyle=C_INK;x.lineWidth=2;
+   for(var t=0;t<pts.length;t++){x.beginPath();x.moveTo(X(pts[t]),base);x.lineTo(X(pts[t]),base-14);x.stroke();}
+ }
+ document.getElementById('kdH').addEventListener('input',draw);
+ document.getElementById('kdNew').onclick=function(){gen();draw();};
+ gen();draw();
+})();
+
+/* ---- mdC: 1D GMM via EM ---- */
+(function(){var c=document.getElementById('mdC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,x0=-4,x1=4,data=[],comp,timer=null;
+ function gen(){data=[];for(var i=0;i<300;i++)data.push(mixsample());
+   comp=[{w:0.5,m:-2.2,s:1.2},{w:0.5,m:2.2,s:1.2}];}
+ function estep(){var g=[];for(var i=0;i<data.length;i++){var a=comp[0].w*gpdf(data[i],comp[0].m,comp[0].s);
+   var b=comp[1].w*gpdf(data[i],comp[1].m,comp[1].s);var s=a+b+1e-12;g.push([a/s,b/s]);}return g;}
+ function mstep(g){for(var k=0;k<2;k++){var Nk=0,mu=0;for(var i=0;i<data.length;i++){Nk+=g[i][k];mu+=g[i][k]*data[i];}
+   mu/=Nk;var v=0;for(var j=0;j<data.length;j++)v+=g[j][k]*(data[j]-mu)*(data[j]-mu);v/=Nk;
+   comp[k].w=Nk/data.length;comp[k].m=mu;comp[k].s=Math.sqrt(Math.max(v,0.05));}}
+ function ll(){var L=0;for(var i=0;i<data.length;i++){var p=comp[0].w*gpdf(data[i],comp[0].m,comp[0].s)+comp[1].w*gpdf(data[i],comp[1].m,comp[1].s);L+=Math.log(p+1e-12);}return L/data.length;}
+ function hist(){var NB=40,bw=(x1-x0)/NB,b=new Array(NB).fill(0);
+   for(var i=0;i<data.length;i++){var bi=Math.floor((data[i]-x0)/(x1-x0)*NB);if(bi>=0&&bi<NB)b[bi]++;}
+   return {b:b,bw:bw,NB:NB};}
+ function draw(){x.clearRect(0,0,W,H);var base=H-26,pmax=0.42;var hh=hist();
+   for(var i=0;i<hh.NB;i++){var d=hh.b[i]/(data.length*hh.bw);var h=d/pmax*(base-18);
+     x.fillStyle="#e3e9f1";x.fillRect((x0+i*hh.bw-x0)/(x1-x0)*W+1,base-h,W/hh.NB-2,h);}
+   for(var k=0;k<2;k++){x.strokeStyle=k===0?"#7fb0dd":"#e0a86a";x.lineWidth=1.6;x.beginPath();
+     for(var px=0;px<=W;px+=2){var xv=x0+px/W*(x1-x0);var y=base-comp[k].w*gpdf(xv,comp[k].m,comp[k].s)/pmax*(base-18);
+       if(px===0)x.moveTo(px,y);else x.lineTo(px,y);}x.stroke();}
+   x.strokeStyle=C_BLUE;x.lineWidth=2.6;x.beginPath();
+   for(var p2=0;p2<=W;p2+=2){var xv2=x0+p2/W*(x1-x0);var sm=comp[0].w*gpdf(xv2,comp[0].m,comp[0].s)+comp[1].w*gpdf(xv2,comp[1].m,comp[1].s);
+     var y2=base-sm/pmax*(base-18);if(p2===0)x.moveTo(p2,y2);else x.lineTo(p2,y2);}x.stroke();
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(0,base);x.lineTo(W,base);x.stroke();
+   var o=document.getElementById('mdOut');if(o)o.textContent="log-likelihood "+ll().toFixed(3);
+ }
+ function step(){mstep(estep());draw();}
+ document.getElementById('mdStep').onclick=function(){step();};
+ document.getElementById('mdRun').onclick=function(){if(timer){clearInterval(timer);timer=null;return;}
+   var it=0;timer=setInterval(function(){step();if(++it>40){clearInterval(timer);timer=null;}},180);};
+ document.getElementById('mdNew').onclick=function(){if(timer){clearInterval(timer);timer=null;}gen();draw();};
+ gen();draw();
+})();
+
+/* ---- nfC: 1D change of variables ---- */
+(function(){var c=document.getElementById('nfC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,x0=-4,x1=4,sweep=null;
+ function draw(){var a=+document.getElementById('nfA').value;
+   document.getElementById('nfAv').textContent=a.toFixed(2);
+   x.clearRect(0,0,W,H);var base=H-26,pmax=0.75;
+   /* base gaussian grey */
+   x.strokeStyle=C_GREY;x.lineWidth=1.8;x.beginPath();
+   for(var px=0;px<=W;px+=2){var xv=x0+px/W*(x1-x0);var y=base-gpdf(xv,0,1)/pmax*(base-18);
+     if(px===0)x.moveTo(px,y);else x.lineTo(px,y);}x.stroke();
+   /* transformed: y=sinh(a x)/a ; invert x=asinh(a y)/a ; dx/dy=1/(a y'?), compute p_Y(y)=p_X(xinv)*|dx/dy| */
+   x.strokeStyle=C_BLUE;x.lineWidth=2.6;x.beginPath();var first=true;
+   for(var p2=0;p2<=W;p2+=2){var yv=x0+p2/W*(x1-x0);
+     var xinv=Math.asinh(a*yv)/a;                 /* g^{-1}(y) */
+     var dxdy=1/Math.sqrt(1+(a*yv)*(a*yv));        /* d/dy asinh(a y)/a = 1/sqrt(1+(ay)^2) */
+     var py=gpdf(xinv,0,1)*Math.abs(dxdy);
+     var yy=base-py/pmax*(base-18);
+     if(first){x.moveTo(p2,yy);first=false;}else x.lineTo(p2,yy);}x.stroke();
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(0,base);x.lineTo(W,base);x.stroke();
+   x.fillStyle=C_MUT;x.font="12px -apple-system,sans-serif";
+   x.fillText("base N(0,1)",14,20);x.fillStyle=C_BL2;x.fillText("transformed p_Y(y)",120,20);
+ }
+ document.getElementById('nfA').addEventListener('input',draw);
+ document.getElementById('nfSweep').onclick=function(){if(sweep){clearInterval(sweep);sweep=null;return;}
+   var d=1,el=document.getElementById('nfA');sweep=setInterval(function(){var v=+el.value+d*0.03;
+     if(v>=1.4){v=1.4;d=-1;}if(v<=0.01){v=0.01;d=1;}el.value=v;draw();},40);};
+ draw();
+})();
+
+/* ---- f2C: 2D flow morph ---- */
+(function(){var c=document.getElementById('f2C');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,N=420,base=[],tgt=[],t=0,dir=1,anim=null,mode=0;
+ function build(){base=[];tgt=[];for(var i=0;i<N;i++){var z1=randn(),z2=randn();base.push([z1,z2]);
+   if(mode===0){/* ring */var ang=2*Math.PI*Math.random();var r=2.3+0.28*randn();tgt.push([r*Math.cos(ang),r*Math.sin(ang)]);}
+   else{/* two moons */var up=Math.random()<0.5;var th=Math.PI*Math.random();
+     if(up){tgt.push([2*Math.cos(th)-1+0.16*randn(),2*Math.sin(th)-0.6+0.16*randn()]);}
+     else{tgt.push([2*Math.cos(th)+1+0.16*randn(),-2*Math.sin(th)+0.6+0.16*randn()]);}}}}
+ function P(vx,vy){return [W*0.5+vx*70, H*0.5 - vy*70];}
+ function draw(){x.clearRect(0,0,W,H);
+   x.fillStyle=C_MUT;x.font="12px -apple-system,sans-serif";
+   x.fillText("t=0  base Gaussian",16,20);x.fillText("t=1  target",W-110,20);
+   for(var i=0;i<N;i++){var vx=base[i][0]*(1-t)+tgt[i][0]*t;var vy=base[i][1]*(1-t)+tgt[i][1]*t;
+     var pp=P(vx,vy);var col=t<0.5?C_GREY:C_BLUE;
+     x.fillStyle=col;x.globalAlpha=0.72;x.beginPath();x.arc(pp[0],pp[1],2.4,0,6.283);x.fill();}
+   x.globalAlpha=1;
+   var o=document.getElementById('f2Out');if(o)o.textContent="t = "+t.toFixed(2);
+ }
+ document.getElementById('f2Go').onclick=function(){if(anim){cancelAnimationFrame(anim);anim=null;return;}
+   function loop(){t+=dir*0.012;if(t>=1){t=1;dir=-1;}if(t<=0){t=0;dir=1;}draw();anim=requestAnimationFrame(loop);}loop();};
+ document.getElementById('f2Tgt').onclick=function(){mode=1-mode;this.textContent="Target: "+(mode===0?"ring":"two moons");build();draw();};
+ build();draw();
+})();
+
+/* ---- llC: char-level LLM ---- */
+(function(){var c=document.getElementById('llC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height;
+ var corpus=("the night sky is a field of chance. each star is a sample drawn from a hidden law, "+
+ "and the astronomer must read the law back from the scattered light. we never see the "+
+ "distribution itself, only the points it throws out. so we learn its shape from the data, "+
+ "and then we can imagine new skies of our own. a model that learns the shape can both judge "+
+ "how strange a new star is and dream up stars that were never seen. this is the quiet trick "+
+ "behind the machines that write and paint and reason about the world.").toLowerCase();
+ var models={};
+ function train(k){var m={};for(var i=k;i<corpus.length;i++){var ctx=corpus.substring(i-k,i);var ch=corpus[i];
+   if(!m[ctx])m[ctx]={};m[ctx][ch]=(m[ctx][ch]||0)+1;}return m;}
+ for(var kk=1;kk<=4;kk++)models[kk]=train(kk);
+ var gen="the ",timer=null;
+ function dist(k,temp){var m=models[k];var ctx=gen.substring(gen.length-k);var row=m[ctx];
+   if(!row){/* backoff */for(var kb=k-1;kb>=1;kb--){row=models[kb][gen.substring(gen.length-kb)];if(row)break;}}
+   if(!row)row={" ":1};var keys=Object.keys(row),logits=[],Z=0,arr=[];
+   for(var i=0;i<keys.length;i++){var p=Math.pow(row[keys[i]],1/temp);Z+=p;arr.push([keys[i],p]);}
+   for(var j=0;j<arr.length;j++)arr[j][1]/=Z;arr.sort(function(a,b){return b[1]-a[1];});return arr;}
+ function pick(arr){var r=Math.random(),a=0;for(var i=0;i<arr.length;i++){a+=arr[i][1];if(r<=a)return arr[i][0];}return arr[arr.length-1][0];}
+ function draw(arr,chosen){x.clearRect(0,0,W,H);
+   /* generated text top */
+   x.fillStyle=C_INK;x.font="16px ui-monospace,Menlo,monospace";
+   var pad=16,maxw=W-2*pad,tx=pad,ty=34,words=gen.split(" ");
+   x.fillText("generated:",pad,ty);ty+=26;tx=pad;
+   var shown=gen.length>230?"..."+gen.substring(gen.length-230):gen;
+   for(var i=0;i<shown.length;i++){var ch=shown[i];var w=x.measureText(ch).width;
+     if(tx+w>W-pad){tx=pad;ty+=22;}
+     x.fillStyle=(i>=shown.length-6)?C_BL2:C_INK;x.fillText(ch,tx,ty);tx+=w;}
+   /* bar chart bottom */
+   var by=H-16,bx=pad,bw=Math.min(46,(W-2*pad)/Math.min(arr.length,14)),top=Math.min(arr.length,14);
+   var maxp=arr.length?arr[0][1]:1;var chh=150;
+   x.font="12px -apple-system,sans-serif";x.fillStyle=C_MUT;
+   x.fillText("p(next char | context)",pad,by-chh-12);
+   for(var b=0;b<top;b++){var h=arr[b][1]/maxp*chh;var lab=arr[b][0]===" "?"␣":arr[b][0];
+     x.fillStyle=(arr[b][0]===chosen)?C_GRN:"#9db8d4";
+     x.fillRect(bx,by-h,bw-6,h);
+     x.fillStyle=C_INK;x.fillText(lab,bx+ (bw-6)/2-3,by+12);}
+ }
+ function stepOnce(){var k=+document.getElementById('llK').value,temp=+document.getElementById('llT').value;
+   document.getElementById('llKv').textContent=k;document.getElementById('llTv').textContent=temp.toFixed(2);
+   var arr=dist(k,temp);var ch=pick(arr);draw(arr,ch);gen+=ch;if(gen.length>1200)gen=gen.substring(gen.length-400);}
+ document.getElementById('llGo').onclick=function(){if(timer)return;timer=setInterval(stepOnce,180);};
+ document.getElementById('llPause').onclick=function(){if(timer){clearInterval(timer);timer=null;}};
+ document.getElementById('llReset').onclick=function(){if(timer){clearInterval(timer);timer=null;}gen="the ";
+   var arr=dist(+document.getElementById('llK').value,+document.getElementById('llT').value);draw(arr,null);};
+ document.getElementById('llK').addEventListener('input',function(){document.getElementById('llKv').textContent=this.value;});
+ document.getElementById('llT').addEventListener('input',function(){document.getElementById('llTv').textContent=(+this.value).toFixed(2);});
+ var a0=dist(3,0.8);draw(a0,null);
+})();
+
+/* ---- dfC: diffusion forward/reverse ---- */
+(function(){var c=document.getElementById('dfC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,x0=-5,x1=5,N=500,pts=[],sig=0.01,anim=null;
+ function reset(){pts=[];for(var i=0;i<N;i++)pts.push(mixsample());sig=0.01;draw();}
+ function scoreConv(v,s){/* d/dv log sum w_k N(v; m_k, s_k^2+s^2) */
+   var num=0,den=0;for(var k=0;k<MIX.length;k++){var vv=MIX[k].s*MIX[k].s+s*s;
+     var g=MIX[k].w*gpdf(v,MIX[k].m,Math.sqrt(vv));den+=g;num+=g*(MIX[k].m-v)/vv;}return num/(den+1e-12);}
+ function hist(){var NB=50,bw=(x1-x0)/NB,b=new Array(NB).fill(0);for(var i=0;i<N;i++){var bi=Math.floor((pts[i]-x0)/(x1-x0)*NB);if(bi>=0&&bi<NB)b[bi]++;}return{b:b,bw:bw,NB:NB};}
+ function draw(){x.clearRect(0,0,W,H);var base=H-26,pmax=0.42;var hh=hist();
+   for(var i=0;i<hh.NB;i++){var d=hh.b[i]/(N*hh.bw);var h=d/pmax*(base-18);
+     x.fillStyle="#dfe6ee";x.fillRect((x0+i*hh.bw-x0)/(x1-x0)*W+1,base-h,W/hh.NB-2,h);}
+   x.strokeStyle=C_GREY;x.lineWidth=2;x.beginPath();
+   for(var px=0;px<=W;px+=2){var xv=x0+px/W*(x1-x0);var y=base-mixpdf(xv)/pmax*(base-18);if(px===0)x.moveTo(px,y);else x.lineTo(px,y);}x.stroke();
+   /* points as a rug */
+   x.fillStyle=C_BLUE;x.globalAlpha=0.5;for(var j=0;j<N;j+=1){var pxp=(pts[j]-x0)/(x1-x0)*W;x.beginPath();x.arc(pxp,base+8,1.6,0,6.283);x.fill();}
+   x.globalAlpha=1;x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(0,base);x.lineTo(W,base);x.stroke();
+   var o=document.getElementById('dfOut');if(o)o.textContent="noise σ = "+sig.toFixed(2);
+ }
+ function forward(){if(anim){cancelAnimationFrame(anim);anim=null;}
+   function loop(){for(var i=0;i<N;i++)pts[i]+=0.09*randn();sig=Math.min(sig+0.05,3.2);draw();
+     if(sig<3.15)anim=requestAnimationFrame(loop);else anim=null;}loop();}
+ function reverse(){if(anim){cancelAnimationFrame(anim);anim=null;}
+   /* start from broad noise */for(var i=0;i<N;i++)pts[i]=3.0*randn();sig=3.0;
+   function loop(){var dt=0.04;for(var i=0;i<N;i++){var sc=scoreConv(pts[i],sig);
+       pts[i]+=sc*sig*sig*0.28 + Math.sqrt(2*0.28)*sig*randn()*0.15;}
+     sig=Math.max(sig-0.06,0.05);draw();
+     if(sig>0.08)anim=requestAnimationFrame(loop);else anim=null;}loop();}
+ document.getElementById('dfNoise').onclick=forward;
+ document.getElementById('dfDenoise').onclick=reverse;
+ document.getElementById('dfReset').onclick=function(){if(anim){cancelAnimationFrame(anim);anim=null;}reset();};
+ reset();
+})();
+
+/* ---- sbC: SBI posterior from simulations ---- */
+(function(){var c=document.getElementById('sbC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,sims=[],acc=[],timer=null;
+ var midx=W*0.52;               /* split: left scatter, right posterior */
+ var tp0=-4,tp1=4;              /* theta range */
+ function reset(){sims=[];acc=[];draw();}
+ function post_mean_sd(x0){var prec=1+0.25;return [x0/prec, Math.sqrt(1/prec)];}
+ function draw(){x.clearRect(0,0,W,H);
+   var x0=+document.getElementById('sbX').value,band=+document.getElementById('sbB').value;
+   document.getElementById('sbXv').textContent=(+x0).toFixed(1);document.getElementById('sbBv').textContent=band.toFixed(2);
+   /* left panel axes: theta horizontal (tp0..tp1), x vertical (-4..4) */
+   function LX(th){return 40+(th-tp0)/(tp1-tp0)*(midx-70);}
+   function LY(xx){return 30+(4-xx)/8*(H-70);}
+   /* band region */
+   x.fillStyle="#eaf6ef";x.fillRect(40,LY(+x0+band),midx-70,LY(+x0-band)-LY(+x0+band));
+   x.strokeStyle="#bfe0cc";x.strokeRect(40,30,midx-70,H-70);
+   x.fillStyle=C_MUT;x.font="12px -apple-system,sans-serif";
+   x.fillText("θ →",midx-70,H-22);x.save();x.translate(20,40);x.rotate(-Math.PI/2);x.fillText("simulated x",-30,0);x.restore();
+   /* x0 line */
+   x.strokeStyle=C_RED;x.lineWidth=1.4;x.beginPath();x.moveTo(40,LY(+x0));x.lineTo(midx-30,LY(+x0));x.stroke();
+   x.fillStyle=C_RED;x.fillText("x₀",midx-30,LY(+x0)-4);
+   /* points */
+   for(var i=0;i<sims.length;i++){var s=sims[i];var inb=Math.abs(s[1]-(+x0))<=band;
+     x.fillStyle=inb?C_GRN:"#c3ccd6";x.globalAlpha=inb?0.85:0.5;
+     x.beginPath();x.arc(LX(s[0]),LY(s[1]),2.2,0,6.283);x.fill();}
+   x.globalAlpha=1;
+   /* right: posterior histogram of accepted theta */
+   var rx0=midx+8,rw=W-rx0-16,base=H-40;
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(rx0,base);x.lineTo(W-16,base);x.stroke();
+   x.fillStyle=C_MUT;x.fillText("posterior  p(θ | x₀)",rx0,24);
+   function RX(th){return rx0+(th-tp0)/(tp1-tp0)*rw;}
+   var NB=34,bw=(tp1-tp0)/NB,b=new Array(NB).fill(0);
+   for(var j=0;j<acc.length;j++){var bi=Math.floor((acc[j]-tp0)/(tp1-tp0)*NB);if(bi>=0&&bi<NB)b[bi]++;}
+   var ms=post_mean_sd(+x0),pmax=gpdf(ms[0],ms[0],ms[1])*1.15;
+   for(var k=0;k<NB;k++){var d=acc.length>0?b[k]/(acc.length*bw):0;var h=d/pmax*(base-30);
+     x.fillStyle="#bfe0cc";x.fillRect(RX(tp0+k*bw)+1,base-h,rw/NB-2,h);}
+   /* exact gaussian */
+   x.strokeStyle=C_BLUE;x.lineWidth=2.4;x.beginPath();
+   for(var px=0;px<=rw;px+=2){var th=tp0+px/rw*(tp1-tp0);var y=base-gpdf(th,ms[0],ms[1])/pmax*(base-30);
+     if(px===0)x.moveTo(rx0+px,y);else x.lineTo(rx0+px,y);}x.stroke();
+   x.fillStyle=C_BL2;x.fillText("exact: θ = "+ms[0].toFixed(2)+" ± "+ms[1].toFixed(2),rx0,base+22);
+   var o=document.getElementById('sbOut');if(o)o.textContent=sims.length+" sims, "+acc.length+" accepted";
+ }
+ function add(k){var x0=+document.getElementById('sbX').value,band=+document.getElementById('sbB').value;
+   for(var i=0;i<k;i++){var th=2*randn();var xx=th+randn();sims.push([th,xx]);
+     if(Math.abs(xx-(+x0))<=band)acc.push(th);}}
+ document.getElementById('sbGo').onclick=function(){if(timer){clearInterval(timer);timer=null;return;}
+   timer=setInterval(function(){add(60);if(sims.length>6000){clearInterval(timer);timer=null;}draw();},50);};
+ document.getElementById('sbReset').onclick=function(){if(timer){clearInterval(timer);timer=null;}reset();};
+ document.getElementById('sbX').addEventListener('input',function(){acc=[];for(var i=0;i<sims.length;i++){var band=+document.getElementById('sbB').value;if(Math.abs(sims[i][1]-(+this.value))<=band)acc.push(sims[i][0]);}draw();}.bind(document.getElementById('sbX')));
+ document.getElementById('sbB').addEventListener('input',function(){acc=[];var x0=+document.getElementById('sbX').value,band=+this.value;for(var i=0;i<sims.length;i++){if(Math.abs(sims[i][1]-x0)<=band)acc.push(sims[i][0]);}draw();});
+ reset();
+})();
+
+/* ---- scC: SBC rank histogram ---- */
+(function(){var c=document.getElementById('scC');if(!c)return;var x=c.getContext('2d');
+ var W=c.width,H=c.height,M=20,ranks=new Array(M+1).fill(0),total=0,mode=0,timer=null;
+ function trial(){var th=2*randn();var x0=th+randn();var pm=x0/1.25,ps=Math.sqrt(1/1.25);
+   var draws=[];var spread=(mode===0)?ps:ps*0.55;   /* overconfident: too-narrow */
+   for(var i=0;i<M;i++)draws.push(pm+spread*randn());
+   var r=0;for(var j=0;j<M;j++)if(draws[j]<th)r++;ranks[r]++;total++;}
+ function draw(){x.clearRect(0,0,W,H);var base=H-30,pad=40,rw=(W-2*pad)/(M+1);
+   var expected=total/(M+1),ymax=Math.max(expected*2.4,4);
+   /* target line */
+   var ey=base-expected/ymax*(base-24);
+   for(var b=0;b<=M;b++){var h=ranks[b]/ymax*(base-24);
+     x.fillStyle=mode===0?"#9db8d4":"#e0a86a";x.fillRect(pad+b*rw+1,base-h,rw-2,h);}
+   x.strokeStyle=C_RED;x.setLineDash([5,4]);x.beginPath();x.moveTo(pad,ey);x.lineTo(W-pad,ey);x.stroke();x.setLineDash([]);
+   x.strokeStyle="#c8d3df";x.beginPath();x.moveTo(pad,base);x.lineTo(W-pad,base);x.stroke();
+   x.fillStyle=C_MUT;x.font="12px -apple-system,sans-serif";x.fillText("rank of the truth within its posterior samples →",pad,base+20);
+   x.fillStyle=C_RED;x.fillText("flat = calibrated",W-pad-110,ey-6);
+   var o=document.getElementById('scOut');if(o)o.textContent=total+" trials";
+ }
+ document.getElementById('scGo').onclick=function(){if(timer){clearInterval(timer);timer=null;return;}
+   timer=setInterval(function(){for(var i=0;i<8;i++)trial();draw();if(total>4000){clearInterval(timer);timer=null;}},40);};
+ document.getElementById('scMode').onclick=function(){mode=1-mode;this.textContent="Model: "+(mode===0?"calibrated":"overconfident");
+   ranks=new Array(M+1).fill(0);total=0;draw();};
+ document.getElementById('scReset').onclick=function(){if(timer){clearInterval(timer);timer=null;}ranks=new Array(M+1).fill(0);total=0;draw();};
+ draw();
+})();
+</script>
+</body></html>
