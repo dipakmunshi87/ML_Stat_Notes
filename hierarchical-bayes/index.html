@@ -12,12 +12,23 @@ body{background:var(--bg);color:var(--ink);
      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
      line-height:1.6;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1000px;margin:0 auto;padding:20px 22px 40px;min-height:100%}
-.topnav{position:sticky;top:0;z-index:20;background:rgba(244,247,251,.94);backdrop-filter:blur(6px);
-        border-bottom:1px solid var(--line);padding:10px 0 10px;margin-bottom:8px;
-        display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.topnav .brand{color:var(--blue);font-weight:800;letter-spacing:.02em;font-size:.92rem;margin-right:8px}
+.topnav{position:sticky;top:0;z-index:46;background:rgba(244,247,251,.96);backdrop-filter:blur(6px);
+        border-bottom:1px solid var(--line);padding:9px 0;margin-bottom:10px;
+        display:flex;gap:10px;align-items:center}
+.topnav .brand{color:var(--blue);font-weight:800;letter-spacing:.02em;font-size:.92rem}
+.tocbtn{border:1px solid var(--line);background:#fff;color:var(--blue2);border-radius:999px;
+        padding:5px 14px;font-size:.84rem;cursor:pointer;font-weight:650;transition:.15s;white-space:nowrap}
+.tocbtn:hover{border-color:var(--blue);color:var(--blue)}
+.pagenum{margin-left:auto;color:var(--mut);font-size:.84rem;font-variant-numeric:tabular-nums}
+.tocback{position:fixed;inset:0;background:rgba(20,40,70,.28);z-index:45;display:none}
+.tocback.open{display:block}
+.toc{display:none;position:fixed;top:52px;left:50%;transform:translateX(-50%);
+     width:min(940px,93vw);max-height:72vh;overflow-y:auto;background:#fff;
+     border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(20,50,90,.22);
+     padding:12px;z-index:47;gap:6px}
+.toc.open{display:flex;flex-wrap:wrap}
 .navbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;
-        padding:5px 12px;font-size:.82rem;cursor:pointer;transition:.15s}
+        padding:5px 12px;font-size:.82rem;cursor:pointer;transition:.15s;text-align:left}
 .navbtn:hover{border-color:var(--blue);color:var(--blue2)}
 .navbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:650}
 .page{display:none;animation:fade .25s ease}
@@ -73,7 +84,9 @@ ul{max-width:82ch}li{margin:5px 0}
 .hint{color:var(--mut);font-size:.85rem;margin-top:8px}
 </style></head><body>
 <div class="wrap">
-  <div class="topnav"><span class="brand">Hierarchical Bayesian models in astronomy</span><button class="navbtn" onclick="show(0)">1. Overview</button><button class="navbtn" onclick="show(1)">2. Anatomy &amp; the math</button><button class="navbtn" onclick="show(2)">3. Partial pooling &amp; shrinkage</button><button class="navbtn" onclick="show(3)">4. Measurement error &amp; latent variables</button><button class="navbtn" onclick="show(4)">5. Selection effects &amp; truncation</button><button class="navbtn" onclick="show(5)">6. Priors &amp; the population</button><button class="navbtn" onclick="show(6)">7. Inference I: MCMC &amp; the funnel</button><button class="navbtn" onclick="show(7)">8. Inference II: Variational</button><button class="navbtn" onclick="show(8)">9. Inference III: Nested sampling</button><button class="navbtn" onclick="show(9)">10. Inference IV: Simulation-based</button><button class="navbtn" onclick="show(10)">11. Model checking &amp; comparison</button><button class="navbtn" onclick="show(11)">12. Wider ideas I: empirical Bayes</button><button class="navbtn" onclick="show(12)">13. Wider ideas II: regularization</button><button class="navbtn" onclick="show(13)">14. Wider ideas III: Gaussian processes</button><button class="navbtn" onclick="show(14)">15. Examples: cosmology</button><button class="navbtn" onclick="show(15)">16. Examples: gravitational waves</button><button class="navbtn" onclick="show(16)">17. Examples: stars, planets, Gaia</button><button class="navbtn" onclick="show(17)">18. Software &amp; tools</button><button class="navbtn" onclick="show(18)">19. References &amp; further reading</button></div>
+  <div class="topnav"><span class="brand">Hierarchical Bayesian models</span><button class="tocbtn" onclick="toggleTOC()">&#9776; Contents</button><span class="pagenum" id="pagenum"></span></div>
+  <div class="tocback" id="tocback" onclick="toggleTOC()"></div>
+  <div class="toc" id="toc"><button class="navbtn" onclick="show(0)">1. Overview</button><button class="navbtn" onclick="show(1)">2. Anatomy &amp; the math</button><button class="navbtn" onclick="show(2)">3. Partial pooling &amp; shrinkage</button><button class="navbtn" onclick="show(3)">4. Measurement error &amp; latent variables</button><button class="navbtn" onclick="show(4)">5. Selection effects &amp; truncation</button><button class="navbtn" onclick="show(5)">6. Priors &amp; the population</button><button class="navbtn" onclick="show(6)">7. Inference I: MCMC &amp; the funnel</button><button class="navbtn" onclick="show(7)">8. Inference II: Variational</button><button class="navbtn" onclick="show(8)">9. Inference III: Nested sampling</button><button class="navbtn" onclick="show(9)">10. Inference IV: Simulation-based</button><button class="navbtn" onclick="show(10)">11. Model checking &amp; comparison</button><button class="navbtn" onclick="show(11)">12. Wider ideas I: empirical Bayes</button><button class="navbtn" onclick="show(12)">13. Wider ideas II: regularization</button><button class="navbtn" onclick="show(13)">14. Wider ideas III: Gaussian processes</button><button class="navbtn" onclick="show(14)">15. Examples: cosmology</button><button class="navbtn" onclick="show(15)">16. Examples: gravitational waves</button><button class="navbtn" onclick="show(16)">17. Examples: stars, planets, Gaia</button><button class="navbtn" onclick="show(17)">18. Software &amp; tools</button><button class="navbtn" onclick="show(18)">19. References &amp; further reading</button></div>
   <section class="page" id="p0">
 <p class="kick">Physics &times; Machine Learning &mdash; Bayesian astrostatistics</p>
 <h1>Hierarchical Bayesian models<br>Inferring populations from imperfect data</h1>
@@ -86,7 +99,7 @@ ul{max-width:82ch}li{margin:5px 0}
   <div class="mcard"><h3>What&rsquo;s inside</h3><p style="margin:6px 0">The structure and math; partial pooling, measurement error and selection (with worked figures); the inference machinery (MCMC, the funnel, VI, nested sampling, SBI); model checking; and related techniques.</p></div>
   <div class="mcard"><h3>Where it&rsquo;s used</h3><p style="margin:6px 0">Supernova cosmology, the distance ladder, photo-z, gravitational-wave populations, exoplanet occurrence, Gaia distances, galaxy scaling relations &mdash; a whole page of examples each.</p></div>
 </div>
-<p style="margin-top:16px;color:var(--mut)">Tabs above, or Prev / Next (or &larr; &rarr; arrow keys), move through the pages. A companion deck covers Bayesian <em>evidence</em> &amp; model selection.</p>
+<p style="margin-top:16px;color:var(--mut)">The <b>Contents</b> menu (top), or Prev / Next (or &larr; &rarr; arrow keys), move through the pages. A companion deck covers Bayesian <em>evidence</em> &amp; model selection.</p>
 <div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
 <section class="page" id="p1">
 <h2>The anatomy of a hierarchical model</h2>
@@ -571,12 +584,16 @@ var cur=0, N=19;
 function show(k){
   if(k<0)k=0; if(k>=N)k=N-1; cur=k;
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('on',i===k));
-  document.querySelectorAll('.topnav .navbtn').forEach((b,i)=>b.classList.toggle('on',i===k));
+  document.querySelectorAll('.toc .navbtn').forEach((b,i)=>b.classList.toggle('on',i===k));
+  var pn=document.getElementById('pagenum'); if(pn) pn.textContent=(k+1)+' / '+N;
   document.querySelectorAll('#prev').forEach(b=>b.disabled=(k===0));
   document.querySelectorAll('#next').forEach(b=>b.disabled=(k===N-1));
+  closeTOC();
   window.scrollTo({top:0,behavior:'smooth'});
 }
-document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);});
+function toggleTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');var open=t.classList.toggle('open');b.classList.toggle('open',open);}
+function closeTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');if(t)t.classList.remove('open');if(b)b.classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);if(e.key==='Escape')closeTOC();});
 show(0);
 </script>
 <script>
