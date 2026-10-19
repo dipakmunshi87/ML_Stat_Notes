@@ -431,5 +431,14 @@ document.addEventListener('keydown',e=>{if(e.target&&/INPUT|TEXTAREA/.test(e.tar
 show(0);
 </script>
 </div>
+<style id="scrollfix">
+.page{display:block !important; animation:none !important;}
+.page + .page{border-top:1px solid var(--line, #e5e7eb); margin-top:40px; padding-top:32px;}
+.pager, .pagenum{display:none !important;}
+</style>
+<script id="scrollfix-js">
+window.goto=function(p){var ps=document.querySelectorAll('.page');if(ps[p])ps[p].scrollIntoView({behavior:'smooth',block:'start'});var t=document.getElementById('toc'),b=document.getElementById('tocback');if(t)t.classList.remove('open');if(b)b.classList.remove('open');};
+window.jump=window.jump||function(id){var el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
+</script>
 </body>
 </html>
