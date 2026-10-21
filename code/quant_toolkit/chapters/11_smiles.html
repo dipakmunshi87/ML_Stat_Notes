@@ -1,0 +1,52 @@
+<h2><span class="n">11</span>Beyond Black&ndash;Scholes: jumps, stochastic volatility and the smile</h2>
+<p class="lead">The implied-volatility surface is not flat, so the lognormal model is wrong. Two physical mechanisms &mdash; prices that jump, and volatility that is itself random &mdash; each produce a smile, and the shapes they produce are different enough to be told apart.</p>
+
+<h3>11.1 What the smile says</h3>
+<p>
+Breeden and Litzenberger (1978) showed that the risk-neutral density of $S_T$ is the second derivative of the call price with respect to strike: $q(K) = e^{rT}\,\partial^2 C/\partial K^2$. A smile therefore <em>is</em> a density: higher implied volatility in the wings means more probability in the tails than a lognormal would put there, and an equity skew (higher vol at low strikes) means a left tail fatter than the right &mdash; crashes more likely than melt-ups of the same size. The surface is a market-implied statement about the distribution, and the models of this chapter are candidate mechanisms for producing such distributions. Since any one-dimensional marginal can be matched by a <em>local volatility</em> model $\sigma(S,t)$ (Dupire 1994, who gave the formula for $\sigma(K,T)$ in terms of the surface), fitting the smile is never the issue; the issue is the <em>dynamics</em> the model implies, which determine hedge ratios and the prices of path-dependent products.
+</p>
+
+<h3>11.2 Jump diffusion</h3>
+<p>
+Merton (1976) added to GBM a Poisson process of jumps: at rate $\lambda$ per year the log-price jumps by $J \sim \mathcal N(m, \delta^2)$. Between jumps the model is Black&ndash;Scholes; conditional on $n$ jumps having occurred the terminal log-price is still Gaussian, with variance $\sigma^2T + n\delta^2$ and a mean adjusted so that the drift is $r$ overall. The price is therefore a Poisson-weighted sum of Black&ndash;Scholes prices,
+$$C = \sum_{n=0}^{\infty}\frac{e^{-\lambda'T}(\lambda'T)^n}{n!}\,C_{\rm BS}\big(S, K, r_n, \sigma_n, T\big),\qquad \sigma_n^2 = \sigma^2 + \frac{n\delta^2}{T},\quad r_n = r - \lambda k + \frac{n\ln(1+k)}{T},$$
+with $k = e^{m + \delta^2/2} - 1$ the mean jump size and $\lambda' = \lambda(1+k)$. Jumps are <em>not</em> hedgeable with the stock alone: a jump moves the price a finite distance in zero time, so no continuous delta hedge can follow it, and the market is incomplete. The price above assumes jump risk is diversifiable (unpriced); in reality it carries a premium, which is one reason implied volatilities sit above realised ones on average.
+</p>
+<div class="box g">
+<h4>Worked example: a skew from downward jumps</h4>
+<p>With diffusion volatility 15%, $\lambda = 0.5$ jumps a year of mean $-10\%$ and spread 15%, the total variance rate corresponds to a volatility of {{v:c11_merton_totvar}}%. The one-year at-the-money call is worth {{v:c11_merton_atm}}, an implied volatility of {{v:c11_merton_ivatm}}%; at $K = 90$ the implied volatility is {{v:c11_merton_iv90}}% and at $K = 110$ it is {{v:c11_merton_iv110}}%. Negative-mean jumps tilt the smile into a skew. Jump smiles are steep at short maturities (a jump dominates a one-week distribution) and flatten with maturity, because the CLT eventually averages the jumps into the diffusion &mdash; which is the opposite of what stochastic volatility does, and is how the two are told apart.</p>
+</div>
+
+<h3>11.3 Stochastic volatility: the Heston model</h3>
+<p>
+Let the variance follow its own mean-reverting square-root process, correlated with the price:
+$$\mathrm dS = rS\,\mathrm dt + \sqrt{v}\,S\,\mathrm dW_1,\qquad \mathrm dv = \kappa(\theta - v)\,\mathrm dt + \xi\sqrt v\,\mathrm dW_2,\qquad \mathrm dW_1\,\mathrm dW_2 = \rho\,\mathrm dt .$$
+The variance reverts to $\theta$ at rate $\kappa$ with volatility-of-volatility $\xi$; the square root keeps $v$ positive provided the Feller condition $2\kappa\theta \ge \xi^2$ holds. The correlation $\rho$ is the lever: with $\rho < 0$ (the empirical case for equities, the <em>leverage effect</em>) a fall in price is accompanied by a rise in variance, fattening the left tail and producing a skew; with $\rho = 0$ the model is symmetric and produces a smile from the randomness of $v$ alone. Heston's (1993) achievement was that, being affine, the model has a closed-form characteristic function $\phi(u) = \mathbb E[e^{iu\ln S_T}]$, so the call price is a single Fourier integral (Chapter&nbsp;5),
+$$C = S\,P_1 - Ke^{-rT}P_2,\qquad P_j = \tfrac12 + \frac1\pi\int_0^\infty\mathrm{Re}\Big[\frac{e^{-iu\ln K}\,f_j(u)}{iu}\Big]\mathrm du ,$$
+with $f_j$ exponentials of functions that solve Riccati ODEs in closed form. Calibration to a surface takes seconds, which is why Heston (and its descendants: SABR for rates, Bates adding jumps, rough volatility) is the industry workhorse.
+</p>
+<div class="box g">
+<h4>Worked example: Heston skew and a Monte Carlo check</h4>
+<p>With $v_0 = \theta = 0.04$ ($20\%$ volatility), $\kappa = 2$, $\xi = 0.39$ (so that the Feller condition holds: $2\kappa\theta = 0.16 \ge \xi^2 = 0.152$) and $\rho = -0.7$, the Fourier formula gives the one-year at-the-money call as {{v:c11_heston_atm}}; a full-truncation Euler Monte Carlo with $10^5$ paths and 500 steps gives {{v:c11_heston_mc}} $\pm$ {{v:c11_heston_mcse}}. The implied volatility is {{v:c11_heston_iv90}}% at $K=90$, {{v:c11_heston_ivatm}}% at the money and {{v:c11_heston_iv110}}% at $K=110$: a pronounced skew. Setting $\rho = 0$ gives a symmetric smile with the at-the-money volatility <em>below</em> 20% &mdash; random variance makes the distribution fat-tailed and peaked, which lowers the price of at-the-money options relative to the wings.</p>
+</div>
+{{fig:c11_smiles|One-year implied-volatility curves generated by three mechanisms with the same overall variance: Merton jumps with negative mean (skew), Heston with ρ = −0.7 (skew) and Heston with ρ = 0 (smile). All three depart from the flat 20% of Black–Scholes.}}
+
+<h3>11.4 Variance swaps: trading volatility directly</h3>
+<p>
+A variance swap pays the realised variance $\frac1T\sum x_t^2$ (the quadratic variation of Chapter&nbsp;7) minus a fixed strike. Its fair strike is $\mathbb E^{\mathbb Q}[\frac1T\int_0^T v_t\,\mathrm dt]$, which in Heston is $\theta + (v_0 - \theta)\frac{1 - e^{-\kappa T}}{\kappa T}$ (volatility {{v:c11_varswap}}% in the example, since $v_0 = \theta$). Remarkably it can also be computed model-independently from the smile: by It&ocirc; applied to $\ln S$, realised variance equals $-\frac2T\ln(S_T/S_0)$ plus a hedgeable term, and a log contract can be replicated by a portfolio of calls and puts across all strikes weighted by $1/K^2$. That replication is the VIX formula. It is the cleanest example of the modern view: a derivative is a portfolio of simpler things, and its price is the cost of that portfolio.
+</p>
+
+<h3>11.5 Choosing a model</h3>
+<p>
+Local volatility fits any surface exactly but implies dynamics (the smile flattening as spot moves) that are wrong, so its hedges are poor. Heston captures the dynamics of the skew but cannot produce enough short-dated smile. Jumps give short-dated smile but no persistence. Practitioners combine them (stochastic-local volatility, Bates) and, since 2014, use <em>rough volatility</em> models in which the variance is driven by a fractional Brownian motion with Hurst exponent $H \approx 0.1$ (Chapter&nbsp;21), which reproduces the observed $T^{-1/2}$ explosion of the at-the-money skew at short maturities with very few parameters. The common thread is that each model is a statement about the <em>physics</em> of returns &mdash; jumps, clustering, leverage, roughness &mdash; and the surface is the experiment that tests it.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Smile = density</dt><dd>$q(K) = e^{rT}\partial_K^2 C$; the wings are the tails.</dd>
+<dt>Jumps</dt><dd>Poisson mixture of BS prices; unhedgeable; steep short-dated smile that flattens with $T$.</dd>
+<dt>Heston</dt><dd>Mean-reverting variance, correlation $\rho$ makes the skew; affine $\Rightarrow$ Fourier pricing.</dd>
+<dt>Variance swap</dt><dd>Realised variance is tradable; its fair value is a $1/K^2$-weighted strip of options.</dd>
+</dl>
+</div>

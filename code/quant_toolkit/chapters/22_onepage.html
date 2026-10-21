@@ -1,0 +1,46 @@
+<h2><span class="n">22</span>The whole subject on one page</h2>
+<p class="lead">One line per chapter: the equation, the idea, and the number that makes it concrete.</p>
+<table>
+<tr><th>Ch.</th><th>Topic</th><th>The formula</th><th>The idea</th></tr>
+<tr><td>1</td><td>Discounting</td><td>$\mathrm{PV} = \sum C_iD(T_i)$, $\ \Delta P/P \approx -D\,\Delta y + \tfrac12C\,\Delta y^2$</td><td>No arbitrage prices cash flows; duration and convexity are Taylor coefficients.</td></tr>
+<tr><td>2</td><td>Fat tails</td><td>$p(x)\propto|x|^{-(\nu+1)}$, $\ \nu\approx3$&ndash;$5$</td><td>Gaussian under-prices $5\sigma$ days by $10^3$&ndash;$10^4$; variance scales as $t$.</td></tr>
+<tr><td>3</td><td>Estimation</td><td>$\mathrm{se}(\hat\mu) = \sigma/\sqrt T$, $\ \mathrm{se}(\widehat{\mathrm{SR}})\approx1/\sqrt T$</td><td>Means need decades, variances need months; shrink everything.</td></tr>
+<tr><td>4</td><td>Linear algebra</td><td>$\sigma_p^2 = \mathbf w^\top\boldsymbol\Sigma\mathbf w$, $\ \boldsymbol\Sigma = \mathbf Q\boldsymbol\Lambda\mathbf Q^\top = \mathbf L\mathbf L^\top$</td><td>Eigenvectors are uncorrelated portfolios; Cholesky makes correlated noise.</td></tr>
+<tr><td>5</td><td>Heat equation</td><td>$u_t = Du_{xx}$, $\ G = e^{-x^2/4Dt}/\sqrt{4\pi Dt}$</td><td>Diffusion smooths; explicit schemes need $D\Delta t/\Delta x^2\le\tfrac12$.</td></tr>
+<tr><td>6</td><td>Regression</td><td>$\hat{\boldsymbol\beta} = (\mathbf X^\top\mathbf X + \lambda\mathbf I)^{-1}\mathbf X^\top\mathbf y$</td><td>Beta is measurable, alpha is not; factor models tame $\boldsymbol\Sigma$; HAC errors.</td></tr>
+<tr><td>7</td><td>Brownian motion</td><td>$(\mathrm dW)^2 = \mathrm dt$, $\ D = \sigma^2/2$</td><td>Quadratic variation is finite: realised variance is observable from one path.</td></tr>
+<tr><td>8</td><td>It&ocirc;</td><td>$\mathrm df = (f_t + af_x + \tfrac12b^2f_{xx})\mathrm dt + bf_x\mathrm dW$</td><td>Convexity drift; GBM median lags mean by $\sigma^2/2$; forward/backward Kolmogorov.</td></tr>
+<tr><td>9</td><td>Black&ndash;Scholes</td><td>$V_t + rSV_S + \tfrac12\sigma^2S^2V_{SS} = rV$; $\ V = e^{-rT}\mathbb E^{\mathbb Q}[g]$</td><td>Hedging removes $\mu$; price = cost of replication; heat equation in $\sigma^2T$.</td></tr>
+<tr><td>10</td><td>Greeks</td><td>$\Theta\approx-\tfrac12\sigma^2S^2\Gamma$; P&amp;L $=\tfrac12\Gamma S^2(\sigma_{\rm r}^2-\sigma_{\rm i}^2)\mathrm dt$</td><td>Theta pays for gamma; hedging error $\propto1/\sqrt n$; implied vol is the market's unit.</td></tr>
+<tr><td>11</td><td>Smiles</td><td>$q(K) = e^{rT}\partial_K^2C$; Heston $\mathrm dv = \kappa(\theta-v)\mathrm dt + \xi\sqrt v\,\mathrm dW$</td><td>The smile is a density; jumps and $\rho\lt0$ make skew; variance is tradable.</td></tr>
+<tr><td>12</td><td>Rates</td><td>$P = e^{A(\tau) - B(\tau)r}$, $\ B = (1-e^{-\kappa\tau})/\kappa$</td><td>Affine models turn the PDE into ODEs; convexity lowers long yields; HJM fixes drift.</td></tr>
+<tr><td>13</td><td>Numerics</td><td>MC error $= s/\sqrt M$; CN second-order; LSMC regression</td><td>PDEs for low dimension and early exercise, Monte Carlo for high dimension.</td></tr>
+<tr><td>14</td><td>Time series</td><td>$x_t = \phi x_{t-1} + \varepsilon_t$; DF on $\Delta x$; $y - \beta z$ stationary</td><td>Returns stationary, prices not; cointegration is the legitimate levels regression; Kalman tracks.</td></tr>
+<tr><td>15</td><td>Volatility</td><td>$\sigma_t^2 = \omega + \alpha x_{t-1}^2 + \beta\sigma_{t-1}^2$, $\ \bar\sigma^2 = \omega/(1-\alpha-\beta)$</td><td>Clustering is an AR(1) in variance; it makes tails; EWMA for daily risk.</td></tr>
+<tr><td>16</td><td>Random matrices</td><td>$\lambda_\pm = (1\pm\sqrt{N/T})^2$</td><td>Noise has a known spectrum; clip or shrink; test out of sample.</td></tr>
+<tr><td>17</td><td>Portfolios</td><td>$\mathbf w\propto\boldsymbol\Sigma^{-1}(\boldsymbol\mu - r_f)$; $\ g(f) = f\mu - \tfrac12f^2\sigma^2$</td><td>Markowitz gives direction, Kelly gives size; both amplify input error; run fractional.</td></tr>
+<tr><td>18</td><td>Risk</td><td>$\mathrm{ES}_\alpha = \mathbb E[L\,|\,L>\mathrm{VaR}_\alpha]$; GPD $(1+\xi y/\beta)^{-1/\xi}$</td><td>ES is coherent, VaR is not; EVT extrapolates the tail; drawdowns $\sim\sigma\sqrt T$.</td></tr>
+<tr><td>19</td><td>ML signals</td><td>$\mathrm{IR}\approx\mathrm{IC}\sqrt{\text{breadth}}$</td><td>$R^2\sim1\%$; walk-forward/purged validation; regularise; track IC.</td></tr>
+<tr><td>20</td><td>Backtests</td><td>$\mathbb E[\max_N\mathrm{SR}]\approx\sqrt{2\ln N}/\sqrt T$</td><td>A thousand trials manufacture Sharpe 1.4; deflate; log every trial; hold out.</td></tr>
+<tr><td>21</td><td>Physics</td><td>Boltzmann $\leftrightarrow\mathbb Q$; Langevin $\leftrightarrow$ OU; path integral $\leftrightarrow$ Feynman&ndash;Kac</td><td>Same equations, relabelled; scaling and agents for what diffusions cannot say.</td></tr>
+</table>
+
+<h3>The five ideas underneath</h3>
+<p>
+<strong>No arbitrage.</strong> Identical cash flows have identical prices. It prices bonds from a curve, forces put&ndash;call parity, and &mdash; through continuous hedging &mdash; removes the expected return from option prices and replaces it with the risk-neutral measure. Every pricing formula in the note is a statement of replication cost.
+</p>
+<p>
+<strong>Diffusion.</strong> Variance grows linearly in time; $(\mathrm dW)^2 = \mathrm dt$. It gives the $\sqrt t$ scaling of volatility, It&ocirc;'s correction term, the heat equation, the Gaussian smoothing of payoffs, and the realised variance that makes volatility &mdash; unlike drift &mdash; measurable.
+</p>
+<p>
+<strong>Signal-to-noise.</strong> $\sigma/\sqrt T$. Expected returns are the least measurable quantity in the subject, which is why estimation error dominates portfolio construction, why shrinkage appears everywhere, why Sharpe ratios need decades, and why backtests lie.
+</p>
+<p>
+<strong>Fat tails and clustering.</strong> The Gaussian is wrong in the tails by orders of magnitude; volatility is predictable even when returns are not. Everything in risk management, from the choice of $\nu$ to expected shortfall to extreme-value extrapolation, follows from taking this seriously.
+</p>
+<p>
+<strong>The spectrum.</strong> Covariance matrices have a few informative eigenvalues and a bulk of noise with a computable shape. Factor models, random-matrix cleaning and constrained optimisation are three ways of refusing to trade the noise.
+</p>
+<p>
+A quant who can derive each formula in the table from the idea beside it, and can say what number it produces for the canonical example of its chapter, has the toolkit. The rest is the particular market, the particular data, and the judgement &mdash; which this note cannot supply &mdash; about when the model is the wrong one.
+</p>

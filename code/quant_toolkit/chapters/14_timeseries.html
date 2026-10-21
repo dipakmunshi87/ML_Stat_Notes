@@ -1,0 +1,58 @@
+<!-- PART: Part III — Statistics for quant research -->
+<div class="part">Part III <span>Statistics for quantitative research and trading</span></div>
+<h2><span class="n">14</span>Time series: stationarity, unit roots, cointegration and filtering</h2>
+<p class="lead">Prices wander; returns do not. Keeping that distinction straight is the difference between a statistical arbitrage and a spurious regression, and the tools of this chapter &mdash; autocorrelation, unit-root tests, cointegration, the Kalman filter &mdash; are how one tells which is which.</p>
+
+<h3>14.1 Stationarity and the autocorrelation function</h3>
+<p>
+A process is (weakly) <em>stationary</em> if its mean and variance are constant in time and its autocovariance $\gamma(k) = \mathrm{Cov}(x_t, x_{t-k})$ depends only on the lag $k$. The <em>autocorrelation function</em> (ACF) is $\rho(k) = \gamma(k)/\gamma(0)$. For independent returns $\rho(k) = 0$ for all $k > 0$, and the sample ACF of $T$ such observations has standard error $1/\sqrt T$: with 1,000 days, any $|\hat\rho(k)| < 0.06$ is noise. The workhorse stationary model is the autoregression of order one,
+$$x_t = \phi\,x_{t-1} + \varepsilon_t,\qquad |\phi| < 1,$$
+whose variance is $\sigma_\varepsilon^2/(1-\phi^2)$ and whose ACF decays geometrically, $\rho(k) = \phi^k$. It is the discrete-time Ornstein&ndash;Uhlenbeck process of Chapter&nbsp;8 with $\phi = e^{-\kappa\Delta t}$; the half-life of a shock is $\ln 2/\ln(1/\phi)$. Moving-average terms ($x_t = \varepsilon_t + \theta\varepsilon_{t-1}$, with an ACF that cuts off after lag 1) and their combination into ARMA models complete the Box&ndash;Jenkins toolkit; in finance the AR(1) and its multivariate cousin the VAR do most of the work.
+</p>
+<div class="box g">
+<h4>Worked example: AR(1) against a random walk</h4>
+<p>1,000 observations of an AR(1) with $\phi = 0.7$ have sample ACF ({{v:c14_acf_ar}}) at lags 1&ndash;4 against the theoretical ({{v:c14_acf_theory}}); the sample variance is {{v:c14_ar_var_sim}} against $1/(1-0.49) = {{v:c14_ar_var}}$. OLS of $x_t$ on $x_{t-1}$ gives $\hat\phi = {{v:c14_phi_hat}} \pm {{v:c14_phi_se}}$. A random walk of the same length has sample ACF ({{v:c14_acf_rw}}) at lags 1&ndash;4 and still {{v:c14_acf_rw20}} at lag 20: the autocorrelation does not decay, because the series has no mean to return to.</p>
+</div>
+
+<h3>14.2 Unit roots and the Dickey&ndash;Fuller test</h3>
+<p>
+At $\phi = 1$ the AR(1) becomes the random walk $x_t = x_{t-1} + \varepsilon_t$: a <em>unit root</em>. Its variance grows as $\sigma_\varepsilon^2 t$, it has no stationary distribution, and shocks are permanent. Log prices are, to a first approximation, unit-root processes; returns, their first differences, are stationary. The test for a unit root regresses $\Delta x_t$ on $x_{t-1}$ and examines the $t$-statistic of the coefficient (equivalently $(\hat\phi - 1)/\mathrm{se}$). Under the null $\phi = 1$ that statistic does <em>not</em> have a Student-$t$ distribution &mdash; the regressor is itself non-stationary &mdash; but the Dickey&ndash;Fuller distribution, whose 5% critical value is about $-2.9$ (with an intercept) rather than $-1.96$. For the AR(1) sample the statistic is {{v:c14_df_ar}}, rejecting a unit root overwhelmingly; for the random walk it is {{v:c14_df_rw}} (with $\hat\phi = {{v:c14_rw_phi}}$), and the null stands. The asymmetry matters: an estimated $\hat\phi$ of 0.98 on a short sample is consistent with both a slowly mean-reverting series and a random walk, and the test has little power to separate them. Many "mean-reverting" strategies are bets on $\phi < 1$ that the data cannot actually support.
+</p>
+
+<h3>14.3 Spurious regression</h3>
+<p>
+Regress one random walk on another, independent one. Granger and Newbold (1974) showed that the result is a high $R^2$ and an enormous $t$-statistic, both meaningless: two independent random walks regressed on each other in our simulation give $t = {{v:c14_spur_t}}$ and $R^2 = {{v:c14_spur_R2}}$. The reason is that the residual is itself a random walk, so the OLS standard errors (which assume stationary residuals) are wrong by an unbounded factor. Any regression between price <em>levels</em>, index levels, cumulative anything, is suspect unless the residual is checked for stationarity. The rule is to difference first &mdash; regress returns on returns &mdash; except in the one case where levels are legitimately related, which is the next section.
+</p>
+
+<h3>14.4 Cointegration and pairs trading</h3>
+<p>
+Two unit-root series $y_t$ and $z_t$ are <em>cointegrated</em> if some linear combination $y_t - \beta z_t$ is stationary (Engle and Granger, 1987). Each wanders, but they wander together: two share classes of one company, a stock and its ADR, a futures contract and its underlying, or &mdash; the hope of every pairs trader &mdash; two companies in the same business. The Engle&ndash;Granger procedure regresses $y$ on $z$ in levels (legitimate here precisely because the residual is stationary), then tests the residual for a unit root with a Dickey&ndash;Fuller test at stricter critical values (about $-3.4$ at 5%, since $\beta$ was estimated). If the spread is stationary it is modelled as an AR(1)/OU process and traded: short the spread when it is high, long when it is low, close when it returns to its mean.
+</p>
+<div class="box g">
+<h4>Worked example: a simulated cointegrated pair</h4>
+<p>We generate two prices sharing a common random walk, with a log-spread following an AR(1) of daily mean-reversion 5% (half-life {{v:c14_sp_halflife_true}} days). The true hedge ratio is 1; the levels regression estimates {{v:c14_hedge}}. The OLS estimate in levels is super-consistent (it converges at rate $T$ rather than $\sqrt T$) but in a finite sample it is biased towards zero whenever the common trend has not wandered far relative to the spread's own variance &mdash; which is exactly the regime of a short backtest. The estimated spread has $\hat\phi = {{v:c14_sp_phi}}$, i.e. a half-life of {{v:c14_sp_halflife}} days, and an Engle&ndash;Granger statistic of {{v:c14_eg_t}}: cointegration is confirmed. A simple rule &mdash; enter at $\pm1.5\sigma$, exit at $\pm0.25\sigma$, with the bands estimated on the first half and traded on the second &mdash; produces {{v:c14_pairs_trades}} round trips and an annualised Sharpe of {{v:c14_pairs_sharpe}} ({{v:c14_pairs_sharpe_cost}} after 5 bp costs per trade). This is a best case: the pair is cointegrated by construction, forever. Real pairs break (one company changes its business, is acquired, or fails), and the spread then becomes a random walk at exactly the moment the strategy is most heavily invested in it. The risk of a pairs trade is not the volatility of the spread but the probability that the relationship ends.</p>
+</div>
+{{fig:c14_pairs|Left: two simulated cointegrated price series. Right: the estimated log-spread with the ±1.5σ entry bands; the trading rule shorts the spread above the upper band and buys it below the lower.}}
+
+<h3>14.5 The Kalman filter: hedge ratios that move</h3>
+<p>
+Hedge ratios, betas and spreads drift. The Kalman filter is the optimal (minimum-variance, linear) way to track a quantity that evolves as a random walk and is observed through noisy linear measurements. With state $\beta_t = \beta_{t-1} + \eta_t$ (process noise $Q$) and observation $y_t = \beta_t x_t + \epsilon_t$ (measurement noise $R$), each step first <em>predicts</em> ($\hat\beta_{t|t-1} = \hat\beta_{t-1}$, $P_{t|t-1} = P_{t-1} + Q$) and then <em>updates</em> with the gain $K_t = P_{t|t-1}x_t/(x_t^2P_{t|t-1} + R)$:
+$$\hat\beta_t = \hat\beta_{t|t-1} + K_t\big(y_t - \hat\beta_{t|t-1}x_t\big),\qquad P_t = (1 - K_tx_t)\,P_{t|t-1}.$$
+It is Bayesian updating with Gaussian prior and likelihood (Chapter&nbsp;3) run recursively, and the gain is the precision-weighting of new data against the accumulated estimate. The ratio $Q/R$ sets the memory: large $Q$ means a fast, noisy tracker; small $Q$ means a slow, smooth one. Tracking a beta that oscillates between 0.5 and 1.5 over 1,000 days, the filter achieves an RMS error of {{v:c14_kf_rmse}} against {{v:c14_roll_rmse}} for a 60-day rolling regression, and it does so with no window to choose, with a running estimate of its own uncertainty $P_t$, and with one multiply&ndash;add per observation. The same recursion with a vector state tracks a whole set of factor exposures, a yield curve's level/slope/curvature, or the unobserved "true" price behind bid&ndash;ask bounce. Its nonlinear extensions (the extended and unscented filters, and particle filters for non-Gaussian problems) are what a physicist knows from signal processing and data assimilation.
+</p>
+{{fig:c14_kalman|Tracking a time-varying hedge ratio: the Kalman filter against a 60-day rolling regression. The filter follows the true β more closely and without the lag of a fixed window.}}
+
+<h3>14.6 Vector autoregressions and Granger causality</h3>
+<p>
+With several series the AR(1) becomes the VAR, $\mathbf x_t = \mathbf A\mathbf x_{t-1} + \boldsymbol\varepsilon_t$, which is estimated equation by equation with OLS. Its uses in finance are lead&ndash;lag analysis (does one market's return predict another's next period? the off-diagonal entries of $\mathbf A$), impulse responses, and the error-correction form $\Delta\mathbf x_t = \boldsymbol\Pi\mathbf x_{t-1} + \dots$ in which the rank of $\boldsymbol\Pi$ counts the cointegrating relationships (Johansen's test). "Granger causality" &mdash; $z$ Granger-causes $y$ if lagged $z$ improves the forecast of $y$ given lagged $y$ &mdash; is a statement about predictability, not causation, and in liquid markets lead&ndash;lag relationships survive for minutes, not days, because the people who find them trade them away.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Stationarity</dt><dd>Returns yes, prices no. ACF of an AR(1) decays as $\phi^k$; of a random walk, not at all.</dd>
+<dt>Unit roots</dt><dd>Dickey&ndash;Fuller critical values, not $t$; short samples cannot distinguish $\phi = 0.98$ from 1.</dd>
+<dt>Cointegration</dt><dd>Stationary combination of non-stationary series; the one legitimate levels regression; pairs break.</dd>
+<dt>Kalman filter</dt><dd>Recursive Bayesian tracking; precision-weighted gain; the right tool for drifting betas.</dd>
+</dl>
+</div>

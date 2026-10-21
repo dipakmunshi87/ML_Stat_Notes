@@ -1,0 +1,55 @@
+<h2><span class="n">17</span>Portfolio theory and bet sizing: Markowitz, CAPM, Kelly and risk parity</h2>
+<p class="lead">Given expected returns and a covariance matrix, how much of each asset should one hold, and how large should the whole position be? The answers are a constrained quadratic optimisation and a logarithm &mdash; and both are only as good as the inputs of Chapters 3 and 16.</p>
+
+<h3>17.1 Mean&ndash;variance optimisation</h3>
+<p>
+Markowitz (1952) proposed choosing weights $\mathbf w$ to minimise variance $\mathbf w^\top\boldsymbol\Sigma\mathbf w$ for a target expected return $\mathbf w^\top\boldsymbol\mu = m$ with $\mathbf w^\top\mathbf 1 = 1$. The Lagrangian $\mathcal L = \tfrac12\mathbf w^\top\boldsymbol\Sigma\mathbf w - \lambda_1(\mathbf w^\top\boldsymbol\mu - m) - \lambda_2(\mathbf w^\top\mathbf 1 - 1)$ has stationarity condition $\boldsymbol\Sigma\mathbf w = \lambda_1\boldsymbol\mu + \lambda_2\mathbf 1$, so every efficient portfolio is a combination of $\boldsymbol\Sigma^{-1}\boldsymbol\mu$ and $\boldsymbol\Sigma^{-1}\mathbf 1$ (the two-fund theorem), and the frontier in the $(\sigma, m)$ plane is the hyperbola $\sigma^2 = (Am^2 - 2Bm + C)/D$ with $A = \mathbf 1^\top\boldsymbol\Sigma^{-1}\mathbf 1$, $B = \mathbf 1^\top\boldsymbol\Sigma^{-1}\boldsymbol\mu$, $C = \boldsymbol\mu^\top\boldsymbol\Sigma^{-1}\boldsymbol\mu$, $D = AC - B^2$. With a risk-free asset at rate $r_f$ the problem simplifies: maximise the Sharpe ratio, and the solution is
+$$\mathbf w^\star \propto \boldsymbol\Sigma^{-1}(\boldsymbol\mu - r_f\mathbf 1),$$
+the <em>tangency portfolio</em>, where the capital market line from $r_f$ touches the frontier. Every investor holds the same risky portfolio and sets their risk by the split between it and cash. The minimum-variance portfolio, $\mathbf w \propto \boldsymbol\Sigma^{-1}\mathbf 1$, needs no expected returns at all, which is its great attraction.
+</p>
+<div class="box g">
+<h4>Worked example: three assets</h4>
+<p>For the covariance matrix of Chapter&nbsp;4 and expected returns $(7\%, 9\%, 4\%)$ with $r_f = 2\%$, the tangency portfolio is $\mathbf w = ({{v:c17_wtan}})$ with expected return {{v:c17_mu_tan}}%, volatility {{v:c17_sig_tan}}% and Sharpe ratio {{v:c17_sr_tan}}. The minimum-variance portfolio is $({{v:c17_wmv}})$ with volatility {{v:c17_sig_mv}}% and expected return {{v:c17_mu_mv}}% &mdash; it nearly ignores asset B, the most volatile, and leans on C, the least correlated. Note that the Sharpe ratio of the tangency portfolio, {{v:c17_sr_tan}}, barely exceeds that of the best single asset (0.28 for B): with correlations of 0.2&ndash;0.6 there is not much diversification to be had among three assets. The benefit grows with $N$ and shrinks with the average correlation (Chapter&nbsp;4).</p>
+</div>
+{{fig:c17_frontier|The mean–variance frontier for three assets (A, B, C), the minimum-variance and tangency portfolios, and the capital market line from the risk-free rate of 2%.}}
+
+<h3>17.2 From the optimiser to the CAPM</h3>
+<p>
+If everyone optimises and holds the tangency portfolio, the market portfolio <em>is</em> the tangency portfolio, and the first-order condition $\boldsymbol\Sigma\mathbf w_m \propto \boldsymbol\mu - r_f\mathbf 1$ says that each asset's excess return is proportional to its covariance with the market: $\mu_i - r_f = \beta_i(\mu_m - r_f)$ with $\beta_i = \mathrm{Cov}(r_i, r_m)/\sigma_m^2$. That is the CAPM of Chapter&nbsp;6, derived in two lines from mean&ndash;variance optimisation. Its empirical failure &mdash; low-beta stocks earn more than the line predicts, as do small, cheap and recently rising ones &mdash; is the origin of the factor models, and the modern reading of the optimiser is as a machine for turning <em>views</em> (which assets will beat their factor-implied returns) into positions.
+</p>
+
+<h3>17.3 Error maximisation</h3>
+<p>
+The formula $\boldsymbol\Sigma^{-1}(\boldsymbol\mu - r_f\mathbf 1)$ amplifies whatever error is in its inputs. Chapter&nbsp;3 showed that ten years of data determine an expected return to about $\pm\sigma/\sqrt{10}$, roughly $\pm6\%$ for a 20%-volatility asset &mdash; the same size as the expected return itself. Re-solving the three-asset problem 2,000 times with expected returns perturbed by that much, the interquartile ranges of the tangency weights are {{v:c17_w_iqr}} for the three assets, and {{v:c17_w_frac_short}}% of the solutions short at least one asset. The optimiser latches onto whichever asset's estimation error happens to be positive and concentrates there; Michaud called it "error maximisation". The cures are those of Chapters 3 and 16: shrink the expected returns towards a common prior (Black&ndash;Litterman shrinks them towards the returns implied by market weights, so that with no views the optimiser returns the market portfolio), clean the covariance, constrain the weights (no shorts, position limits), or abandon $\boldsymbol\mu$ altogether and use minimum variance or risk parity. In practice the expected-return input is treated as the scarce, uncertain quantity it is, and the optimiser is used to size views of known modest reliability rather than to discover allocations.
+</p>
+
+<h3>17.4 The Kelly criterion: how much in total</h3>
+<p>
+Mean&ndash;variance says how to split; it does not say how much risk to take overall. Kelly (1956) answered for a bettor who maximises the long-run growth rate of wealth. Invest a fraction $f$ of wealth in an asset with return $\mu$ and volatility $\sigma$, the rest in cash at zero; by It&ocirc;'s lemma (Chapter&nbsp;8) the log-wealth grows at rate
+$$g(f) = f\mu - \tfrac12 f^2\sigma^2 ,$$
+the expected return minus the volatility drag of the levered position. It is a parabola in $f$: maximised at $f^\star = \mu/\sigma^2$, where $g(f^\star) = \mu^2/2\sigma^2 = \tfrac12\mathrm{SR}^2$, and <em>zero again</em> at $f = 2f^\star$. For $\mu = 8\%$, $\sigma = 20\%$: $f^\star = {{v:c17_kelly}}$ (that is, 200% exposure, levered twice), $g(f^\star) = {{v:c17_kelly_g}}$% a year; at half-Kelly $g = {{v:c17_g_half}}$% (three-quarters of the maximum growth for half the risk), and at twice Kelly $g = {{v:c17_g_2x}}$%: a strategy with a positive expected return, levered to twice the Kelly fraction, grows at zero rate &mdash; beyond it, wealth goes to zero with probability one despite every bet having positive expectation. For a discrete even-odds bet won with probability $p$, the same calculation gives $f^\star = 2p - 1$: at $p = 0.55$, bet {{v:c17_kelly_bet}} of wealth and grow at {{v:c17_kelly_bet_g}}% per bet.
+</p>
+{{fig:c17_kelly|The long-run growth rate of wealth as a function of the fraction invested, for μ = 8%, σ = 20%. The optimum is at f* = μ/σ² = 2; beyond 2f* = 4 the growth rate is negative. Practitioners sit at a quarter to a half of f* because μ is uncertain.}}
+<p>
+Nobody runs full Kelly. The growth curve is flat near the top and steep beyond it, and $\mu$ is uncertain by a factor of order one (Chapter&nbsp;3): if the true $\mu$ is half the estimate, "full Kelly" on the estimate is twice Kelly on the truth. Fractional Kelly ($f^\star/2$ to $f^\star/4$) sacrifices a little growth for a large reduction in drawdowns; at $f^\star/2$ the drawdown distribution is roughly that of full Kelly with the depths halved. In the multi-asset case the Kelly portfolio is $\mathbf f^\star = \boldsymbol\Sigma^{-1}\boldsymbol\mu$ &mdash; the <em>unnormalised</em> tangency portfolio &mdash; so Markowitz and Kelly are the same calculation, the first giving the direction and the second the size.
+</p>
+
+<h3>17.5 Risk parity and other $\boldsymbol\mu$-free rules</h3>
+<p>
+If expected returns cannot be estimated, allocate by risk. <em>Risk parity</em> chooses weights so that each asset contributes equally to portfolio variance: the contribution of asset $i$ is $w_i(\boldsymbol\Sigma\mathbf w)_i$, and the condition $w_i(\boldsymbol\Sigma\mathbf w)_i = \sigma_p^2/N$ for all $i$ is solved by a fixed-point iteration. For the three assets the risk-parity weights are $({{v:c17_wrp}})$ with risk contributions $({{v:c17_rp_rc}})$, volatility {{v:c17_sig_rp}}% and expected return {{v:c17_mu_rp}}% &mdash; between the minimum-variance and tangency portfolios, as it generally is. In its best-known form (bonds levered up to match the risk of equities) it has been the engine of some very large funds. Its hidden assumption is that Sharpe ratios are equal across assets, which is a view like any other; its hidden risk is the leverage applied to the low-volatility assets, which is exactly where volatility rises when correlations go to one.
+</p>
+
+<h3>17.6 Turnover and transaction costs</h3>
+<p>
+Every rebalance costs the bid&ndash;ask spread plus market impact, which for a trade of size $Q$ in a stock with daily volume $V$ and volatility $\sigma$ scales roughly as $\sigma\sqrt{Q/V}$ (the square-root law, one of the few robust empirical regularities of market microstructure). An optimiser that ignores costs rebalances towards every wiggle in its inputs; adding a penalty $\lambda_c\|\mathbf w - \mathbf w_{\rm old}\|_1$ (proportional costs) or a quadratic impact term converts the problem into one of <em>trading towards</em> the target at a controlled rate, and the optimal policy, for quadratic costs, is to close a constant fraction of the gap each period &mdash; an exponential moving average of the targets (G&acirc;rleanu and Pedersen 2013). Net of costs, a signal with a one-day half-life and a 5% annual gross alpha is worthless; the same signal with a three-month half-life is a business. The quality of a strategy is set as much by how slowly it trades as by how well it forecasts.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Tangency</dt><dd>$\mathbf w \propto \boldsymbol\Sigma^{-1}(\boldsymbol\mu - r_f)$; two-fund theorem; CAPM follows in two lines.</dd>
+<dt>Error maximisation</dt><dd>Weights are wildly sensitive to $\boldsymbol\mu$; shrink, constrain, or go $\boldsymbol\mu$-free.</dd>
+<dt>Kelly</dt><dd>$g(f) = f\mu - \tfrac12f^2\sigma^2$; $f^\star = \mu/\sigma^2$; twice Kelly grows at zero; run fractional.</dd>
+<dt>Costs</dt><dd>Impact $\propto\sigma\sqrt{Q/V}$; trade towards targets; slow signals survive, fast ones do not.</dd>
+</dl>
+</div>

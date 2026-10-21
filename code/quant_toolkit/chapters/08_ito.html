@@ -1,0 +1,65 @@
+<h2><span class="n">8</span>It&ocirc; calculus: SDEs, It&ocirc;'s lemma and the Fokker&ndash;Planck equation</h2>
+<p class="lead">Stochastic calculus is ordinary calculus with one extra rule, $(\mathrm dW)^2 = \mathrm dt$. That rule produces a correction term in the chain rule, and that correction term is responsible for volatility drag, for the $\sigma^2/2$ in Black&ndash;Scholes, and for the difference between the mean and the median of every asset's future price.</p>
+
+<h3>8.1 Stochastic differential equations</h3>
+<p>
+A diffusion process is written
+$$\mathrm dX_t = a(X_t, t)\,\mathrm dt + b(X_t, t)\,\mathrm dW_t ,$$
+meaning: over a short interval the change in $X$ is a deterministic <em>drift</em> $a\,\mathrm dt$ plus a random shock of standard deviation $b\sqrt{\mathrm dt}$. The equation is shorthand for the integral $X_t = X_0 + \int_0^t a\,\mathrm ds + \int_0^t b\,\mathrm dW_s$, where the second integral is the It&ocirc; integral &mdash; a limit of sums $\sum b(X_{t_i})\,(W_{t_{i+1}} - W_{t_i})$ in which the integrand is evaluated at the <em>start</em> of each interval. That choice (as opposed to the midpoint, which gives the Stratonovich integral used in physics) is the right one for finance because a trading decision at $t_i$ cannot use information from $t_{i+1}$: the It&ocirc; integral is the gain of a non-anticipating trading strategy, and it has the key property $\mathbb E\big[\int b\,\mathrm dW\big] = 0$ (it is a <em>martingale</em>). The three SDEs that matter most are:
+</p>
+<table>
+<tr><th>Model</th><th>SDE</th><th>Used for</th></tr>
+<tr><td>Arithmetic Brownian motion</td><td>$\mathrm dX = \mu\,\mathrm dt + \sigma\,\mathrm dW$</td><td>Bachelier's model; spreads; rates near zero</td></tr>
+<tr><td>Geometric Brownian motion (GBM)</td><td>$\mathrm dS = \mu S\,\mathrm dt + \sigma S\,\mathrm dW$</td><td>Stock prices; the Black&ndash;Scholes model</td></tr>
+<tr><td>Ornstein&ndash;Uhlenbeck (OU)</td><td>$\mathrm dx = \kappa(\theta - x)\,\mathrm dt + \sigma\,\mathrm dW$</td><td>Interest rates (Vasicek); spreads; volatility; pairs trading</td></tr>
+</table>
+
+<h3>8.2 It&ocirc;'s lemma</h3>
+<p>
+Let $f(x,t)$ be smooth and $X_t$ a diffusion. Taylor-expand $f$ to second order, as in Chapter&nbsp;5:
+$$\mathrm df = \frac{\partial f}{\partial t}\mathrm dt + \frac{\partial f}{\partial x}\mathrm dX + \tfrac12\frac{\partial^2 f}{\partial x^2}(\mathrm dX)^2 + \dots$$
+Now use the multiplication table. $(\mathrm dX)^2 = (a\,\mathrm dt + b\,\mathrm dW)^2 = b^2(\mathrm dW)^2 + O(\mathrm dt^{3/2}) = b^2\,\mathrm dt$. The second-order term is of order $\mathrm dt$ &mdash; the same order as the drift &mdash; and must be kept, while all higher terms vanish. The result is <em>It&ocirc;'s lemma</em>:
+$$\boxed{\;\mathrm df = \Big(\frac{\partial f}{\partial t} + a\frac{\partial f}{\partial x} + \tfrac12 b^2\frac{\partial^2 f}{\partial x^2}\Big)\mathrm dt + b\,\frac{\partial f}{\partial x}\,\mathrm dW\;}$$
+It is the chain rule plus an extra drift $\tfrac12 b^2 f''$, the <em>It&ocirc; correction</em>, which is positive for convex $f$: a convex function of a noisy variable drifts upwards on average even if the variable itself does not (Jensen's inequality in differential form). Everything that distinguishes stochastic from ordinary calculus is in that term.
+</p>
+
+<h3>8.3 Solving GBM: the volatility drag</h3>
+<p>
+Apply the lemma to $f = \ln S$ with $\mathrm dS = \mu S\,\mathrm dt + \sigma S\,\mathrm dW$ (so $a = \mu S$, $b = \sigma S$, $f' = 1/S$, $f'' = -1/S^2$):
+$$\mathrm d\ln S = \Big(\mu - \tfrac12\sigma^2\Big)\mathrm dt + \sigma\,\mathrm dW .$$
+The log-price is an arithmetic Brownian motion with drift $\mu - \sigma^2/2$, so
+$$S_T = S_0\exp\!\Big[\big(\mu - \tfrac12\sigma^2\big)T + \sigma W_T\Big],\qquad \ln S_T \sim \mathcal N\!\Big(\ln S_0 + (\mu - \tfrac12\sigma^2)T,\ \sigma^2T\Big).$$
+The price is lognormal. Its mean is $\mathbb E[S_T] = S_0e^{\mu T}$ (the $-\sigma^2/2$ in the exponent is exactly cancelled by the $+\sigma^2/2$ from the lognormal mean formula of Chapter&nbsp;2) but its <em>median</em> is $S_0e^{(\mu - \sigma^2/2)T}$. The gap $\sigma^2/2$ is the <em>volatility drag</em>: a typical path grows more slowly than the average path, because the average is pulled up by a few very large outcomes. For $\mu = 10\%$, $\sigma = 20\%$, $T = 1$ the drag is {{v:c8_drag}}% a year, the mean of $S_T$ is {{v:c8_ES}} and the median {{v:c8_median}}; simulating $10^5$ paths gives {{v:c8_ES_sim}} and {{v:c8_median_sim}}, and $\mathbb E[\ln S_T] = {{v:c8_ElogS}}$ against the theoretical {{v:c8_ElogS_th}}. A leveraged ETF, which multiplies $\sigma$ by its leverage, multiplies the drag by its square; that is why a $3\times$ fund can lose money while its index is flat.
+</p>
+{{fig:c8_paths|Left: five geometric Brownian motion paths with μ = 10%, σ = 20%, and the mean path S₀e^μt (dashed). Right: an Ornstein–Uhlenbeck path starting at 8% reverting to θ = 3% with κ = 5 (half-life 0.14 years) and σ = 2%.}}
+
+<h3>8.4 The Ornstein&ndash;Uhlenbeck process</h3>
+<p>
+For $\mathrm dx = \kappa(\theta - x)\,\mathrm dt + \sigma\,\mathrm dW$, apply It&ocirc; to $f = e^{\kappa t}x$ (the integrating factor from the deterministic ODE): $\mathrm d(e^{\kappa t}x) = \kappa\theta e^{\kappa t}\mathrm dt + \sigma e^{\kappa t}\mathrm dW$, which integrates to
+$$x_t = \theta + (x_0 - \theta)e^{-\kappa t} + \sigma\int_0^t e^{-\kappa(t-s)}\,\mathrm dW_s .$$
+The mean decays to $\theta$ with half-life $\ln 2/\kappa$ ({{v:c8_ou_halflife}} years for $\kappa = 5$); the variance, by the It&ocirc; isometry $\mathbb E[(\int g\,\mathrm dW)^2] = \int g^2\,\mathrm dt$, is $\frac{\sigma^2}{2\kappa}(1 - e^{-2\kappa t}) \to \sigma^2/2\kappa$ ({{v:c8_ou_statsd}}% standard deviation in the stationary state here). The OU process is the Gaussian stationary process; its autocorrelation is $e^{-\kappa\tau}$, which makes it the continuous-time AR(1) of Chapter&nbsp;14, and it is the model behind the Vasicek rate model (Chapter&nbsp;12), the variance process of Heston (Chapter&nbsp;11, as a square-root variant), and every pairs-trading spread (Chapter&nbsp;14). Physicists know it as the velocity of a Brownian particle with friction: the Langevin equation (Chapter&nbsp;21).
+</p>
+
+<h3>8.5 From paths to densities: Fokker&ndash;Planck and Kolmogorov</h3>
+<p>
+The SDE describes one path. The probability density $p(x,t)$ of $X_t$ obeys the <em>Fokker&ndash;Planck</em> (forward Kolmogorov) equation
+$$\frac{\partial p}{\partial t} = -\frac{\partial}{\partial x}\big[a(x,t)\,p\big] + \tfrac12\frac{\partial^2}{\partial x^2}\big[b^2(x,t)\,p\big],$$
+a drift&ndash;diffusion equation that reduces to the heat equation when $a = 0$, $b = \sigma$. It is derived by taking expectations of It&ocirc;'s lemma for an arbitrary test function and integrating by parts. Its adjoint, the <em>backward Kolmogorov</em> equation, governs how the expected value of a future payoff $u(x,t) = \mathbb E[g(X_T)\,|\,X_t = x]$ depends on the current state:
+$$\frac{\partial u}{\partial t} + a\frac{\partial u}{\partial x} + \tfrac12 b^2\frac{\partial^2 u}{\partial x^2} = 0,\qquad u(x,T) = g(x).$$
+The operator in brackets is the It&ocirc; drift operator from the lemma: $u$ is a martingale, so its drift must vanish. This backward equation, with a discounting term added and $a, b$ taken from the risk-neutral GBM, <em>is</em> the Black&ndash;Scholes equation. We have now seen the same structure three times &mdash; Einstein's density equation, the heat equation, the Kolmogorov pair &mdash; and the next chapter puts a price on it.
+</p>
+
+<h3>8.6 Simulating SDEs: Euler&ndash;Maruyama and its errors</h3>
+<p>
+The simplest discretisation is $X_{k+1} = X_k + a(X_k)\Delta t + b(X_k)\sqrt{\Delta t}\,Z_k$ with $Z_k\sim\mathcal N(0,1)$. Its <em>weak</em> error (error in expectations) is $O(\Delta t)$ and its <em>strong</em> error (error in the path) is $O(\sqrt{\Delta t})$; the Milstein scheme adds the It&ocirc; correction $\tfrac12 bb'(Z_k^2 - 1)\Delta t$ and improves the strong order to 1. For GBM one should not discretise at all: simulate $\ln S$ exactly using the closed-form solution, which is what the $10^5$-path check above does. For processes without closed forms (Heston, CIR) the discretisation must also respect positivity of the variance, and the "full truncation" trick of replacing $v$ by $\max(v,0)$ inside the coefficients is the standard practical fix (used in Chapter&nbsp;11's Monte Carlo check).
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>It&ocirc;'s lemma</dt><dd>$\mathrm df = (f_t + af_x + \tfrac12 b^2 f_{xx})\,\mathrm dt + bf_x\,\mathrm dW$: the chain rule plus a convexity drift.</dd>
+<dt>GBM solution</dt><dd>$\ln S_T$ Gaussian with drift $\mu - \sigma^2/2$; mean $S_0e^{\mu T}$, median lower by the volatility drag.</dd>
+<dt>OU</dt><dd>Mean reversion with half-life $\ln2/\kappa$ and stationary variance $\sigma^2/2\kappa$.</dd>
+<dt>Kolmogorov</dt><dd>Forward equation for densities, backward equation for expectations; the latter becomes Black&ndash;Scholes.</dd>
+</dl>
+</div>

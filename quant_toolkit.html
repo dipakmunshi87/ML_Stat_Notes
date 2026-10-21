@@ -1617,6 +1617,11 @@ A quant who can derive each formula in the table from the idea beside it, and ca
 <section class="page" id="c23">
 <h2><span class="n">23</span>Appendix &mdash; the computations, in code</h2>
 <p class="lead">Every number and figure in the note comes from short NumPy/SciPy scripts with fixed seeds. The six kernels below are the ones worth owning; the rest is plotting and bookkeeping.</p>
+<div class="box g">
+<h4>The complete source</h4>
+<p>The full build &mdash; the three computation scripts that produce every value and figure, the chapter sources, the assembler and the MathJax renderer &mdash; is in the repository at
+<a href="https://github.com/dipakmunshi87/ML_Stat_Notes/tree/main/code/quant_toolkit">github.com/dipakmunshi87/ML_Stat_Notes/code/quant_toolkit</a>. Running <code>python compute_part1.py &amp;&amp; python compute_part2.py &amp;&amp; python compute_part3.py &amp;&amp; python build.py</code> regenerates this page from scratch.</p>
+</div>
 
 <h3>A.1 Black&ndash;Scholes, Greeks and implied volatility</h3>
 <pre><code><span class="c"># Black-Scholes price, Greeks and implied volatility (Chapters 9-10)</span>

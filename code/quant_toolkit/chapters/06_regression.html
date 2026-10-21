@@ -1,0 +1,56 @@
+<h2><span class="n">6</span>Regression and factor models</h2>
+<p class="lead">Linear regression is the workhorse of empirical finance: it estimates betas, decomposes returns into factors and alpha, tests whether a signal predicts anything, and &mdash; misused &mdash; manufactures false discoveries at industrial scale.</p>
+
+<h3>6.1 Ordinary least squares and what it assumes</h3>
+<p>
+The model is $y_t = \mathbf x_t^\top\boldsymbol\beta + \varepsilon_t$, or in matrix form $\mathbf y = \mathbf X\boldsymbol\beta + \boldsymbol\varepsilon$ with $\mathbf X$ the $T\times p$ matrix of regressors. The OLS estimate $\hat{\boldsymbol\beta} = (\mathbf X^\top\mathbf X)^{-1}\mathbf X^\top\mathbf y$ (Chapter&nbsp;4) is the maximum-likelihood estimate if the errors are Gaussian, and the Gauss&ndash;Markov theorem says it is the best linear unbiased estimator provided the errors have mean zero, constant variance $\sigma_\varepsilon^2$ and no correlation with each other or with $\mathbf X$. Under those assumptions
+$$\mathrm{Cov}(\hat{\boldsymbol\beta}) = \sigma_\varepsilon^2\,(\mathbf X^\top\mathbf X)^{-1},\qquad \hat\sigma_\varepsilon^2 = \frac{\|\mathbf y - \mathbf X\hat{\boldsymbol\beta}\|^2}{T-p},$$
+and the $t$-statistic of each coefficient is $\hat\beta_j/\mathrm{se}(\hat\beta_j)$. The fraction of variance explained is $R^2 = 1 - \|\hat{\boldsymbol\varepsilon}\|^2/\|\mathbf y - \bar y\|^2$. In finance every one of the Gauss&ndash;Markov assumptions fails somewhat: errors are heteroskedastic (volatility clusters, Chapter&nbsp;15), autocorrelated (overlapping returns), and fat-tailed. The coefficients remain unbiased but the standard errors are wrong, and the fix is a robust ("HAC", Newey&ndash;West) covariance estimate that uses the actual residual structure. A residual autocorrelation of $0.3$ inflates the true standard error of a mean by a factor $\sqrt{(1+\rho)/(1-\rho)} = {{v:c6_hac_factor}}$; the naive $t$-statistic is too large by that factor.
+</p>
+
+<h3>6.2 The CAPM regression: beta and alpha</h3>
+<p>
+The capital asset pricing model says that, in equilibrium, the expected excess return of any asset is proportional to its covariance with the market: $\mathbb E[r_i] - r_f = \beta_i\,(\mathbb E[r_m] - r_f)$ with $\beta_i = \mathrm{Cov}(r_i, r_m)/\mathrm{Var}(r_m)$. The empirical version is the regression of excess returns on market excess returns,
+$$r_{i,t} - r_f = \alpha_i + \beta_i\,(r_{m,t} - r_f) + \varepsilon_{i,t},$$
+in which $\beta$ is the asset's systematic risk and $\alpha$ is the return not explained by the market &mdash; the quantity every active manager claims to produce. Two facts follow immediately from Chapter&nbsp;3. $\beta$ is a ratio of covariances and is well determined by a year or two of daily data. $\alpha$ is a mean and is not.
+</p>
+<div class="box g">
+<h4>Worked example: two years of daily data</h4>
+<p>We simulate 500 days with true $\alpha = 2$ bp/day ({{v:c6_alpha_true_ann}}% a year), $\beta = 1.2$, market volatility 1%/day and idiosyncratic volatility 1.2%/day. OLS gives $\hat\beta = {{v:c6_beta}}$ with standard error {{v:c6_se_beta}} ($t = {{v:c6_t_beta}}$): the beta is nailed. It gives $\hat\alpha = {{v:c6_alpha}}$ bp/day ({{v:c6_alpha_ann}}% a year) with standard error {{v:c6_se_alpha}} bp ($t = {{v:c6_t_alpha}}$): a real 5% annual alpha is invisible in two years of data, and the point estimate is off by 40%. $R^2 = {{v:c6_R2}}$, typical for a single stock against its index.</p>
+</div>
+{{fig:c6_capm|The CAPM regression: 500 daily asset returns against market returns, with the OLS line. The slope (beta) is determined to ±0.05; the intercept (alpha) is lost in the scatter.}}
+
+<h3>6.3 Multi-factor models</h3>
+<p>
+The CAPM's one factor explains perhaps a quarter of the cross-sectional variation in stock returns. Adding factors &mdash; size, value, momentum, quality, low volatility in the Fama&ndash;French / Carhart tradition, or statistical factors from PCA (Chapter&nbsp;4), or industry dummies &mdash; gives the general linear factor model
+$$\mathbf r_t = \boldsymbol\alpha + \mathbf B\,\mathbf f_t + \boldsymbol\varepsilon_t,\qquad
+\boldsymbol\Sigma = \mathbf B\,\boldsymbol\Sigma_f\,\mathbf B^\top + \mathbf D,$$
+where $\mathbf B$ is the $n\times k$ matrix of loadings, $\boldsymbol\Sigma_f$ the $k\times k$ factor covariance and $\mathbf D$ the diagonal matrix of idiosyncratic variances. The second equation is the practical payoff: a $500\times500$ covariance matrix with 125,250 free entries is replaced by $500\times k$ loadings plus $k(k+1)/2$ factor covariances plus 500 residual variances &mdash; a few thousand numbers, estimable from a few years of data, automatically positive definite, and with the noise structure of Chapter&nbsp;16 largely removed. Every commercial risk model (Barra, Axioma and their descendants) is this equation with a particular choice of factors. Regressing a synthetic stock with true loadings (1.1, 0.5, &minus;0.3) on three factors recovers ({{v:c6_b3}}) with $t$-statistics ({{v:c6_t3}}): the market loading is sharp, the weaker factors are marginal, and with real data and 50 candidate factors most "significant" loadings would be noise.
+</p>
+
+<h3>6.4 Multicollinearity and regularisation</h3>
+<p>
+When regressors are nearly collinear, $\mathbf X^\top\mathbf X$ is nearly singular, its inverse is huge in the ill-determined direction, and the coefficients become wildly uncertain even though the fit is fine. Two factors that are almost the same (correlation 0.999 in the example below) with true coefficients $(1, 1)$ are estimated by OLS as ({{v:c6_ols_coll}}), each with standard error {{v:c6_se_coll}}; the condition number of $\mathbf X^\top\mathbf X$ is {{v:c6_cond_coll}}. Only their <em>sum</em> is determined. <em>Ridge regression</em> adds a penalty $\lambda\|\boldsymbol\beta\|^2$ to the least-squares objective, giving
+$$\hat{\boldsymbol\beta}_{\rm ridge} = (\mathbf X^\top\mathbf X + \lambda\mathbf I)^{-1}\mathbf X^\top\mathbf y,$$
+which floors the small eigenvalues and shrinks coefficients towards zero: with $\lambda = 10$ it returns ({{v:c6_ridge_coll}}). This is the Bayesian shrinkage of Chapter&nbsp;3 with a Gaussian prior of variance $\sigma_\varepsilon^2/\lambda$ on each coefficient. The <em>lasso</em> uses $\lambda\|\boldsymbol\beta\|_1$ instead and sets weak coefficients exactly to zero (variable selection); the <em>elastic net</em> combines the two. In finance, where the number of candidate predictors is large and their individual signal tiny, some regularisation is always necessary and the penalty strength is chosen by cross-validation &mdash; done correctly for time series, which is harder than it sounds (Chapter&nbsp;19).
+</p>
+
+<h3>6.5 Predictive regressions and their pathologies</h3>
+<p>
+The regression a quant most wants to run is $r_{t+1} = a + b\,s_t + \varepsilon_{t+1}$: does signal $s$ predict next period's return? Three pathologies make the naive $t$-statistic untrustworthy. <em>Persistent regressors</em>: if $s_t$ is highly autocorrelated (a valuation ratio, a yield) and its innovations are correlated with returns, the OLS estimate of $b$ is biased (Stambaugh bias) and over-rejects. <em>Overlapping observations</em>: regressing 12-month returns on monthly data makes adjacent errors share 11 months and inflates $t$ by roughly $\sqrt{12}$ unless HAC corrected. <em>Look-ahead</em>: a signal built with data not available at time $t$ (restated earnings, index membership as of today) predicts beautifully and trades at a loss. The defences are HAC standard errors, out-of-sample testing on data not used for selection, and a prior that the true $R^2$ of any return-prediction regression is of order 1% &mdash; which, with enough capital and leverage, is still a business.
+</p>
+
+<h3>6.6 Classification: logistic regression and default prediction</h3>
+<p>
+When the outcome is binary &mdash; will this borrower default, will this trade fill, will tomorrow's return be positive &mdash; the linear model is replaced by one for the probability: $\mathbb P(y = 1\,|\,\mathbf x) = \sigma(\mathbf x^\top\boldsymbol\beta)$ with $\sigma(z) = 1/(1+e^{-z})$ the logistic function, so that the <em>log-odds</em> are linear in the features. The coefficients are fitted by maximum likelihood, i.e. by minimising the cross-entropy $-\sum_t[y_t\ln p_t + (1-y_t)\ln(1-p_t)]$, which is convex and solved by Newton's method (iteratively reweighted least squares). Logistic regression is the model behind most credit scorecards, and its output is used in the same two ways as the linear model's: the coefficients say which features matter and by how much, and the fitted probabilities are inputs to pricing (a loan's expected loss is probability of default times loss given default times exposure). Two cautions carry over from the continuous case. Rare outcomes (default rates of 1&ndash;2%) make the likelihood nearly flat and the coefficients noisy, so regularisation and large samples are essential; and a classifier's accuracy is a useless metric when the classes are unbalanced (predicting "no default" for everyone is 98% accurate). The right metrics are the log-loss itself, the area under the ROC curve, and above all <em>calibration</em>: among loans given a 5% probability of default, do 5% default? A model that ranks well but is mis-calibrated misprices every loan it touches.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>OLS</dt><dd>$\hat{\boldsymbol\beta} = (\mathbf X^\top\mathbf X)^{-1}\mathbf X^\top\mathbf y$; $t$-statistics need robust (HAC) standard errors in finance.</dd>
+<dt>Beta vs alpha</dt><dd>Beta is a covariance ratio and is measurable; alpha is a mean and is not.</dd>
+<dt>Factor model</dt><dd>$\boldsymbol\Sigma = \mathbf B\boldsymbol\Sigma_f\mathbf B^\top + \mathbf D$ tames the covariance matrix.</dd>
+<dt>Ridge/lasso</dt><dd>Regularisation = shrinkage prior; essential when predictors are many and weak.</dd>
+</dl>
+</div>

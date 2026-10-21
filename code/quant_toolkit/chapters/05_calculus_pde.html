@@ -1,0 +1,58 @@
+<h2><span class="n">5</span>Calculus, ODEs and the heat equation</h2>
+<p class="lead">Three pieces of calculus do nearly all the work in finance: the Taylor expansion, the first-order linear ODE, and one partial differential equation &mdash; the diffusion or heat equation, which is Black&ndash;Scholes under a change of variables.</p>
+
+<h3>5.1 Taylor expansions: the language of risk</h3>
+<p>
+Every "sensitivity" in finance is a Taylor coefficient. For a function $f$ of one variable,
+$$f(x+h) = f(x) + f'(x)\,h + \tfrac12 f''(x)\,h^2 + O(h^3),$$
+and for a function of several variables, $f(\mathbf x + \mathbf h) = f + \nabla f^\top\mathbf h + \tfrac12\mathbf h^\top\mathbf H\mathbf h + \dots$ with $\mathbf H$ the Hessian. Duration and convexity (Chapter&nbsp;1) are $f'$ and $f''$ of price with respect to yield; delta and gamma (Chapter&nbsp;10) are the same derivatives of an option price with respect to the underlying; a P&amp;L explanation decomposes a day's profit into first- and second-order terms in each risk factor. The accuracy is easy to feel: $e^{0.1} = {{v:c5_exp01}}$, while the first-order expansion gives {{v:c5_taylor1}} and the second-order {{v:c5_taylor2}}. One more term is needed for most day-to-day moves, and the whole series for a crash. The crucial subtlety, which is the entire content of Chapter&nbsp;8, is that for a <em>random</em> increment $h$ with $\mathbb E[h^2] \propto \mathrm dt$, the second-order term is of the same order as the first and cannot be dropped: that is It&ocirc;'s lemma.
+</p>
+
+<h3>5.2 Ordinary differential equations</h3>
+<p>
+The equation $\mathrm dP/\mathrm dt = rP$ (money in a bank account, or a bond price under a constant short rate) is the first-order linear ODE with solution $P(t) = P_0e^{rt}$; with a time-varying rate $r(t)$ it is $P(t) = P_0\exp\!\int_0^t r(s)\,\mathrm ds$, which is where the "money-market account" $B_t$ of Chapter&nbsp;9 comes from. Three years of 5% turns 100 into {{v:c5_ode}}. The mean-reverting equation $\mathrm dx/\mathrm dt = \kappa(\theta - x)$ (a short rate pulled back towards a long-run level $\theta$ at speed $\kappa$) has solution $x(t) = \theta + (x_0-\theta)e^{-\kappa t}$, with half-life $\ln 2/\kappa$: adding noise to it gives the Ornstein&ndash;Uhlenbeck process and the Vasicek model (Chapters 8 and 12). More generally, bond prices in affine interest-rate models satisfy Riccati ODEs, $A'(t) = \ldots$, which are solved numerically with any standard integrator (Runge&ndash;Kutta); the point of using affine models is precisely that the PDE collapses to ODEs.
+</p>
+
+<h3>5.3 The heat equation</h3>
+<p>
+Let $u(x,t)$ be a temperature profile in a bar, or a probability density of a diffusing particle. Conservation of heat (or probability) plus Fourier's law (flux proportional to minus the gradient) gives
+$$\frac{\partial u}{\partial t} = D\,\frac{\partial^2 u}{\partial x^2},$$
+the <em>heat</em> or <em>diffusion</em> equation, with $D$ the diffusivity. Its fundamental solution, the response to a unit spike at the origin at $t=0$, is the Gaussian kernel
+$$G(x,t) = \frac{1}{\sqrt{4\pi D t}}\exp\!\Big(-\frac{x^2}{4Dt}\Big),$$
+a normal density with variance $2Dt$: the spread grows as $\sqrt t$. (Check by substitution: both sides equal $G\cdot\big(x^2/(4Dt^2) - 1/(2t)\big)$.) Because the equation is linear, the solution from any initial profile $u_0(x)$ is the convolution $u(x,t) = \int G(x-y,t)\,u_0(y)\,\mathrm dy$: the initial condition is smeared by a Gaussian of width $\sqrt{2Dt}$. In Fourier space each mode $e^{ikx}$ decays as $e^{-Dk^2t}$, so fine structure (large $k$) vanishes fastest &mdash; which is why a diffusing price distribution forgets its details and tends to the Gaussian, and why option prices are smooth functions of the underlying even though the payoff has a kink.
+</p>
+<p>
+The connection to finance, made precise in Chapter&nbsp;9, is this: the Black&ndash;Scholes PDE for an option price $V(S,t)$ becomes, after the substitutions $x = \ln S$ and $\tau = T - t$ (time to expiry) plus a change of dependent variable to remove the drift and discounting, exactly the heat equation with $D = \sigma^2/2$. The payoff at expiry is the initial condition, and the option price today is that payoff convolved with a Gaussian. Pricing an option is solving a heat-conduction problem backwards from the boundary.
+</p>
+
+<h3>5.4 Solving it numerically: finite differences and stability</h3>
+<p>
+Replace the derivatives by differences on a grid $x_i = i\,\Delta x$, $t_k = k\,\Delta t$: $u_t \approx (u_i^{k+1}-u_i^k)/\Delta t$ and $u_{xx} \approx (u_{i+1}^k - 2u_i^k + u_{i-1}^k)/\Delta x^2$. The <em>explicit</em> scheme steps forward as
+$$u_i^{k+1} = u_i^k + \alpha\big(u_{i+1}^k - 2u_i^k + u_{i-1}^k\big),\qquad \alpha = \frac{D\,\Delta t}{\Delta x^2}.$$
+It is stable only if $\alpha \le \tfrac12$ (von Neumann analysis: each Fourier mode is multiplied per step by $1 - 4\alpha\sin^2(k\Delta x/2)$, which must stay in $[-1,1]$). This is a harsh constraint &mdash; halving $\Delta x$ requires quartering $\Delta t$ &mdash; and it is why option-pricing codes use the <em>implicit</em> or <em>Crank&ndash;Nicolson</em> schemes (Chapter&nbsp;13), which evaluate the second difference at the new time level, require solving a tridiagonal system per step, and are stable for any $\alpha$.
+</p>
+<div class="box g">
+<h4>Worked example: a spike spreading</h4>
+<p>With $D = 1$, $\Delta x = {{v:c5_dx}}$ and $\Delta t = {{v:c5_dt}}$ ($\alpha = {{v:c5_alpha}}$), the explicit scheme carries an initial narrow Gaussian from $t = 0.05$ to $t = 2.5$ with maximum absolute error {{v:c5_err}} against the exact kernel. The standard deviation grows from $\sqrt{2Dt} = {{v:c5_sd_t1}}$ at $t = 1$ to {{v:c5_sd_t25}} at $t = 2.5$. Raising $\alpha$ to 0.6 and taking 200 steps produces a "solution" of magnitude {{v:c5_unstable_max}}: the high-frequency modes grow instead of decaying and the grid fills with oscillating garbage. Stability is not a refinement; it is the difference between an answer and noise.</p>
+</div>
+{{fig:c5_heat|The heat equation solved by explicit finite differences (coloured) against the exact Gaussian kernel (dotted black) at four times. The profile spreads as √t and flattens; the numerical and exact solutions are indistinguishable at this resolution.}}
+
+<h3>5.5 Green's functions and the Feynman&ndash;Kac idea</h3>
+<p>
+The Gaussian kernel $G$ is the Green's function of the heat equation: it propagates the solution from one time to another. Physicists know the same object as the free-particle propagator, and the statement "the solution of a diffusion PDE is an expectation over random paths of the initial data" is the Feynman&ndash;Kac formula, which in finance reads: <em>the option price is the discounted expected payoff under the risk-neutral measure</em>. The PDE view (solve the heat equation on a grid) and the probabilistic view (simulate paths and average) are the same mathematics seen from two sides, and a quant uses whichever is computationally convenient: PDEs for low-dimensional problems with early exercise, Monte Carlo for high-dimensional ones. Chapter&nbsp;9 derives the formula and Chapter&nbsp;21 draws the path-integral picture.
+</p>
+
+<h3>5.6 A note on the Fourier transform</h3>
+<p>
+Because diffusion is diagonal in Fourier space, many pricing problems are solved by transform. If the log-price has a known <em>characteristic function</em> $\phi(k) = \mathbb E[e^{ik\ln S_T}]$ &mdash; and it does in every affine model, including Heston (Chapter&nbsp;11) &mdash; then the option price is a one-dimensional Fourier integral (Carr&ndash;Madan, 1999) and can be evaluated for hundreds of strikes at once with an FFT. For the lognormal model $\phi(k) = \exp\big(ik(\ln S_0 + (r-\sigma^2/2)T) - \tfrac12 k^2\sigma^2 T\big)$, the Gaussian characteristic function, whose $e^{-k^2\sigma^2T/2}$ factor is the $e^{-Dk^2t}$ decay of the heat equation again.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Taylor</dt><dd>All risk sensitivities are Taylor coefficients; for random increments the $h^2$ term survives.</dd>
+<dt>Heat equation</dt><dd>$u_t = Du_{xx}$; Gaussian kernel of variance $2Dt$; Black&ndash;Scholes is this with $D = \sigma^2/2$.</dd>
+<dt>Stability</dt><dd>Explicit schemes need $\alpha = D\Delta t/\Delta x^2 \le \tfrac12$; implicit schemes do not.</dd>
+<dt>Feynman&ndash;Kac</dt><dd>PDE solution = expectation over paths; price = discounted risk-neutral expectation.</dd>
+</dl>
+</div>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Quant Toolkit: Physics, Mathematics and Statistics for Finance</title>
+<meta name="description" content="A from-first-principles guide to the mathematics, statistics and physics used in the finance industry: discounting and bonds, probability and fat tails, estimation and inference, linear algebra and PCA, calculus/ODE/PDE and the heat equation, regression and factor models, random walks and Brownian motion, Ito calculus, Black-Scholes, Greeks and hedging, volatility models, interest-rate models, numerical pricing (trees, finite differences, Monte Carlo), time series, GARCH, random matrix theory, portfolio theory, risk measures, machine learning for signals, backtesting, and the physics toolkit (statistical mechanics, Langevin, Fokker-Planck, path integrals, scaling). Worked examples and computed figures throughout.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Quant Toolkit: Physics, Mathematics and Statistics for Finance">
+<meta property="og:description" content="Every piece of maths, statistics and physics the finance industry actually uses, built from first principles with worked examples: from discounting to Black-Scholes, GARCH to random matrix theory, Kelly to Fokker-Planck.">
+<meta property="og:image" content="https://dipakmunshi87.github.io/ML_Stat_Notes/quant_toolkit_preview.png">
+<meta property="og:url" content="https://dipakmunshi87.github.io/ML_Stat_Notes/quant_toolkit.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Quant Toolkit: Physics, Mathematics and Statistics for Finance">
+<meta name="twitter:description" content="The maths, statistics and physics the finance industry actually uses, from first principles with worked examples.">
+<meta name="twitter:image" content="https://dipakmunshi87.github.io/ML_Stat_Notes/quant_toolkit_preview.png">
+<style>
+  :root{
+    --acc:#3D7EBF; --acc2:#245a95; --red:#D9675C; --green:#5BA552;
+    --ink:#1c2530; --mut:#5b6b7a; --line:#e3e8ee; --bg:#ffffff; --soft:#f6f8fb;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.62; font-size:16px;}
+  .wrap{max-width:1000px; margin:0 auto; padding:0 22px 90px;}
+  header{max-width:1000px;margin:0 auto;padding:46px 22px 10px;}
+  h1{font-size:2.0rem; line-height:1.18; margin:.1em 0 .18em; color:var(--acc2); letter-spacing:-.01em;}
+  .sub{font-size:1.06rem; color:var(--mut); margin:0 0 .3em; font-weight:500;}
+  .byline{font-size:.92rem; color:var(--mut); border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line); padding:9px 0; margin:16px 0 0;}
+  .byline a{color:var(--acc); text-decoration:none;}
+  h2{font-size:1.42rem; color:var(--acc2); margin:2.1em 0 .1em; letter-spacing:-.01em;}
+  h2 .n{color:var(--acc); font-weight:700; margin-right:.35em;}
+  h2 + .lead, p.lead{color:var(--mut); margin:.25em 0 .2em; font-size:1.0rem;}
+  h3{font-size:1.1rem; color:var(--ink); margin:1.5em 0 .1em;}
+  p{margin:.72em 0;}
+  .hr{height:1px;background:var(--line);border:0;margin:.6em 0 0;}
+  a{color:var(--acc);}
+  code{background:var(--soft); border:1px solid var(--line); border-radius:4px;
+    padding:.07em .34em; font-size:.88em; font-family:"SF Mono",Menlo,Consolas,monospace;}
+  pre{background:#0f1720; color:#e7edf3; border-radius:9px; padding:15px 17px; overflow:auto;
+    font-size:.84rem; line-height:1.5; font-family:"SF Mono",Menlo,Consolas,monospace;}
+  pre code{background:none;border:0;padding:0;color:inherit;font-size:inherit;}
+  pre .c{color:#7f93a6;} pre .k{color:#6cb6ff;} pre .s{color:#9ae6a4;} pre .f{color:#f0b37e;}
+  figure{margin:1.3em 0; text-align:center;}
+  figure img{max-width:100%; border:1px solid var(--line); border-radius:9px;}
+  figcaption{font-size:.86rem; color:var(--mut); margin-top:.5em; text-align:left;}
+  .box{background:var(--soft); border:1px solid var(--line); border-left:4px solid var(--acc);
+    border-radius:8px; padding:3px 18px; margin:1.25em 0;}
+  .box.r{border-left-color:var(--red);}
+  .box.g{border-left-color:var(--green);}
+  .box h4{margin:.85em 0 .2em; font-size:1.0rem; color:var(--acc2);}
+  .box.r h4{color:#b24a40;} .box.g h4{color:#3f7a38;}
+  .key{display:grid; grid-template-columns:150px 1fr; gap:3px 14px; font-size:.95rem; margin:.5em 0;}
+  .key dt{font-weight:600; color:var(--acc2);}
+  .key dd{margin:0; color:var(--ink);}
+  table{border-collapse:collapse; width:100%; font-size:.92rem; margin:1.1em 0;}
+  th,td{border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top;}
+  th{background:var(--soft); color:var(--acc2);}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .win{color:var(--green); font-weight:700;}
+  ol.refs{font-size:.88rem; color:var(--mut); line-height:1.5; padding-left:1.3em;}
+  ol.refs li{margin:.35em 0;}
+  .foot{font-size:.85rem; color:var(--mut); border-top:1px solid var(--line); margin-top:2.5em; padding-top:14px;}
+  .tag{display:inline-block; background:#eaf1fa; color:var(--acc2); border-radius:20px;
+    padding:2px 11px; font-size:.78rem; font-weight:600; margin:0 5px 5px 0;}
+  .em{color:var(--red); font-weight:600;}
+  .part{margin:3.2em 0 -1.2em; padding:10px 0 6px; border-top:3px solid var(--acc); color:var(--acc);
+    font-weight:800; letter-spacing:.08em; font-size:.82rem; text-transform:uppercase;}
+  .part span{display:block;color:var(--acc2);font-size:1.25rem;letter-spacing:0;text-transform:none;font-weight:700;margin-top:2px;}
+  .topnav{position:sticky;top:0;z-index:46;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);padding:9px 0;margin:0 0 4px;display:flex;align-items:center;}
+  .topnav .inner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;gap:10px;align-items:center;width:100%;}
+  .topnav .brand{color:var(--acc);font-weight:800;letter-spacing:.02em;font-size:.92rem;}
+  .tocbtn{border:1px solid var(--line);background:#fff;color:#245a95;border-radius:999px;
+    padding:5px 14px;font-size:.84rem;cursor:pointer;font-weight:650;transition:.15s;white-space:nowrap;}
+  .tocbtn:hover{border-color:var(--acc);color:var(--acc);}
+  .pagenum{margin-left:auto;color:var(--mut);font-size:.84rem;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;}
+  .tocback{position:fixed;inset:0;background:rgba(20,40,70,.28);z-index:45;display:none;}
+  .tocback.open{display:block;}
+  .toc{display:none;position:fixed;top:52px;left:50%;transform:translateX(-50%);
+    width:min(1000px,93vw);max-height:78vh;overflow-y:auto;background:#fff;
+    border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(20,50,90,.22);
+    padding:12px;z-index:47;gap:6px;}
+  .toc.open{display:flex;flex-wrap:wrap;}
+  .tocpart{flex-basis:100%;color:var(--acc);font-weight:800;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;margin:8px 4px 2px;}
+  .navbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;
+    padding:5px 12px;font-size:.82rem;cursor:pointer;transition:.15s;text-align:left;text-decoration:none;}
+  .navbtn:hover{border-color:var(--acc);color:#245a95;}
+  .page{display:none;animation:fade .25s ease;}
+  .page.on{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:34px;gap:10px;border-top:1px solid var(--line);padding-top:16px;}
+  .pager button.pg{cursor:pointer;font-family:inherit;border:1px solid var(--line);background:#fff;color:#245a95;border-radius:10px;padding:9px 18px;font-size:.92rem;font-weight:600;text-decoration:none;}
+  .pager button.pg:hover{border-color:var(--acc);}
+  .pager .pgn{color:var(--mut);font-size:.84rem;font-variant-numeric:tabular-nums;}
+  .navbtn.on{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:650;}
+  @media print{.page{display:block!important;animation:none!important;} .topnav,.toc,.tocback,.pager{display:none!important;} section.page{page-break-before:always;} figure img{max-width:100%;}}
+  @media (max-width:640px){.key{grid-template-columns:1fr;} h1{font-size:1.6rem;} body{font-size:15px;}}
+  /*MJXCSS*/
+  .mjx-eq{line-height:0}.mjx-display{display:block;text-align:center;margin:1em 0;overflow-x:auto;overflow-y:hidden}
+</style>
+</head>
+<body>
+<div class="topnav"><div class="inner"><span class="brand">The Quant Toolkit &mdash; a reproducible note</span><button class="tocbtn" onclick="toggleTOC()">&#9776; Contents</button><span class="pagenum" id="pagenum"></span></div></div>
+<div class="tocback" id="tocback" onclick="toggleTOC()"></div>
+<div class="toc" id="toc"><!--TOC--></div>
+<header id="top">
+  <div class="sub">A reproducible technical note</div>
+  <h1>The Quant Toolkit: Physics, Mathematics and Statistics for Finance</h1>
+  <div class="sub">Every piece of maths, statistics and physics the finance industry actually uses &mdash; built from first principles, with worked examples and computed figures</div>
+  <div class="byline">
+    Dr.&nbsp;Dipak&nbsp;Munshi &nbsp;&middot;&nbsp; ML &amp; Statistics Notes &nbsp;&middot;&nbsp;
+    basic to advanced, with pen-and-paper derivations and computed examples
+  </div>
+</header>
+<div class="wrap">
+<!--BODY-->
+<div class="foot">
+Dr Dipak Munshi &middot; ML &amp; Statistics Notes &middot; all figures and numbers in this note are produced by the code in the appendix with fixed random seeds; nothing is drawn from live market data.
+</div>
+</div>
+<script>
+var cur=0,N=document.querySelectorAll('section.page').length;
+function show(k){if(k<0)k=0;if(k>=N)k=N-1;cur=k;
+ document.querySelectorAll('section.page').forEach(function(p,i){p.classList.toggle('on',i===k);});
+ document.querySelectorAll('.toc .navbtn').forEach(function(b,i){b.classList.toggle('on',i===k);});
+ var h=document.querySelectorAll('section.page')[k].querySelector('h2');var pn=document.getElementById('pagenum');
+ if(pn)pn.textContent='page '+(k+1)+' / '+N+(h?' \u00b7 '+h.textContent.replace(/^(\d+)\s*/,'$1. '):'');
+ closeTOC();try{history.replaceState(null,'','#p'+(k+1));}catch(e){}window.scrollTo({top:0,behavior:'smooth'});}
+function toggleTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');var o=t.classList.toggle('open');b.classList.toggle('open',o);}
+function closeTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');if(t)t.classList.remove('open');if(b)b.classList.remove('open');}
+document.addEventListener('keydown',function(e){var tg=(e.target.tagName||'').toLowerCase();if(tg==='input'||tg==='textarea')return;
+ if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);if(e.key==='Escape')closeTOC();});
+(function(){var m=(location.hash||'').match(/^#p(\d+)$/);show(m?parseInt(m[1],10)-1:0);})();
+</script>
+</body>
+</html>

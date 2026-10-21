@@ -1,0 +1,6 @@
+{
+  "name": "quant-toolkit-build",
+  "private": true,
+  "description": "Server-side MathJax rendering for The Quant Toolkit note",
+  "dependencies": { "mathjax-full": "3.2.2" }
+}

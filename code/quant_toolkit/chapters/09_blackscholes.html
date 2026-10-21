@@ -1,0 +1,59 @@
+<h2><span class="n">9</span>Black&ndash;Scholes: no arbitrage, the PDE and the risk-neutral measure</h2>
+<p class="lead">The Black&ndash;Scholes argument is the most important piece of reasoning in finance: by hedging continuously, the writer of an option removes all risk, and the price that makes the hedged position earn exactly the risk-free rate is forced. The expected return of the stock drops out entirely.</p>
+
+<h3>9.1 The replication argument</h3>
+<p>
+Let $S$ follow GBM, $\mathrm dS = \mu S\,\mathrm dt + \sigma S\,\mathrm dW$, and let $V(S,t)$ be the price of a European option that pays $g(S_T)$ at expiry. Form a portfolio $\Pi = V - \Delta\,S$: long the option, short $\Delta$ shares. By It&ocirc;'s lemma,
+$$\mathrm dV = \Big(\frac{\partial V}{\partial t} + \mu S\frac{\partial V}{\partial S} + \tfrac12\sigma^2S^2\frac{\partial^2V}{\partial S^2}\Big)\mathrm dt + \sigma S\frac{\partial V}{\partial S}\,\mathrm dW ,$$
+so $\mathrm d\Pi = \mathrm dV - \Delta\,\mathrm dS$ has a random part $\sigma S\big(\partial_S V - \Delta\big)\mathrm dW$. Choose $\Delta = \partial V/\partial S$ and the randomness vanishes. The portfolio is now risk-free over $\mathrm dt$, so by no arbitrage it must earn the risk-free rate: $\mathrm d\Pi = r\Pi\,\mathrm dt$. Writing out both sides, the $\mu$ terms cancel (they appear in $\mathrm dV$ and in $\Delta\,\mathrm dS$ with opposite signs), leaving the <em>Black&ndash;Scholes equation</em>
+$$\boxed{\;\frac{\partial V}{\partial t} + rS\frac{\partial V}{\partial S} + \tfrac12\sigma^2S^2\frac{\partial^2V}{\partial S^2} - rV = 0\;},\qquad V(S,T) = g(S).$$
+Every European claim on $S$ satisfies this one equation; only the terminal condition differs. The disappearance of $\mu$ is the central miracle: two traders who disagree violently about where the stock is going must agree on the option price, because neither needs a forecast to hedge. What they must agree on is $\sigma$ &mdash; and Chapter&nbsp;3 showed that $\sigma$, unlike $\mu$, is measurable.
+</p>
+
+<h3>9.2 Reduction to the heat equation</h3>
+<p>
+Substitute $S = Ke^{x}$, $t = T - 2\tau/\sigma^2$ and $V = K\,e^{\alpha x + \beta\tau}\,u(x,\tau)$ with $\alpha = -\tfrac12(k-1)$, $\beta = -\tfrac14(k+1)^2$, $k = 2r/\sigma^2$. A page of algebra turns the Black&ndash;Scholes equation into $\partial_\tau u = \partial_x^2 u$ &mdash; the heat equation of Chapter&nbsp;5 with unit diffusivity and $\tau$ running forward from expiry. The option price is therefore the payoff, transformed, convolved with a Gaussian kernel of variance $2\tau = \sigma^2(T-t)$, and transformed back. Three consequences are immediate. The price is a smooth function of $S$ even though the payoff is not (the kink at $K$ is diffused away). Information propagates from the boundary (expiry) backwards. And the natural time variable is not $T-t$ but $\sigma^2(T-t)$: the <em>total variance</em> to expiry is what matters, which is why a one-year option at 20% volatility and a four-year option at 10% are, up to discounting, the same object.
+</p>
+{{fig:c9_smoothing|The Black–Scholes call price as a function of spot for several times to expiry (K = 100, r = 5%, σ = 20%). The hockey-stick payoff is smoothed by a Gaussian of width σ√T: this is heat conduction run backwards from expiry.}}
+
+<h3>9.3 The formula</h3>
+<p>
+Solving the heat equation with the call payoff $g = \max(S - K, 0)$ gives
+$$C = S\,\Phi(d_1) - Ke^{-rT}\,\Phi(d_2),\qquad d_{1,2} = \frac{\ln(S/K) + (r \pm \tfrac12\sigma^2)T}{\sigma\sqrt T},$$
+and for the put, $P = Ke^{-rT}\Phi(-d_2) - S\Phi(-d_1)$. The two terms have direct readings: $\Phi(d_2)$ is the risk-neutral probability of finishing in the money, so $Ke^{-rT}\Phi(d_2)$ is the present value of paying the strike when exercised; $S\Phi(d_1)$ is the present value of receiving the stock when exercised (the $d_1$ rather than $d_2$ reflects that the stock is worth more in the states where it is received). The formula contains no $\mu$, as promised.
+</p>
+<div class="box g">
+<h4>Worked example: the canonical at-the-money option</h4>
+<p>$S = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$: $d_1 = {{v:c9_d1}}$, $d_2 = {{v:c9_d2}}$, $\Phi(d_1) = {{v:c9_Nd1}}$, $\Phi(d_2) = {{v:c9_Nd2}}$, discount factor $e^{-rT} = {{v:c9_df}}$, so $C = 100\times{{v:c9_Nd1}} - 100\times{{v:c9_df}}\times{{v:c9_Nd2}} = {{v:c9_call}}$. The put is $P = {{v:c9_put}}$. Put&ndash;call parity, $C - P = S - Ke^{-rT} = {{v:c9_parity}}$, checks. Parity is a pure no-arbitrage statement (a call minus a put is a forward) and holds in <em>any</em> model: a market where it fails is a free lunch, and it is the first thing a desk's pricing system is tested against.</p>
+</div>
+
+<h3>9.4 The risk-neutral measure and Feynman&ndash;Kac</h3>
+<p>
+The PDE has a probabilistic twin. By the Feynman&ndash;Kac theorem (Chapter&nbsp;5), the solution of the backward equation with discounting is
+$$V(S,t) = e^{-r(T-t)}\,\mathbb E^{\mathbb Q}\big[g(S_T)\,\big|\,S_t = S\big],$$
+where the expectation is taken under a process in which $\mu$ has been replaced by $r$: $\mathrm dS = rS\,\mathrm dt + \sigma S\,\mathrm dW^{\mathbb Q}$. This <em>risk-neutral measure</em> $\mathbb Q$ is not a belief that the stock will earn the risk-free rate; it is a bookkeeping device that encodes the hedging argument. Girsanov's theorem makes it rigorous: changing the drift of a Brownian motion from $\mu$ to $r$ is equivalent to reweighting paths by the Radon&ndash;Nikodym density $\exp(-\lambda W_T - \tfrac12\lambda^2T)$ with $\lambda = (\mu - r)/\sigma$, the <em>market price of risk</em>. Under $\mathbb Q$ every discounted traded price $e^{-rt}S_t$ is a martingale, and "price = discounted expectation under the martingale measure" is the fundamental theorem of asset pricing, valid far beyond Black&ndash;Scholes. The practical consequence is enormous: any payoff, in any dimension, can be priced by simulating paths with drift $r$ and averaging &mdash; the Monte Carlo method of Chapter&nbsp;13.
+</p>
+<div class="box g">
+<h4>Worked example: pricing by simulation, and what happens if you use $\mu$</h4>
+<p>Simulating $S_T$ under $\mathbb Q$ and averaging the discounted call payoff gives {{v:c9_mc_1000}} $\pm$ {{v:c9_mcse_1000}} with 1,000 paths, {{v:c9_mc_100000}} $\pm$ {{v:c9_mcse_100000}} with $10^5$ and {{v:c9_mc_1000000}} $\pm$ {{v:c9_mcse_1000000}} with $10^6$, converging on {{v:c9_call}} as $1/\sqrt M$. Simulating instead with the real-world drift $\mu = 10\%$ and discounting at $r$ gives {{v:c9_call_mu_wrong}} &mdash; a 33% overprice, and the single most common error made by people pricing options for the first time. The option is worth {{v:c9_call}} <em>because it can be replicated for that cost</em>; the stock's expected return is irrelevant to the cost of replication.</p>
+</div>
+
+<h3>9.5 Extensions that cost nothing</h3>
+<p>
+Dividends at continuous yield $q$ replace $S$ by $Se^{-qT}$ (and $r$ by $r - q$ in $d_{1,2}$). Options on futures set $q = r$ (Black's 1976 formula, the standard for commodities and rates). Foreign exchange sets $q$ to the foreign rate (Garman&ndash;Kohlhagen). Time-dependent $\sigma(t)$ and $r(t)$ are handled by replacing $\sigma^2T$ with $\int_0^T\sigma^2(t)\,\mathrm dt$ and $rT$ with $\int r\,\mathrm dt$ &mdash; which follows from the heat-equation structure: only total variance matters. What the formula cannot do without modification is handle <em>state</em>-dependent or random volatility, jumps, or early exercise; those are Chapters&nbsp;11 and 13.
+</p>
+
+<h3>9.6 What the argument assumes, and what breaks</h3>
+<p>
+It is worth listing the assumptions, because each one is the seed of a later chapter. Continuous trading with no transaction costs (discrete hedging and costs: Chapter&nbsp;10). Constant, known volatility (the smile: Chapter&nbsp;11). Continuous price paths (jumps: Chapter&nbsp;11; unhedgeable, so the market becomes incomplete and the price is no longer unique). A constant risk-free rate at which one can borrow and lend without limit (stochastic rates: Chapter&nbsp;12; funding costs and the post-2008 "XVA" adjustments for counterparty risk, funding and capital, which have become a sub-industry). Unlimited short selling of the underlying. And &mdash; least discussed, most important &mdash; the ability to actually trade the hedge in the size required when the market moves: in October 1987 the portfolio-insurance programmes that were synthetically replicating puts by selling futures as the market fell found no buyers, and the replication argument failed at exactly the moment it was needed. The Black&ndash;Scholes price is the cost of a hedging strategy; its validity is the validity of that strategy, and a trader's job is to know, position by position, where the strategy will fail.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Hedging removes $\mu$</dt><dd>$\Delta = \partial V/\partial S$ makes the portfolio risk-free; no arbitrage then fixes the price.</dd>
+<dt>BS equation</dt><dd>$V_t + rSV_S + \tfrac12\sigma^2S^2V_{SS} = rV$: the backward Kolmogorov equation with drift $r$ and discounting.</dd>
+<dt>Heat equation</dt><dd>Total variance $\sigma^2T$ is the clock; prices are Gaussian-smoothed payoffs.</dd>
+<dt>Risk-neutral pricing</dt><dd>$V = e^{-rT}\mathbb E^{\mathbb Q}[g(S_T)]$: simulate with drift $r$, never with $\mu$.</dd>
+</dl>
+</div>
