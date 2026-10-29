@@ -1,0 +1,46 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "laptop",
+      "displayName": "Laptop: Release, OpenMP if available",
+      "binaryDir": "${sourceDir}/build/laptop",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "PIC_USE_OPENMP": "ON", "PIC_USE_MPI": "OFF", "PIC_NATIVE": "ON" }
+    },
+    {
+      "name": "laptop-mpi",
+      "displayName": "Laptop with MPI (e.g. brew/apt OpenMPI)",
+      "inherits": "laptop",
+      "binaryDir": "${sourceDir}/build/laptop-mpi",
+      "cacheVariables": { "PIC_USE_MPI": "ON", "MPIEXEC_PREFLAGS": "--oversubscribe" }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug with address/undefined-behaviour sanitizers (serial)",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug", "PIC_USE_OPENMP": "OFF",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer"
+      }
+    },
+    {
+      "name": "hpc",
+      "displayName": "HPC: MPI + OpenMP, portable flags (load compiler and MPI modules first)",
+      "binaryDir": "${sourceDir}/build/hpc",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "PIC_USE_OPENMP": "ON", "PIC_USE_MPI": "ON", "PIC_NATIVE": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "laptop", "configurePreset": "laptop" },
+    { "name": "laptop-mpi", "configurePreset": "laptop-mpi" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "hpc", "configurePreset": "hpc" }
+  ],
+  "testPresets": [
+    { "name": "laptop", "configurePreset": "laptop", "output": { "outputOnFailure": true } },
+    { "name": "laptop-mpi", "configurePreset": "laptop-mpi", "output": { "outputOnFailure": true } },
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "hpc", "configurePreset": "hpc", "output": { "outputOnFailure": true } }
+  ]
+}
