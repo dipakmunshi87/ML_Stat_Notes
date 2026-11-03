@@ -446,7 +446,7 @@ rng = np.random.default_rng(0)
 n = 100_000
 df = pd.DataFrame({
     &quot;date&quot;: pd.Timestamp(&quot;2026-01-01&quot;) + pd.to_timedelta(rng.integers(0, 180, n), unit=&quot;D&quot;),
-    &quot;site&quot;: rng.choice([&quot;Culham&quot;, &quot;Sunbury&quot;, &quot;Reading&quot;], n),
+    &quot;site&quot;: rng.choice([&quot;Site-A&quot;, &quot;Site-C&quot;, &quot;Site-B&quot;], n),
     &quot;power_kw&quot;: rng.gamma(4.0, 25.0, n),
 })
 
@@ -473,23 +473,23 @@ q = duckdb.sql(&quot;&quot;&quot;
 &quot;&quot;&quot;).df()
 print(q.to_string(index=False))</code></pre>
 <div class="codecap">output</div><pre class="out"><code>  site   month   power_kw  mom_pct
-Culham 2026-01 101.140681      NaN
-Culham 2026-02 100.490494    -0.64
-Culham 2026-03  99.485674    -1.00
+Site-A 2026-01 101.140681      NaN
+Site-A 2026-02 100.490494    -0.64
+Site-A 2026-03  99.485674    -1.00
 shape: (3, 4)
 ┌────────┬─────────────────────┬────────────┬─────────┐
 │ site   ┆ month               ┆ power_kw   ┆ mom_pct │
 │ ---    ┆ ---                 ┆ ---        ┆ ---     │
 │ str    ┆ datetime[μs]        ┆ f64        ┆ f64     │
 ╞════════╪═════════════════════╪════════════╪═════════╡
-│ Culham ┆ 2026-01-01 00:00:00 ┆ 101.140681 ┆ null    │
-│ Culham ┆ 2026-02-01 00:00:00 ┆ 100.490494 ┆ -0.64   │
-│ Culham ┆ 2026-03-01 00:00:00 ┆ 99.485674  ┆ -1.0    │
+│ Site-A ┆ 2026-01-01 00:00:00 ┆ 101.140681 ┆ null    │
+│ Site-A ┆ 2026-02-01 00:00:00 ┆ 100.490494 ┆ -0.64   │
+│ Site-A ┆ 2026-03-01 00:00:00 ┆ 99.485674  ┆ -1.0    │
 └────────┴─────────────────────┴────────────┴─────────┘
   site      month   power_kw  mom_pct
-Culham 2026-01-01 101.140681      NaN
-Culham 2026-02-01 100.490494    -0.64
-Culham 2026-03-01  99.485674    -1.00</code></pre>
+Site-A 2026-01-01 101.140681      NaN
+Site-A 2026-02-01 100.490494    -0.64
+Site-A 2026-03-01  99.485674    -1.00</code></pre>
 <p>All three agree. pandas remains the default; Polars and DuckDB are worth knowing for speed, memory and SQL. pandas 3.0 (2026) made copy-on-write the default (no more
 <code>SettingWithCopyWarning</code> surprises) and uses Arrow-backed strings.</p>
 
@@ -667,7 +667,7 @@ unchanged.</p>
 <div class="box r">
 <h4>A practical warning</h4>
 <p>PyTorch and JAX each bundle their own CUDA libraries. Installing both, with GPU support, in one environment often
-breaks one of them. Keep them in separate environments (the satrfi pipeline does exactly this for its three SBI scripts).</p>
+breaks one of them. Keep them in separate environments.</p>
 </div>
 
 <p><b>Learn more:</b> <a href="https://scikit-learn.org/stable/user_guide.html" target="_blank" rel="noopener">scikit-learn user guide</a>;

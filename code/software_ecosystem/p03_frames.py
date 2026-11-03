@@ -7,7 +7,7 @@ rng = np.random.default_rng(0)
 n = 100_000
 df = pd.DataFrame({
     "date": pd.Timestamp("2026-01-01") + pd.to_timedelta(rng.integers(0, 180, n), unit="D"),
-    "site": rng.choice(["Culham", "Sunbury", "Reading"], n),
+    "site": rng.choice(["Site-A", "Site-C", "Site-B"], n),
     "power_kw": rng.gamma(4.0, 25.0, n),
 })
 
