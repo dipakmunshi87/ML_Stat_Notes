@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>From Laptop to Supercomputer</title>
-<meta name="description" content="A field guide to the Python, C++ and Fortran ecosystems for industry and physics research: language features, tools, HPC, ML, how they evolved 2016-2026, and what interviews test. Tested examples and links.">
+<meta name="description" content="A field guide to the Python, C++ and Fortran ecosystems for industry and physics research: language features, tools, HPC, ML, how they evolved 2016-2026, and which skills each kind of role uses. Tested examples and links.">
 <style>:root{--acc:#3D7EBF;--acc2:#245a95;--red:#D9675C;--green:#5BA552;--ink:#1c2530;--mut:#5b6b7a;--line:#e3e8ee;--bg:#ffffff;--soft:#f6f8fb;}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -64,12 +64,12 @@ ul,ol{padding-left:1.4em;} li{margin:.3em 0;}
 <body>
 <div class="topnav"><div class="inner"><span class="brand">From Laptop to Supercomputer</span><button class="tocbtn" onclick="toggleTOC()">&#9776; Contents</button><span class="pagenum" id="pagenum"></span></div></div>
 <div class="tocback" id="tocback" onclick="toggleTOC()"></div>
-<div class="toc" id="toc"><button class="navbtn" onclick="show(0)">0. Overview: three languages, one ecosystem</button><div class="tocpart">Part I — Python</div><button class="navbtn" onclick="show(1)">1. Python: the language core interviewers test</button><button class="navbtn" onclick="show(2)">2. Environments, packaging and reproducibility</button><button class="navbtn" onclick="show(3)">3. The scientific stack: NumPy, SciPy, pandas, Polars and friends</button><button class="navbtn" onclick="show(4)">4. Machine learning and AI: scikit-learn, PyTorch, JAX</button><button class="navbtn" onclick="show(5)">5. Performance and parallelism in Python</button><button class="navbtn" onclick="show(6)">6. Software engineering: git, testing, quality, CI</button><button class="navbtn" onclick="show(7)">7. Data, SQL and production: from notebook to service</button><button class="navbtn" onclick="show(8)">8. Python 2016 → 2026: how it changed, and where it is going</button><div class="tocpart">Part II — C++</div><button class="navbtn" onclick="show(9)">9. Modern C++: the core every interview expects</button><button class="navbtn" onclick="show(10)">10. The C++ toolchain: compilers, CMake, testing, debugging</button><button class="navbtn" onclick="show(11)">11. C++ in HPC and science: OpenMP, MPI, GPUs, and Python bindings</button><button class="navbtn" onclick="show(12)">12. C++ 2011 → 2026: the standards and the current debates</button><div class="tocpart">Part III — Fortran</div><button class="navbtn" onclick="show(13)">13. Modern Fortran: far beyond FORTRAN 77</button><button class="navbtn" onclick="show(14)">14. The Fortran ecosystem today, and modernising legacy code</button><div class="tocpart">Part IV — Debugging and profiling</div><button class="navbtn" onclick="show(15)">15. Debugging Python, C++ and Fortran: on a Mac, a workstation and a cluster</button><button class="navbtn" onclick="show(16)">16. Profiling and performance: CPU and GPU, Mac and Linux</button><div class="tocpart">Part V — Interviews</div><button class="navbtn" onclick="show(17)">17. What interviewers ask, role by role</button><button class="navbtn" onclick="show(18)">18. Resources: the best of the free (and a few paid) material</button><div class="tocpart">Appendices</div><button class="navbtn" onclick="show(19)">Appendix A: GitHub, CI/CD and automated testing</button><button class="navbtn" onclick="show(20)">Appendix B: OpenMP, MPI and their relatives</button><button class="navbtn" onclick="show(21)">Appendix C: Setting up on a Mac: what installs, and what needs a Linux machine</button><button class="navbtn" onclick="show(22)">Appendix D: Docker and containers, for every language</button></div>
+<div class="toc" id="toc"><button class="navbtn" onclick="show(0)">0. Overview: three languages, one ecosystem</button><div class="tocpart">Part I — Python</div><button class="navbtn" onclick="show(1)">1. Python: the language core</button><button class="navbtn" onclick="show(2)">2. Environments, packaging and reproducibility</button><button class="navbtn" onclick="show(3)">3. The scientific stack: NumPy, SciPy, pandas, Polars and friends</button><button class="navbtn" onclick="show(4)">4. Machine learning and AI: scikit-learn, PyTorch, JAX</button><button class="navbtn" onclick="show(5)">5. Performance and parallelism in Python</button><button class="navbtn" onclick="show(6)">6. Software engineering: git, testing, quality, CI</button><button class="navbtn" onclick="show(7)">7. Data, SQL and production: from notebook to service</button><button class="navbtn" onclick="show(8)">8. Python 2016 → 2026: how it changed, and where it is going</button><div class="tocpart">Part II — C++</div><button class="navbtn" onclick="show(9)">9. Modern C++: the essential core</button><button class="navbtn" onclick="show(10)">10. The C++ toolchain: compilers, CMake, testing, debugging</button><button class="navbtn" onclick="show(11)">11. C++ in HPC and science: OpenMP, MPI, GPUs, and Python bindings</button><button class="navbtn" onclick="show(12)">12. C++ 2011 → 2026: the standards and the current debates</button><div class="tocpart">Part III — Fortran</div><button class="navbtn" onclick="show(13)">13. Modern Fortran: far beyond FORTRAN 77</button><button class="navbtn" onclick="show(14)">14. The Fortran ecosystem today, and modernising legacy code</button><div class="tocpart">Part IV — Debugging and profiling</div><button class="navbtn" onclick="show(15)">15. Debugging Python, C++ and Fortran: on a Mac, a workstation and a cluster</button><button class="navbtn" onclick="show(16)">16. Profiling and performance: CPU and GPU, Mac and Linux</button><div class="tocpart">Part V — Putting it together</div><button class="navbtn" onclick="show(17)">17. Skills by role, and key concepts by language</button><button class="navbtn" onclick="show(18)">18. Resources: the best of the free (and a few paid) material</button><div class="tocpart">Appendices</div><button class="navbtn" onclick="show(19)">Appendix A: GitHub, CI/CD and automated testing</button><button class="navbtn" onclick="show(20)">Appendix B: OpenMP, MPI and their relatives</button><button class="navbtn" onclick="show(21)">Appendix C: Setting up on a Mac: what installs, and what needs a Linux machine</button><button class="navbtn" onclick="show(22)">Appendix D: Docker and containers, for every language</button></div>
 <header id="top">
   <div class="sub">A field guide for industry and research</div>
   <h1>From Laptop to Supercomputer: The Scientific Coder&rsquo;s Field Guide to Python, C++ and Fortran</h1>
   <div class="sub">Language essentials, HPC with OpenMP and MPI, debugging and profiling on a Mac and on GPU clusters,
-  CI/CD and Docker, how it all changed from 2016 to 2026, and what interviewers test, with tested code throughout</div>
+  CI/CD and Docker, how it all changed from 2016 to 2026, and which skills each kind of role uses, with tested code throughout</div>
   <div class="byline">Dr.&nbsp;Dipak&nbsp;Munshi &nbsp;&middot;&nbsp; <a href="https://dipakmunshi87.github.io/ML_Stat_Notes/">ML &amp; Statistics Notes</a> &nbsp;&middot;&nbsp; October 2026</div>
 </header>
 <div class="wrap">
@@ -78,8 +78,7 @@ ul,ol{padding-left:1.4em;} li{margin:.3em 0;}
 
 <p class="lead">Research software and industry software are built from the same three layers: a fast compiled core,
 an array layer, and a high-level language that glues them together. Python, C++ and Fortran each own one part of that
-stack. This note maps the whole ecosystem, from the language features interviewers ask about to the tools that run on
-supercomputers, with tested examples and links to the best free resources.</p>
+stack. This note maps the whole ecosystem, from the core language features to the tools that run on supercomputers, with tested examples and links to the best free resources.</p>
 
 <figure>
 <svg viewBox="0 0 900 360" role="img" aria-label="Layers of the scientific software stack" style="max-width:100%;height:auto;font-family:inherit">
@@ -109,12 +108,12 @@ written in C, C++, Fortran or CUDA. Python sets up the work and the compiled cod
 
 <h3>Why three languages</h3>
 <table>
-<tr><th>Language</th><th>Strength</th><th>Where it dominates</th><th>What interviews test</th></tr>
+<tr><th>Language</th><th>Strength</th><th>Where it dominates</th><th>Key skills</th></tr>
 <tr><td><b>Python</b></td><td>Fast to write; huge library ecosystem; glue between everything</td>
 <td>Data science, ML and AI, analysis pipelines, automation, prototyping</td>
 <td>Core language, data handling (pandas, SQL), ML libraries, testing and clean code</td></tr>
 <tr><td><b>C++</b></td><td>Speed with abstraction; control of memory; huge industry base</td>
-<td>Engineering software (e.g. AVEVA), finance, games, ML frameworks' internals, HPC codes, embedded</td>
+<td>Engineering and simulation software, finance, games, ML frameworks' internals, HPC codes, embedded</td>
 <td>Memory and ownership (RAII), the STL, templates, performance, modern standards</td></tr>
 <tr><td><b>Fortran</b></td><td>Arrays and numerics built into the language; mature compilers</td>
 <td>Weather and climate (ECMWF, Met Office), materials, plasma and fusion codes, legacy science</td>
@@ -127,7 +126,7 @@ ML frameworks, performance and parallelism, software engineering, data and produ
 changed between 2016 and 2026. <b>Part II</b> (Chapters 9&ndash;12) does the same for C++, and <b>Part III</b>
 (Chapters 13&ndash;14) for Fortran. <b>Part IV</b> (Chapters 15&ndash;16) covers debugging and profiling in all
 three languages, on a Mac, a Linux workstation and a CPU or GPU cluster. <b>Part V</b> maps all of it onto
-interviews (what each kind of role asks, and how to present research experience), followed by a list of the best resources.
+the skills different kinds of work need, with the key concepts in each language, followed by a list of the best resources.
 The appendices cover GitHub, CI/CD and automated testing (<b>A</b>); OpenMP, MPI and the wider family of parallel
 programming models (<b>B</b>); what installs on a Mac and what needs a Linux machine (<b>C</b>); and Docker and containers (<b>D</b>).</p>
 
@@ -137,17 +136,17 @@ on a small two-core cloud machine; on a laptop they will be faster, but the rati
 
 <div class="box g">
 <h4>The one idea to take away</h4>
-<p>Modern scientific computing is <b>polyglot</b>. Interviewers in both industry and research labs increasingly look
-for people who can move across the layers: prototype in Python, find the bottleneck, move it into compiled code or
-onto a GPU, test it, and ship it. A physicist with Fortran, MPI and Python experience already has this profile. The
-task is to describe it in today's vocabulary.</p>
+<p>Modern scientific computing is <b>polyglot</b>. Both industry and research labs increasingly need
+people who can move across the layers: prototype in Python, find the bottleneck, move it into compiled code or
+onto a GPU, test it, and ship it. Someone with Fortran, MPI and Python experience already has most of this profile; the
+rest is today's tools and vocabulary.</p>
 </div>
 
-<div class="pager"><span></span><span class="pgn">page 1 of 23</span><button class="pg" onclick="show(1)">Next: 1. Python: the language core interviewers test &rarr;</button></div>
+<div class="pager"><span></span><span class="pgn">page 1 of 23</span><button class="pg" onclick="show(1)">Next: 1. Python: the language core &rarr;</button></div>
 </section><section class="page" id="c1">
-<div class="part">Part I <span>Python</span></div><h2><span class="n">1</span>Python: the language core interviewers test</h2>
+<div class="part">Part I <span>Python</span></div><h2><span class="n">1</span>Python: the language core</h2>
 
-<p class="lead">Interviews test fluency with the core language more than knowledge of any library: the data
+<p class="lead">Fluency with the core language matters more than knowledge of any library: the data
 model, built-in containers, iteration, functions, classes and typing. These are the building blocks of everything else.</p>
 
 <h3>1.1 Everything is an object; names are references</h3>
@@ -170,7 +169,7 @@ c = a.copy()     # shallow copy; copy.deepcopy for nested structures</code></pre
 <tr><td><code>set</code></td><td>membership, uniqueness</td><td>O(1)</td><td>O(1)</td><td><code>x in s</code> is fast; <code>x in list</code> is slow</td></tr>
 <tr><td><code>tuple</code></td><td>fixed records, dict keys</td><td>O(1)</td><td>immutable</td><td>use <code>namedtuple</code> or a dataclass for readability</td></tr>
 <tr><td><code>collections.deque</code></td><td>queues, sliding windows</td><td>ends O(1)</td><td>both ends O(1)</td><td><code>deque(maxlen=k)</code> keeps the last k items</td></tr>
-<tr><td><code>collections.Counter</code>, <code>defaultdict</code></td><td>counting, grouping</td><td>O(1)</td><td>O(1)</td><td>appear in many interview solutions</td></tr>
+<tr><td><code>collections.Counter</code>, <code>defaultdict</code></td><td>counting, grouping</td><td>O(1)</td><td>O(1)</td><td>appear in many everyday solutions</td></tr>
 <tr><td><code>heapq</code></td><td>top-k, priority queues</td><td>min O(1)</td><td>O(log n)</td><td>a list kept in heap order</td></tr>
 </table>
 
@@ -256,11 +255,10 @@ errors at once (useful in concurrent code), and <code>add_note()</code> attaches
 In industry codebases, typed code is the norm; in research code it is becoming common.</p>
 
 <div class="box">
-<h4>Interview checklist for this chapter</h4>
+<h4>Checklist for this chapter</h4>
 <p>Mutable vs immutable; <code>is</code> vs <code>==</code>; shallow vs deep copy; list vs set membership cost;
 dict ordering; generators vs lists; <code>*args/**kwargs</code>; the mutable default; decorators (a function that
-wraps a function); context managers; dataclasses; when to use a class at all. Practice tasks for all of these
-are in <code>Coding_test_practice/py_advanced_problems.py</code>.</p>
+wraps a function); context managers; dataclasses; when to use a class at all.</p>
 </div>
 
 <p><b>Learn more:</b> <a href="https://docs.python.org/3/tutorial/" target="_blank" rel="noopener">the official Python tutorial</a>;
@@ -396,8 +394,7 @@ print(np.allclose(np.einsum(&quot;ik,jk-&gt;ij&quot;, x, x), x @ x.T))</code></p
 True</code></pre>
 <p>Broadcasting is about 30 times faster than the double loop. The matrix-product form uses the identity
 |a&minus;b|&sup2; = |a|&sup2; + |b|&sup2; &minus; 2a&middot;b to turn the problem into one BLAS call; it is
-fastest at scale, at the price of a little round-off (6&times;10<sup>&minus;8</sup> here). Knowing this trade-off is
-the kind of thing that separates a numerical person in interviews.</p>
+fastest at scale, at the price of a little round-off (6&times;10<sup>&minus;8</sup> here). Knowing this trade-off is a mark of numerical maturity.</p>
 <ul>
 <li><b>Views vs copies:</b> slicing gives a view (shared memory); fancy indexing and boolean masks give copies.</li>
 <li><b>Random numbers:</b> use <code>rng = np.random.default_rng(seed)</code>, not the legacy <code>np.random.seed</code>.</li>
@@ -436,7 +433,7 @@ one (Radau) needs a few hundred. <code>curve_fit</code> with <code>absolute_sigm
 parameter uncertainties that are correct for known measurement errors.</p>
 
 <h3>3.3 Data frames: pandas, Polars and DuckDB</h3>
-<p><b>pandas</b> is the standard tool for tabular data, and every data-science interview assumes it.
+<p><b>pandas</b> is the standard tool for tabular data, and almost every data-science team uses it.
 <b>Polars</b> (Rust; 1.0 in 2024) is a newer, much faster data-frame library with a lazy, query-optimised
 expression API and multithreading. <b>DuckDB</b> is an in-process SQL database that queries data frames, CSV and
 Parquet files directly. The same monthly-growth query in all three:</p>
@@ -493,8 +490,7 @@ shape: (3, 4)
 Culham 2026-01-01 101.140681      NaN
 Culham 2026-02-01 100.490494    -0.64
 Culham 2026-03-01  99.485674    -1.00</code></pre>
-<p>All three agree. In interviews, pandas is expected; knowing that Polars and DuckDB exist, and why (speed,
-memory, SQL), shows that you are current. pandas 3.0 (2026) made copy-on-write the default (no more
+<p>All three agree. pandas remains the default; Polars and DuckDB are worth knowing for speed, memory and SQL. pandas 3.0 (2026) made copy-on-write the default (no more
 <code>SettingWithCopyWarning</code> surprises) and uses Arrow-backed strings.</p>
 
 <h3>3.4 Domain and file-format libraries you should name</h3>
@@ -529,7 +525,7 @@ idea: <b>automatic differentiation plus optimisation</b>.</p>
 <h3>4.1 scikit-learn: classical ML, done properly</h3>
 <p>The consistent <code>fit</code>/<code>predict</code>/<code>transform</code> API, <b>Pipelines</b> that keep
 preprocessing inside cross-validation (preventing leakage), and honest evaluation. The example models rare
-equipment failures, the kind of problem in bp's role description:</p>
+equipment failures, a common industrial problem:</p>
 <div class="codecap">p04_sklearn.py</div><pre><code>import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -568,7 +564,7 @@ for name, model in models.items():
 <div class="codecap">output</div><pre class="out"><code>positive rate: 0.099
 logistic  PR-AUC = 0.505 +/- 0.059   (a random guess scores 0.099)
 boosting  PR-AUC = 0.485 +/- 0.047   (a random guess scores 0.099)</code></pre>
-<p>Points to make in an interview: the preprocessing sits <em>inside</em> the pipeline, so it is re-fitted on each
+<p>Points to note: the preprocessing sits <em>inside</em> the pipeline, so it is re-fitted on each
 training fold; the metric is precision&ndash;recall AUC, not accuracy, because failures are rare; and the simple
 logistic model matches gradient boosting here, because the data were generated by a logistic model. <b>Always
 compare against a simple baseline.</b> On real tabular data, gradient boosting (scikit-learn's
@@ -795,8 +791,7 @@ important change to Python's performance model in decades.</p>
 </section><section class="page" id="c6">
 <h2><span class="n">6</span>Software engineering: git, testing, quality, CI</h2>
 
-<p class="lead">This is where research code and industry code differ most, and where interviewers for engineering
-and research-software roles probe hardest. The good news: the tools are simple and the habits transfer directly.</p>
+<p class="lead">This is where research code and industry code differ most, and where engineering and research-software roles demand the most. The good news: the tools are simple and the habits transfer directly.</p>
 
 <h3>6.1 Version control with git</h3>
 <p>Know: clone, branch, commit, push, pull; merging vs rebasing; pull requests and code review; resolving
@@ -913,7 +908,7 @@ vocabulary and the basics.</p>
 
 <h3>7.1 SQL is the language of company data</h3>
 <p>Most company data lives in databases or warehouses (PostgreSQL, SQL Server, Snowflake, BigQuery, Databricks).
-Interviews for data roles almost always include SQL: <code>SELECT/WHERE/GROUP BY/HAVING</code>, joins (especially
+Data roles almost always need SQL: <code>SELECT/WHERE/GROUP BY/HAVING</code>, joins (especially
 <code>LEFT JOIN</code>), subqueries and <code>WITH</code> clauses, and <b>window functions</b>
 (<code>ROW_NUMBER</code>, <code>RANK</code>, <code>LAG</code>, running totals). The DuckDB example in Chapter 3
 uses a window function. From Python, use DuckDB for local analytics and SQLAlchemy or a database driver
@@ -1022,9 +1017,9 @@ testing, typing and code review.</li>
 <a href="https://data-apis.org/array-api/latest/" target="_blank" rel="noopener">Python array API standard</a>;
 <a href="https://pyo3.rs/" target="_blank" rel="noopener">PyO3 (Rust for Python)</a>.</p>
 
-<div class="pager"><button class="pg" onclick="show(7)">&larr; Previous</button><span class="pgn">page 9 of 23</span><button class="pg" onclick="show(9)">Next: 9. Modern C++: the core every interview expects &rarr;</button></div>
+<div class="pager"><button class="pg" onclick="show(7)">&larr; Previous</button><span class="pgn">page 9 of 23</span><button class="pg" onclick="show(9)">Next: 9. Modern C++: the essential core &rarr;</button></div>
 </section><section class="page" id="c9">
-<div class="part">Part II <span>C++</span></div><h2><span class="n">9</span>Modern C++: the core every interview expects</h2>
+<div class="part">Part II <span>C++</span></div><h2><span class="n">9</span>Modern C++: the essential core</h2>
 
 <p class="lead">"Modern C++" means C++11 and later: code that manages memory through ownership rather than raw
 <code>new</code> and <code>delete</code>, uses the standard library, and is both safe and fast. C++17 is today's
@@ -1053,7 +1048,7 @@ the language catches. They may appear to work. Sanitizers (Chapters 10 and 15) f
 </dl>
 
 <h3>9.2 A worked example: modern C++ in one program</h3>
-<div class="codecap">modern.cpp</div><pre><code>// modern.cpp -- the C++11/14/17/20 features interviewers ask about, in one program.
+<div class="codecap">modern.cpp</div><pre><code>// modern.cpp -- the C++11/14/17/20 features used most, in one program.
 // Build: g++ -std=c++20 -O2 -Wall -Wextra modern.cpp -o modern &amp;&amp; ./modern
 #include &lt;algorithm&gt;
 #include &lt;cmath&gt;
@@ -1153,8 +1148,7 @@ sqrt(9) = 3</code></pre>
 <tr><td>Views</td><td><code>std::string_view</code> (17), <code>std::span</code> (20), <code>std::mdspan</code> (23, multi-dimensional)</td><td>non-owning, no copies</td></tr>
 </table>
 <p><code>std::list</code> is almost never the right choice: its nodes are scattered in memory, so
-<code>std::vector</code> wins even for many insertions because of cache effects. Saying this in an interview shows
-you understand performance.</p>
+<code>std::vector</code> wins even for many insertions because of cache effects. This is a core lesson about performance on modern hardware.</p>
 
 <h3>9.4 Templates and generic code</h3>
 <p>Templates let one function or class work for many types, resolved at compile time (zero run-time overhead).
@@ -1177,7 +1171,7 @@ T rms(std::span&lt;const T&gt; x) {
 <h2><span class="n">10</span>The C++ toolchain: compilers, CMake, testing, debugging</h2>
 
 <p class="lead">In C++ the language is only half the job. Building, testing and debugging large codes is a skill of
-its own, and interviews for engineering roles often ask about it.</p>
+its own, and engineering roles depend on it.</p>
 
 <h3>10.1 Compilers</h3>
 <table>
@@ -1410,8 +1404,7 @@ uneven); C++23 is partial; C++26 features are arriving. For production code, tea
 <p>Since about 2022, security agencies (the US NSA and CISA among them) have recommended memory-safe languages, and
 Rust has been adopted in parts of the Linux kernel, Android, Windows and many new tools. The C++ response has
 been to make safe code the default where possible: hardened libraries, bounds checking, the erroneous-behaviour
-rules and contracts in C++26, sanitizers, and following the Core Guidelines. In interviews it is worth showing that
-you know about the debate and that you write C++ defensively: RAII, no raw owning pointers, containers instead of
+rules and contracts in C++26, sanitizers, and following the Core Guidelines. In practice the answer is to know the debate and to write C++ defensively: RAII, no raw owning pointers, containers instead of
 arrays, <code>at()</code> or spans in debug builds, sanitizers in CI.</p>
 
 <h3>12.3 Where C++ is heading</h3>
@@ -1425,7 +1418,7 @@ programming towards standard C++.</li>
 <p><b>Learn more:</b> <a href="https://en.cppreference.com/w/cpp/compiler_support" target="_blank" rel="noopener">compiler support tables</a>;
 <a href="https://herbsutter.com/2026/03/" target="_blank" rel="noopener">Herb Sutter: C++26 is done</a>;
 <a href="https://isocpp.org/" target="_blank" rel="noopener">isocpp.org</a>;
-<a href="https://www.youtube.com/@CppCon" target="_blank" rel="noopener">CppCon talks</a> (the "Back to Basics" track is excellent for interviews).</p>
+<a href="https://www.youtube.com/@CppCon" target="_blank" rel="noopener">CppCon talks</a> (the "Back to Basics" track is excellent for learning the essentials).</p>
 
 <div class="pager"><button class="pg" onclick="show(11)">&larr; Previous</button><span class="pgn">page 13 of 23</span><button class="pg" onclick="show(13)">Next: 13. Modern Fortran: far beyond FORTRAN 77 &rarr;</button></div>
 </section><section class="page" id="c13">
@@ -1625,7 +1618,7 @@ optimised OpenMP, OpenACC or GPU code; used by the Met Office's LFRic model and 
 </table>
 
 <h3>14.4 Modernising a legacy code: the playbook</h3>
-<p>A frequent real-world task (and a good interview story):</p>
+<p>A frequent real-world task :</p>
 <ol>
 <li><b>Put it under version control and build it reproducibly</b> (CMake or fpm), with all compiler warnings on.</li>
 <li><b>Write regression tests first</b>: capture current outputs on reference inputs so that every later change can
@@ -2003,7 +1996,7 @@ VTune, LIKWID, Nsight Compute and Intel Advisor draw rooflines.</p>
 <h3>16.5 Parallel scaling (OpenMP and MPI)</h3>
 <ul>
 <li><b>Strong scaling</b>: fixed problem, more cores; expect Amdahl's law to flatten the curve. <b>Weak scaling</b>: problem grows with
-cores; ideal is constant run time. Always plot both, with efficiency, for a proposal or interview.</li>
+cores; ideal is constant run time. Always plot both, with efficiency, for a proposal or report.</li>
 <li><b>OpenMP</b>: time with <code>OMP_NUM_THREADS</code> = 1, 2, 4, 8&hellip;; pin threads (<code>OMP_PROC_BIND=close OMP_PLACES=cores</code>);
 VTune shows load imbalance and barrier waiting.</li>
 <li><b>MPI</b>: <b>Linaro MAP</b>, <b>Score-P</b> with <b>Vampir</b> or Scalasca, <b>TAU</b>, mpiP (lightweight: time in each MPI call),
@@ -2079,57 +2072,47 @@ copies inside loops (keep data on the GPU); too little work to fill the device (
 <a href="https://docs.nvidia.com/nsight-systems/" target="_blank" rel="noopener">Nsight Systems</a>;
 <a href="https://docs.nvidia.com/nsight-compute/" target="_blank" rel="noopener">Nsight Compute</a>.</p>
 
-<div class="pager"><button class="pg" onclick="show(15)">&larr; Previous</button><span class="pgn">page 17 of 23</span><button class="pg" onclick="show(17)">Next: 17. What interviewers ask, role by role &rarr;</button></div>
+<div class="pager"><button class="pg" onclick="show(15)">&larr; Previous</button><span class="pgn">page 17 of 23</span><button class="pg" onclick="show(17)">Next: 17. Skills by role, and key concepts by language &rarr;</button></div>
 </section><section class="page" id="c17">
-<div class="part">Part V <span>Interviews</span></div><h2><span class="n">17</span>What interviewers ask, role by role</h2>
+<div class="part">Part V <span>Putting it together</span></div><h2><span class="n">17</span>Skills by role, and key concepts by language</h2>
 
-<p class="lead">The same ecosystem is tested differently by different kinds of employer. Knowing which parts each
-role weighs lets you prepare efficiently and tell the right story.</p>
+<p class="lead">The same ecosystem is used differently in different kinds of work. This chapter maps which parts
+each kind of role relies on, and lists the key concepts in each language as a self-check.</p>
 
 <h3>17.1 By role</h3>
 <table>
-<tr><th>Role</th><th>Heavily tested</th><th>Sometimes</th><th>Rarely</th></tr>
-<tr><td><b>Data scientist</b> (e.g. bp, Network Rail)</td><td>Python and pandas, <b>SQL</b>, statistics, scikit-learn, evaluation metrics, communicating results</td><td>OOP, system design, cloud</td><td>C++, Fortran</td></tr>
+<tr><th>Role</th><th>Used heavily</th><th>Sometimes</th><th>Rarely</th></tr>
+<tr><td><b>Data scientist</b></td><td>Python and pandas, <b>SQL</b>, statistics, scikit-learn, evaluation metrics, communicating results</td><td>OOP, system design, cloud</td><td>C++, Fortran</td></tr>
 <tr><td><b>ML engineer</b></td><td>Python (including OOP, testing), PyTorch, ML system design, MLOps, Docker, CI</td><td>SQL, C++ for performance, GPUs</td><td>Fortran</td></tr>
-<tr><td><b>Research software engineer</b> (universities, UKAEA, Hartree, ECMWF)</td><td>Software engineering practice (git, testing, CI, packaging), Python, one compiled language, HPC (MPI/OpenMP)</td><td>GPU porting, C++/Fortran interoperability</td><td>SQL</td></tr>
-<tr><td><b>Scientific/engineering software developer</b> (e.g. AVEVA)</td><td><b>C++</b> (modern features, memory, STL, design), numerical methods, optimisation, debugging</td><td>Python bindings, Fortran legacy code</td><td>ML</td></tr>
+<tr><td><b>Research software engineer</b></td><td>Software engineering practice (git, testing, CI, packaging), Python, one compiled language, HPC (MPI/OpenMP)</td><td>GPU porting, C++/Fortran interoperability</td><td>SQL</td></tr>
+<tr><td><b>Scientific/engineering software developer</b></td><td><b>C++</b> (modern features, memory, STL, design), numerical methods, optimisation, debugging</td><td>Python bindings, Fortran legacy code</td><td>ML</td></tr>
 <tr><td><b>HPC / computational scientist</b></td><td>MPI, OpenMP, GPUs, performance analysis, Fortran or C++, scaling studies</td><td>Python workflows</td><td>SQL</td></tr>
-<tr><td><b>Quant researcher / developer</b></td><td>Probability, statistics, Python (NumPy/pandas), C++ (quant developer), algorithms</td><td>ML, time series</td><td>Fortran</td></tr>
+<tr><td><b>Quantitative analyst / developer</b></td><td>Probability, statistics, Python (NumPy/pandas), C++ (for developers), algorithms</td><td>ML, time series</td><td>Fortran</td></tr>
 </table>
 
-<h3>17.2 Typical questions, by language</h3>
+<h3>17.2 Key concepts, by language</h3>
 <p><b>Python:</b> mutable defaults; list vs set; generators; decorators; context managers; the GIL and when to use
-processes; pandas group-by and merge; vectorisation; how you test and package code; write a class for X.</p>
+processes; pandas group-by and merge; vectorisation; testing and packaging code; designing a class.</p>
 <p><b>C++:</b> RAII; <code>unique_ptr</code> vs <code>shared_ptr</code>; what <code>std::move</code> does; rule of
 zero/five; virtual destructors; <code>vector</code> vs <code>list</code>; <code>map</code> vs
-<code>unordered_map</code>; templates vs virtual functions; undefined behaviour; how you would find a memory leak or
-a race condition; C++17/20 features you use.</p>
+<code>unordered_map</code>; templates vs virtual functions; undefined behaviour; finding a memory leak or
+a race condition; the C++17/20 features worth using.</p>
 <p><b>Fortran:</b> what modern Fortran adds over 77; modules vs <code>COMMON</code>; array syntax and memory layout
-(<b>column-major</b>, so the first index should vary fastest in loops, the opposite of C); how to call Fortran from C or
-Python; MPI and OpenMP in Fortran; how you would modernise or test a legacy code.</p>
+(<b>column-major</b>, so the first index should vary fastest in loops, the opposite of C); calling Fortran from C or
+Python; MPI and OpenMP in Fortran; modernising and testing a legacy code.</p>
 <p><b>HPC:</b> strong vs weak scaling (Amdahl's and Gustafson's laws); load balancing; domain decomposition and halo
 exchange; memory bandwidth vs compute bound (the roofline model); profiling an MPI code; core-hours.</p>
 
-<h3>17.3 Presenting research experience in industry terms</h3>
+<h3>17.3 A suggested learning path</h3>
 <table>
-<tr><th>What you did</th><th>How to say it</th></tr>
-<tr><td>Planck: Fortran 90 + MPI/OpenMP simulations of 100+ full-sky maps at 5&prime; resolution on NERSC</td><td>"Built and ran hybrid MPI/OpenMP production codes on national supercomputers; large Monte Carlo ensembles to quantify errors and biases in published results."</td></tr>
-<tr><td>Euclid work package coordination</td><td>"Led a multinational technical team from method to implementation, pipeline integration and formal cross-validation, to mission deadlines."</td></tr>
-<tr><td>Satellite RFI pipeline (JAX, CPU and GPU, on a university HPC cluster)</td><td>"Designed a differentiable forward model in JAX; ran on GPU nodes; packaged the pipeline so external collaborators could install it from GitHub, fixing portability issues found in fresh installs."</td></tr>
-<tr><td>Benchmarking inference methods against known answers</td><td>"Model validation and calibration: showed a widely used approach was biased by 33&ndash;108&sigma;, and why."</td></tr>
-<tr><td>Public notes with reproducible code</td><td>"Every figure regenerated from published, tested code (Python, PyTorch, C++/CMake with ctest)."</td></tr>
-</table>
-
-<h3>17.4 A two-week preparation plan</h3>
-<table>
-<tr><th>Days</th><th>Focus</th><th>Material</th></tr>
-<tr><td>1&ndash;3</td><td>Python core, data structures, 2 coding problems a day, said aloud</td><td>Chapter 1; <code>problems.py</code></td></tr>
-<tr><td>4&ndash;5</td><td>pandas and SQL (joins, group-by, window functions)</td><td>Chapters 3 and 7; HackerRank SQL</td></tr>
-<tr><td>6&ndash;7</td><td>OOP, decorators, generators, testing</td><td>Chapter 6; <code>py_advanced_problems.py</code></td></tr>
-<tr><td>8&ndash;9</td><td>ML concepts, metrics, a from-scratch model, a system-design answer</td><td>Chapter 4; <code>ML_interview_questions.md</code>, <code>ml_problems.py</code></td></tr>
-<tr><td>10&ndash;11</td><td>C++ (for C++ roles): RAII, STL, moves, a CMake build</td><td>Chapters 9&ndash;10; LearnCpp</td></tr>
-<tr><td>12</td><td>HPC and performance stories</td><td>Chapters 5, 11, 15 and 16; your HPC cluster job walkthrough</td></tr>
-<tr><td>13&ndash;14</td><td>Mock interviews; your project stories (situation, task, action, result)</td><td>Section 17.3</td></tr>
+<tr><th>Step</th><th>Focus</th><th>Where in this note</th></tr>
+<tr><td>1</td><td>Python core and data structures</td><td>Chapter 1</td></tr>
+<tr><td>2</td><td>NumPy, pandas and SQL (joins, group-by, window functions)</td><td>Chapters 3 and 7</td></tr>
+<tr><td>3</td><td>OOP, decorators, generators, testing and packaging</td><td>Chapters 2 and 6</td></tr>
+<tr><td>4</td><td>Machine learning workflows and evaluation</td><td>Chapter 4</td></tr>
+<tr><td>5</td><td>Modern C++ and its toolchain</td><td>Chapters 9&ndash;10</td></tr>
+<tr><td>6</td><td>Parallelism and performance</td><td>Chapters 5, 11, 15 and 16; Appendix B</td></tr>
+<tr><td>7</td><td>Modern Fortran and legacy code</td><td>Chapters 13&ndash;14</td></tr>
 </table>
 
 <div class="pager"><button class="pg" onclick="show(16)">&larr; Previous</button><span class="pgn">page 18 of 23</span><button class="pg" onclick="show(18)">Next: 18. Resources: the best of the free (and a few paid) material &rarr;</button></div>
@@ -2153,7 +2136,7 @@ exchange; memory bandwidth vs compute bound (the roofline model); profiling an M
 <li>&#9733; <a href="https://www.statlearning.com/" target="_blank" rel="noopener">An Introduction to Statistical Learning (Python edition)</a> (free)</li>
 <li><a href="https://d2l.ai/" target="_blank" rel="noopener">Dive into Deep Learning</a>; <a href="https://pytorch.org/tutorials/" target="_blank" rel="noopener">PyTorch tutorials</a>; <a href="https://docs.jax.dev/en/latest/" target="_blank" rel="noopener">JAX docs</a></li>
 <li><a href="https://huggingface.co/learn" target="_blank" rel="noopener">Hugging Face courses</a>; <a href="https://madewithml.com/" target="_blank" rel="noopener">Made With ML</a> (MLOps)</li>
-<li><i>Designing Machine Learning Systems</i> (Chip Huyen), the standard book for ML system-design interviews</li>
+<li><i>Designing Machine Learning Systems</i> (Chip Huyen), the standard book on ML system design</li>
 </ul>
 <h3>SQL and data</h3>
 <ul>
@@ -2182,12 +2165,10 @@ exchange; memory bandwidth vs compute bound (the roofline model); profiling an M
 <li><a href="https://the-turing-way.netlify.app/" target="_blank" rel="noopener">The Turing Way</a>; <a href="https://society-rse.org/" target="_blank" rel="noopener">Society of Research Software Engineering</a></li>
 <li>Victor Eijkhout's free <a href="https://theartofhpc.com/" target="_blank" rel="noopener">Art of HPC</a> books (parallel programming, the roofline model, scientific computing)</li>
 </ul>
-<h3>Interview practice</h3>
+<h3>Coding practice</h3>
 <ul>
-<li>&#9733; <a href="https://www.hackerrank.com/interview/interview-preparation-kit" target="_blank" rel="noopener">HackerRank Interview Preparation Kit</a>; <a href="https://leetcode.com/" target="_blank" rel="noopener">LeetCode</a>; <a href="https://app.codility.com/programmers/" target="_blank" rel="noopener">Codility lessons</a></li>
+<li>&#9733; <a href="https://www.hackerrank.com/domains" target="_blank" rel="noopener">HackerRank practice tracks</a>; <a href="https://leetcode.com/" target="_blank" rel="noopener">LeetCode</a>; <a href="https://app.codility.com/programmers/" target="_blank" rel="noopener">Codility lessons</a></li>
 <li><a href="https://neetcode.io/" target="_blank" rel="noopener">NeetCode</a> (problems grouped by pattern, with video explanations)</li>
-<li>Your own practice pack: <code>~/Job_applications_2026/Coding_test_practice/</code> (coding problems, ML questions,
-Python OOP tasks, all with automatic checks and solutions)</li>
 </ul>
 <div class="box">
 <h4>Code from this note</h4>
@@ -2511,7 +2492,7 @@ and give workflows the minimum <code>permissions</code>.</li>
 </ul>
 
 <div class="box g">
-<h4>How this sounds in an interview</h4>
+<h4>What this looks like in practice</h4>
 <p>"Every push runs the unit tests on three Python versions on Linux and macOS, a sanitizer build of the C++ core, and
 an end-to-end smoke test of the pipeline from a fresh install. Documentation deploys automatically, and tagged releases go to
 PyPI and Zenodo with a DOI." Each part of that sentence is a few lines of YAML from this appendix.</p>
@@ -2839,7 +2820,7 @@ if rank == 0:
 <tr><td>Python</td><td><b>mpi4py</b>, multiprocessing, <b>Dask</b>, <b>Ray</b>, Numba (<code>prange</code>), JAX sharding, <code>torch.distributed</code></td><td>the same ideas at a higher level</td></tr>
 <tr><td>Data-parallel big data</td><td>MapReduce, <b>Apache Spark</b>, Flink</td><td>industry's version of "scatter, compute, reduce", with fault tolerance</td></tr>
 </table>
-<p>For an interview it is worth saying how they relate: an MPI <code>Allreduce</code> is the same operation as NCCL's
+<p>It is worth seeing how they relate: an MPI <code>Allreduce</code> is the same operation as NCCL's
 all-reduce in distributed deep learning and the "reduce" in MapReduce and Spark, and an OpenMP parallel loop is what Numba's
 <code>prange</code>, oneTBB's <code>parallel_for</code> and a CUDA kernel launch each express in their own way.</p>
 
@@ -2855,7 +2836,7 @@ module; MPI-4.0/4.1 (2021/2023) added large counts (more than 2<sup>31</sup> ele
 directive-based GPU offload for legacy Fortran; and convergence with AI tooling (the same collectives power large-model training).</li>
 </ul>
 
-<h3>B.10 Interview questions on this appendix</h3>
+<h3>B.10 Self-test questions on this appendix</h3>
 <ol>
 <li>When would you use OpenMP, MPI, or both? <i>(memory model, scale, hybrid layout per node)</i></li>
 <li>What is a race condition and how do you fix one? <i>(reduction, private copies, atomic, critical; ThreadSanitizer)</i></li>

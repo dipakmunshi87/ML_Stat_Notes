@@ -1,4 +1,4 @@
-// modern.cpp -- the C++11/14/17/20 features interviewers ask about, in one program.
+// modern.cpp -- the C++11/14/17/20 features used most, in one program.
 // Build: g++ -std=c++20 -O2 -Wall -Wextra modern.cpp -o modern && ./modern
 #include <algorithm>
 #include <cmath>
