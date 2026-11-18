@@ -1,0 +1,60 @@
+<h2><span class="n">15</span>Volatility: clustering, GARCH and realised variance</h2>
+<p class="lead">Returns are nearly unpredictable; their magnitudes are not. Volatility clusters, persists and mean-reverts, and modelling that is the most reliably useful piece of time-series statistics in finance.</p>
+
+<h3>15.1 The stylised facts</h3>
+<p>
+Three regularities hold for almost every liquid asset at daily frequency. Returns themselves have essentially no autocorrelation: our simulated series has $\hat\rho_1 = {{v:c15_acf_r}}$, consistent with zero. <em>Squared</em> returns are strongly autocorrelated: $\hat\rho_1(x^2) = {{v:c15_acf_r2}}$, still {{v:c15_acf_r2_20}} at lag 20. And the unconditional distribution is fat-tailed (Chapter&nbsp;2). The second fact is <em>volatility clustering</em> &mdash; Mandelbrot's observation that "large changes tend to be followed by large changes, of either sign, and small changes by small changes" &mdash; and the third turns out to be partly a consequence of it: a mixture of Gaussians with varying variance is fat-tailed even if each day's return, conditional on its variance, is Gaussian. A model of the conditional variance therefore explains two of the three facts at once.
+</p>
+
+<h3>15.2 ARCH and GARCH</h3>
+<p>
+Engle (1982) proposed letting today's variance depend on yesterday's squared shock: $\sigma_t^2 = \omega + \alpha\,x_{t-1}^2$ (ARCH). Bollerslev (1986) added persistence through yesterday's variance,
+$$x_t = \sigma_t z_t,\quad z_t\sim\mathcal N(0,1),\qquad \sigma_t^2 = \omega + \alpha\,x_{t-1}^2 + \beta\,\sigma_{t-1}^2 ,$$
+the GARCH(1,1) model, which remains the default thirty years later. Taking expectations of the variance equation in the stationary state, $\bar\sigma^2 = \omega + (\alpha + \beta)\bar\sigma^2$, so the unconditional variance is $\bar\sigma^2 = \omega/(1 - \alpha - \beta)$ and stationarity requires $\alpha + \beta < 1$. Subtracting this, $\sigma_t^2 - \bar\sigma^2 = (\alpha+\beta)(\sigma_{t-1}^2 - \bar\sigma^2) + \alpha(x_{t-1}^2 - \sigma_{t-1}^2)$: the variance is an AR(1) around its long-run level with persistence $\alpha + \beta$ and an innovation driven by the surprise in the squared return. The half-life of a volatility shock is $\ln\tfrac12/\ln(\alpha+\beta)$. The model is the discrete-time analogue of the mean-reverting variance of Heston (Chapter&nbsp;11), with the square-root diffusion replaced by a shock proportional to the realised squared return.
+</p>
+<p>
+Two further consequences. The <em>multi-step forecast</em> is $\mathbb E[\sigma_{t+k}^2] = \bar\sigma^2 + (\alpha+\beta)^k(\sigma_{t+1}^2 - \bar\sigma^2)$, decaying geometrically to the long-run level, so the forecast of the <em>average</em> variance over the next $k$ days &mdash; what an option needs &mdash; lies between today's level and $\bar\sigma^2$. And the model's unconditional excess kurtosis is
+$$\kappa = \frac{6\alpha^2}{1 - \beta^2 - 2\alpha\beta - 3\alpha^2},$$
+positive even with Gaussian $z_t$: clustering alone makes the tails fat. In practice it does not make them fat enough, and the standard fix is Student-$t$ innovations, which add one parameter.
+</p>
+<div class="box g">
+<h4>Worked example: simulating and fitting GARCH(1,1)</h4>
+<p>With $\omega = 2\times10^{-6}$, $\alpha = 0.08$, $\beta = 0.90$ (typical equity-index values) the unconditional volatility is {{v:c15_uncond}}% annualised, the persistence is {{v:c15_persist}} and the half-life of a shock is {{v:c15_halflife}} days. Over 3,000 simulated days the annualised conditional volatility ranges from {{v:c15_vol_min}}% to {{v:c15_vol_max}}%. The sample excess kurtosis is {{v:c15_kurt}} against the formula's {{v:c15_kurt_th}}. Maximum-likelihood estimation &mdash; maximising $-\tfrac12\sum_t\big[\ln\sigma_t^2 + x_t^2/\sigma_t^2\big]$ by recursing the variance equation inside the likelihood &mdash; recovers $\hat\omega = {{v:c15_om_hat}}$, $\hat\alpha = {{v:c15_al_hat}}$, $\hat\beta = {{v:c15_be_hat}}$, persistence {{v:c15_persist_hat}}. The persistence is always the well-determined parameter; $\alpha$ and $\beta$ individually trade off against each other, and $\omega$ is tiny and poorly pinned, which is why fitted GARCH models are often "variance-targeted" with $\omega$ fixed by the sample variance.</p>
+<p>At the end of the sample the conditional volatility is {{v:c15_h_now}}%; the model's forecast of the average volatility over the next 10 days is {{v:c15_fc_10}}% and over the next year {{v:c15_fc_250}}%, converging towards the long-run {{v:c15_uncond}}%. A term structure of volatility forecasts falls out of one recursion.</p>
+</div>
+{{fig:c15_garch|Six hundred days of a GARCH(1,1) simulation: the true conditional volatility, the EWMA estimate with λ = 0.94, and a 21-day trailing realised volatility. Clustering is visible as the slow waves; the realised estimate lags and is noisy, the EWMA tracks but has no mean reversion.}}
+
+<h3>15.3 EWMA: the risk manager's GARCH</h3>
+<p>
+Set $\omega = 0$, $\alpha = 1 - \lambda$, $\beta = \lambda$: the variance becomes an exponentially weighted moving average of squared returns, $\sigma_t^2 = \lambda\sigma_{t-1}^2 + (1-\lambda)x_{t-1}^2$. RiskMetrics (1996) fixed $\lambda = 0.94$ for daily data (an effective window of about 17 days) and the convention stuck because it needs no estimation and never breaks. The price is that $\alpha + \beta = 1$: the model is integrated, has no unconditional variance and no mean reversion, so its $k$-day forecast is flat at today's level. For one-day risk this hardly matters; for a one-year option it is wrong. EWMA is the right tool for a daily VaR system and the wrong tool for a volatility surface.
+</p>
+
+<h3>15.4 Realised volatility</h3>
+<p>
+Chapter&nbsp;7 showed that quadratic variation is observable: the sum of squared intraday returns over a day estimates that day's integrated variance $\int\sigma_t^2\,\mathrm dt$ with an error that shrinks as the sampling interval shrinks. Five-minute returns give a <em>realised variance</em> with roughly 80 observations per day and a relative standard error of about $\sqrt{2/80} \approx 16\%$ per day, far better than the single squared daily return (relative error $\sqrt2$). Below a few minutes, bid&ndash;ask bounce and discreteness add a noise term that grows as the interval shrinks, and the estimator must be corrected (realised kernels, pre-averaging). Realised-variance series are themselves modelled as time series &mdash; the HAR model regresses tomorrow's realised variance on daily, weekly and monthly averages of past realised variance and beats GARCH out of sample &mdash; and they are the natural input to variance-swap and VIX-futures trading.
+</p>
+
+<h3>15.5 Asymmetry: the leverage effect</h3>
+<p>
+Equity volatility rises more after a fall than after a rise of the same size (Black 1976 attributed it to leverage: a lower equity value makes the firm more levered and so riskier; the modern view is mostly "fear"). GARCH is symmetric in $x_{t-1}$. The GJR extension adds an indicator term, $\sigma_t^2 = \omega + (\alpha + \gamma\,\mathbb 1_{x_{t-1}<0})x_{t-1}^2 + \beta\sigma_{t-1}^2$, and EGARCH models $\ln\sigma_t^2$ with a term in the signed shock; fitted $\gamma$ is positive and large for indices. This asymmetry is the time-series counterpart of the negative $\rho$ in Heston and of the equity skew in Chapter&nbsp;11: the same fact seen in returns, in options and in the variance process.
+</p>
+
+<h3>15.6 Where the model sits in the business</h3>
+<p>
+GARCH-type forecasts feed risk systems (VaR scales with tomorrow's $\sigma$), volatility-targeting strategies (scale position size by $1/\hat\sigma$, which roughly halves drawdowns at the same average exposure), option relative-value desks (compare the model's term structure of forecasts with the implied term structure), and execution algorithms (expected cost scales with $\sigma$). Multivariate versions &mdash; DCC, in which each asset has its own GARCH and the correlation matrix follows its own EWMA-like recursion &mdash; provide the time-varying covariance matrices used by portfolio construction. The model's limits are equally well known: it reacts to volatility rather than anticipating it, it is blind to scheduled events (earnings, central-bank meetings) that the options market prices explicitly, and in a crisis the parameters estimated on calm data understate the persistence.
+</p>
+
+<h3>15.7 The variance risk premium</h3>
+<p>
+Implied volatility (Chapter&nbsp;10) is a forecast of future realised volatility made by the market under the risk-neutral measure; GARCH makes the same forecast under the real-world measure. The two differ systematically: for equity indices the implied volatility exceeds the subsequently realised volatility on average by two to four volatility points, and the implied variance exceeds the realised variance by a larger margin still. This <em>variance risk premium</em> is the price of insurance &mdash; investors pay to be long volatility because it rises when their portfolios fall &mdash; and it is the reason that systematically selling variance (short variance swaps, short straddles, delta-hedged) has a positive expected return with a catastrophic left tail, the classic "picking up pennies in front of a steamroller" profile. Its size varies with the level of risk aversion and is itself a predictor of future equity returns at horizons of a few months (Bollerslev, Tauchen and Zhou 2009), which makes the gap between the two forecasts a signal in its own right. The time-series models of this chapter, the implied surface of Chapter&nbsp;11 and the risk measures of Chapter&nbsp;18 therefore triangulate the same quantity from three directions: what volatility <em>was</em>, what the market will <em>pay</em> for it, and what it would <em>cost</em> if it arrived.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>GARCH(1,1)</dt><dd>$\sigma_t^2 = \omega + \alpha x_{t-1}^2 + \beta\sigma_{t-1}^2$; variance is an AR(1) with persistence $\alpha+\beta$ around $\omega/(1-\alpha-\beta)$.</dd>
+<dt>Clustering makes tails</dt><dd>Mixtures over variance are fat-tailed; add $t$ innovations for the rest.</dd>
+<dt>EWMA</dt><dd>$\lambda = 0.94$: integrated GARCH; fine for daily risk, no term structure.</dd>
+<dt>Realised variance</dt><dd>Intraday squared returns measure $\int\sigma^2\mathrm dt$ directly; HAR forecasts beat GARCH.</dd>
+</dl>
+</div>

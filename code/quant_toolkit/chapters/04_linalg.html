@@ -1,0 +1,60 @@
+<h2><span class="n">4</span>Linear algebra: the covariance matrix and its eigenvectors</h2>
+<p class="lead">A portfolio is a vector of weights; its risk is a quadratic form; the market's structure lives in the eigenvectors of a covariance matrix. Almost every multi-asset calculation in finance is linear algebra applied to one matrix.</p>
+
+<h3>4.1 Portfolios as vectors, risk as a quadratic form</h3>
+<p>
+Let $\mathbf r$ be the vector of $n$ asset returns over a period, with mean $\boldsymbol\mu$ and covariance $\boldsymbol\Sigma$, $\Sigma_{ij} = \mathrm{Cov}(r_i, r_j) = \rho_{ij}\sigma_i\sigma_j$. A portfolio with weights $\mathbf w$ (summing to one for a fully invested, unlevered portfolio) has return $r_p = \mathbf w^\top\mathbf r$, expected return $\mathbf w^\top\boldsymbol\mu$ and variance
+$$\sigma_p^2 = \mathrm{Var}(\mathbf w^\top \mathbf r) = \mathbf w^\top \boldsymbol\Sigma\, \mathbf w = \sum_{i,j} w_i w_j \rho_{ij}\sigma_i\sigma_j .$$
+This is the formula behind diversification. For $n$ assets each with volatility $\sigma$ and pairwise correlation $\rho$, equal weights give $\sigma_p^2 = \sigma^2\big[\frac1n + \rho(1-\frac1n)\big] \to \rho\sigma^2$ as $n\to\infty$: diversification removes the idiosyncratic part but cannot remove the common part, and the floor is set by the average correlation. $\boldsymbol\Sigma$ is symmetric and positive semi-definite ($\mathbf w^\top\boldsymbol\Sigma\mathbf w \ge 0$ for every $\mathbf w$, since a variance cannot be negative); a sample covariance from $T < n$ observations is singular, which will matter in Chapter&nbsp;16.
+</p>
+<div class="box g">
+<h4>Worked example: three assets</h4>
+<p>Volatilities 20%, 25%, 15% and correlations $\rho_{12} = 0.6$, $\rho_{13} = 0.2$, $\rho_{23} = 0.3$ give the covariance matrix (rows) $\boldsymbol\Sigma = $ [{{v:c4_Sigma}}]. The portfolio $\mathbf w = (0.5, 0.3, 0.2)$ has variance $\mathbf w^\top\boldsymbol\Sigma\mathbf w = {{v:c4_port_var}}$, i.e. volatility {{v:c4_port_vol}}% &mdash; below the weighted average of the volatilities (20.5%), which is what imperfect correlation buys.</p>
+</div>
+
+<h3>4.2 Eigenvalues and eigenvectors: the principal components</h3>
+<p>
+A symmetric matrix can be written $\boldsymbol\Sigma = \mathbf Q\boldsymbol\Lambda\mathbf Q^\top$ with $\mathbf Q$ orthogonal (columns $\mathbf q_k$ are the eigenvectors) and $\boldsymbol\Lambda = \mathrm{diag}(\lambda_1 \ge \lambda_2 \ge \dots)$. The eigenvectors are portfolios with a special property: they are uncorrelated with each other, and $\mathbf q_k$ has variance exactly $\lambda_k$. The first eigenvector is the direction of largest variance, i.e. the portfolio that explains the most risk. In equity markets $\mathbf q_1$ always has all its entries of the same sign &mdash; it is "the market", everything moving together &mdash; and $\lambda_1$ is typically a third to a half of the total variance $\mathrm{tr}\,\boldsymbol\Sigma = \sum\lambda_k$. The next few eigenvectors are sectors, styles and regions; the rest is noise. This decomposition is <em>principal component analysis</em> (PCA), and it is the standard first look at any multi-asset dataset.
+</p>
+<p>
+For the three-asset matrix the eigenvalues are {{v:c4_eig}}; the first accounts for {{v:c4_eig_frac1}}% of the total variance and its eigenvector is ({{v:c4_ev1}}) &mdash; all positive, loaded most on the highest-volatility, most-correlated asset. The condition number $\lambda_{\max}/\lambda_{\min} = {{v:c4_cond}}$ is benign here; for a 500-stock covariance matrix it is routinely in the thousands, and that is the source of most of the trouble in portfolio optimisation (Chapter&nbsp;17).
+</p>
+<div class="box g">
+<h4>Worked example: PCA on a 30-asset factor model</h4>
+<p>We generate 1,000 days of returns for 30 assets driven by one market factor (betas between 0.6 and 1.4, factor volatility 1%/day), three sector factors (10 assets each, 0.5%/day) and idiosyncratic noise (0.8%/day), then compute the eigenvalues of the sample <em>correlation</em> matrix. The eigenvalues are {{v:c4_pca_ev1}}, {{v:c4_pca_ev2}}, {{v:c4_pca_ev3}}, {{v:c4_pca_ev4}}, &hellip; against a noise level of about 1: the first three components explain {{v:c4_pca_frac3}}% of the variance and the structure (one market, three sectors, with the third sector absorbed partly into the market mode) is immediately visible. The first eigenvector has every loading positive; the second is positive on one sector and negative on the others.</p>
+</div>
+{{fig:c4_pca|Left: eigenvalues of the 30×30 sample correlation matrix; one dominant market mode, a couple of sector modes, then a bulk of noise eigenvalues near 1. Right: the loadings of the first two eigenvectors; the market mode loads on everything with one sign, the sector mode is a long–short portfolio.}}
+
+<h3>4.3 Cholesky: generating correlated randomness</h3>
+<p>
+Any positive-definite $\boldsymbol\Sigma$ factorises as $\boldsymbol\Sigma = \mathbf L\mathbf L^\top$ with $\mathbf L$ lower-triangular (the Cholesky factor). If $\mathbf z$ is a vector of independent standard normals then $\mathbf x = \mathbf L\mathbf z$ has covariance $\mathbb E[\mathbf L\mathbf z\mathbf z^\top\mathbf L^\top] = \mathbf L\mathbf L^\top = \boldsymbol\Sigma$. This is how every multi-asset Monte Carlo generates correlated paths, and it is cheap: $O(n^3/3)$ once, then $O(n^2)$ per sample. For our three-asset matrix $\mathbf L = $ [{{v:c4_chol}}], and the sample covariance of $10^5$ draws of $\mathbf L\mathbf z$ is [{{v:c4_chol_check}}], reproducing $\boldsymbol\Sigma$ to the third decimal. The first row of $\mathbf L$ is just $\sigma_1$; the second row says asset 2 is $\rho_{12}\sigma_2$ of asset 1's shock plus $\sigma_2\sqrt{1-\rho_{12}^2}$ of its own, and so on &mdash; Cholesky is a sequence of regressions.
+</p>
+
+<h3>4.4 Least squares, projection and the SVD</h3>
+<p>
+Fitting a linear model $\mathbf y \approx \mathbf X\boldsymbol\beta$ by least squares minimises $\|\mathbf y - \mathbf X\boldsymbol\beta\|^2$; setting the gradient to zero gives the normal equations $\mathbf X^\top\mathbf X\boldsymbol\beta = \mathbf X^\top\mathbf y$, so $\hat{\boldsymbol\beta} = (\mathbf X^\top\mathbf X)^{-1}\mathbf X^\top\mathbf y$. Geometrically $\mathbf X\hat{\boldsymbol\beta}$ is the orthogonal projection of $\mathbf y$ onto the column space of $\mathbf X$, and the residual is orthogonal to every column. Numerically one never forms $(\mathbf X^\top\mathbf X)^{-1}$ (it squares the condition number); one uses the QR or singular value decomposition $\mathbf X = \mathbf U\mathbf S\mathbf V^\top$, which gives $\hat{\boldsymbol\beta} = \mathbf V\mathbf S^{-1}\mathbf U^\top\mathbf y$ and reveals, through small singular values, which directions are poorly determined. Regressing the first asset's returns in the factor example on a constant, the market factor and its sector factor gives coefficients ({{v:c4_ls}}) against true values ({{v:c4_ls_true}}). The SVD of a returns matrix (assets $\times$ time) is also PCA: the right singular vectors are the eigenvectors of the covariance and the singular values squared, divided by $T$, are its eigenvalues.
+</p>
+
+<h3>4.5 Positive definiteness and what breaks it</h3>
+<p>
+A covariance matrix assembled from pairwise correlations estimated on different date ranges, or with missing data, or "adjusted by hand", is frequently not positive semi-definite: it has a negative eigenvalue, which means there is a portfolio with negative variance, which means any optimiser will find it and lever it to infinity. The fix is to compute the eigen-decomposition, floor the eigenvalues at a small positive value, and reassemble (Higham's nearest-correlation-matrix algorithm does this properly, re-imposing unit diagonal). Checking positive definiteness, via a Cholesky attempt that either succeeds or fails, is the first test to run on any covariance matrix handed to you.
+</p>
+
+<h3>4.6 Matrix calculus: the three identities that do all the work</h3>
+<p>
+Optimising over portfolios means differentiating quadratic forms, and three identities suffice. For a symmetric $\boldsymbol\Sigma$,
+$$\frac{\partial}{\partial\mathbf w}\big(\mathbf a^\top\mathbf w\big) = \mathbf a,\qquad
+\frac{\partial}{\partial\mathbf w}\big(\mathbf w^\top\boldsymbol\Sigma\mathbf w\big) = 2\boldsymbol\Sigma\mathbf w,\qquad
+\frac{\partial}{\partial\mathbf w}\sqrt{\mathbf w^\top\boldsymbol\Sigma\mathbf w} = \frac{\boldsymbol\Sigma\mathbf w}{\sigma_p}.$$
+The last is the vector of <em>marginal risk contributions</em>: how much the portfolio volatility changes per unit of each weight. Multiplying component-wise by $\mathbf w$ gives the risk contributions $w_i(\boldsymbol\Sigma\mathbf w)_i/\sigma_p$, which sum to $\sigma_p$ by Euler's theorem for homogeneous functions &mdash; the basis of every risk-attribution report and of the risk-parity allocation in Chapter&nbsp;17. The marginal contribution of asset $i$ is also $\beta_{i,p}\,\sigma_p$, its beta to the portfolio times the portfolio volatility, which is why "which position is adding the most risk" and "which position has the highest beta to the book" are the same question. With these identities the mean&ndash;variance problem of Chapter&nbsp;17 is solved in three lines, and the Fisher information of Chapter&nbsp;3, for a Gaussian with parameters in the mean, is $\mathbf J^\top\boldsymbol\Sigma^{-1}\mathbf J$ with $\mathbf J$ the Jacobian of the mean &mdash; the same matrix a cosmologist writes down for a parameter forecast.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>$\mathbf w^\top\boldsymbol\Sigma\mathbf w$</dt><dd>Portfolio variance; diversification floors at the average correlation.</dd>
+<dt>Eigenvectors</dt><dd>Uncorrelated portfolios ordered by variance; the first is "the market".</dd>
+<dt>Cholesky</dt><dd>$\mathbf x = \mathbf L\mathbf z$ turns independent noise into correlated noise: the engine of multi-asset Monte Carlo.</dd>
+<dt>SVD</dt><dd>Numerically stable least squares; exposes ill-conditioning; equals PCA on the data matrix.</dd>
+</dl>
+</div>

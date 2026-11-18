@@ -156,37 +156,237 @@
       <p class="meta">One page &middot; five figures computed live &middot;
       <span class="go">Open &rarr;</span></p>
     </a>
-
-    <a class="tcard c-purple" href="diffusion/index.html">
+    <a class="tcard c-purple" href="hierarchical-bayes/index.html">
       <div class="mnum">9</div>
-      <h3>Diffusion and score-based models</h3>
-      <p>Destroy your data with noise on a schedule you control, learn one function &mdash; the gradient of the
-      log density &mdash; and the destruction runs backwards. Generation becomes an initial-value problem, and
-      the only thing that had to be learned was a vector field.</p>
+      <h3>Hierarchical Bayesian models</h3>
+      <p>Inferring a population from many noisy, incomplete, selection-biased measurements at once: partial
+      pooling and shrinkage, measurement error, and selection effects, with the inference machinery &mdash; MCMC
+      and the funnel, variational inference, nested sampling and simulation-based inference &mdash; each worked
+      from the equations up.</p>
       <ul class="pages">
-        <li>The forward process</li><li>The score</li><li>Score matching</li><li>The reverse SDE</li>
-        <li>Probability flow</li><li>Samplers</li><li>Where it fails</li><li>Software</li>
+        <li>Anatomy</li><li>Shrinkage</li><li>Measurement error</li><li>Selection</li>
+        <li>MCMC &amp; the funnel</li><li>Variational</li><li>Nested sampling</li><li>Simulation-based</li>
+        <li>Empirical Bayes</li><li>Gaussian processes</li>
       </ul>
-      <p class="meta">Eight pages &middot; three demonstrations that train and sample live &middot;
-      <span class="go">Open &rarr;</span></p>
+      <p class="meta">19 pages &middot; seven interactive widgets &middot; <span class="go">Open &rarr;</span></p>
     </a>
-
-    <a class="tcard c-pink" href="anomaly/index.html">
+    <a class="tcard c-pink" href="learning-distribution/index.html">
       <div class="mnum">10</div>
-      <h3>Anomaly detection</h3>
-      <p>Build a description of normal, then measure how badly each point fits it. Every method differs only in
-      what it assumes &ldquo;normal&rdquo; means &mdash; and fails in a way you can predict from that assumption
-      alone. Including the evaluation traps that make most reported numbers meaningless.</p>
+      <h3>Learning the distribution</h3>
+      <p>Neural density estimation as the common core of generative AI, language models, diffusion and Bayesian
+      inference: from histograms and kernels to mixtures, normalizing flows, autoregressive and diffusion
+      models, then simulation-based inference, amortisation and calibration &mdash; each with a runnable toy example.</p>
       <ul class="pages">
-        <li>Robust statistics</li><li>Distance and isolation</li><li>Reconstruction</li>
-        <li>Time series</li><li>Evaluation</li>
+        <li>Density basics</li><li>KDE</li><li>Mixtures</li><li>Normalizing flows</li>
+        <li>Autoregressive</li><li>LLMs as density</li><li>Diffusion</li><li>Conditional p(&theta;|x)</li>
+        <li>SBI</li><li>Calibration</li>
       </ul>
-      <p class="meta">Five pages &middot; nine demonstrations computed live &middot;
-      <span class="go">Open &rarr;</span></p>
+      <p class="meta">20 pages &middot; nine interactive animations &middot; <span class="go">Open &rarr;</span></p>
     </a>
-
-    <a class="tcard c-orange" href="bayesian-physics/index.html">
+    <a class="tcard c-green" href="gaussian-processes/index.html">
       <div class="mnum">11</div>
+      <h3>Gaussian processes</h3>
+      <p>Distributions over functions: conditioning and the posterior, kernels and what they encode, the marginal
+      likelihood and Occam&rsquo;s razor, and the many faces GPs take &mdash; from linear regression and splines to
+      random fields &mdash; with worked uses across physics and astronomy.</p>
+      <ul class="pages">
+        <li>Conditioning</li><li>Kernels</li><li>Marginal likelihood</li><li>Special cases</li>
+        <li>Inducing points</li><li>Classification</li><li>Physics uses</li><li>Astronomy uses</li>
+        <li>Limitations</li><li>Software</li>
+      </ul>
+      <p class="meta">39 pages &middot; 27 interactive widgets &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-orange" href="maximum-entropy/index.html">
+      <div class="mnum">12</div>
+      <h3>Maximum entropy methods</h3>
+      <p>Saying exactly what the data say and no more: the least-biased distribution consistent with your
+      constraints. From the Gibbs / exponential-family form to image and spectral reconstruction, MaxEnt as
+      inference, and where it reappears across machine learning.</p>
+      <ul class="pages">
+        <li>The principle</li><li>Exponential family</li><li>Dice problem</li><li>MaxEnt as inference</li>
+        <li>Image reconstruction</li><li>Spectral / Burg</li><li>Deconvolution</li><li>Generalisations</li>
+      </ul>
+      <p class="meta">15 pages &middot; five interactive widgets &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-purple" href="bayesian-evidence/index.html">
+      <div class="mnum">13</div>
+      <h3>Bayesian evidence &amp; model selection</h3>
+      <p>Choosing between models the Bayesian way: the evidence integral and the Occam factor that penalises
+      complexity automatically, how to compute it (nested sampling and friends), and worked examples from
+      cosmology to exoplanets.</p>
+      <ul class="pages">
+        <li>Model selection</li><li>Occam factor</li><li>The evidence integral</li><li>Nested sampling</li>
+        <li>Worked examples</li>
+      </ul>
+      <p class="meta">10 pages &middot; interactive widgets &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-pink" href="anomaly-detection/index.html">
+      <div class="mnum">14</div>
+      <h3>Anomaly detection</h3>
+      <p>Finding the rare, the wrong and the new: density scores, distance and reconstruction-error methods,
+      and the statistics of setting a threshold honestly &mdash; from simple cuts to modern detectors.</p>
+      <ul class="pages">
+        <li>What is an anomaly</li><li>Density scores</li><li>Distance methods</li><li>Reconstruction</li>
+        <li>Setting a threshold</li><li>Examples</li>
+      </ul>
+      <p class="meta">13 pages &middot; interactive widgets &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-green" href="planetary-ml/index.html">
+      <div class="mnum">15</div>
+      <h3>Neural networks meet ODEs</h3>
+      <p>An illustrated tour from planetary orbits to space weather: where machine learning augments
+      differential equations &mdash; inferring parameters, fast surrogate solves, structure-preserving
+      integration and real-time forecasting &mdash; every figure generated from scratch.</p>
+      <ul class="pages">
+        <li>Intro</li><li>Infer</li><li>Emulate</li><li>Integrate</li>
+        <li>Forecast</li><li>Trade-offs</li><li>Summary</li>
+      </ul>
+      <p class="meta">8 pages &middot; animated demos &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-purple" href="diffusion_models.html">
+      <div class="mnum">16</div>
+      <h3>Diffusion &amp; score-based models</h3>
+      <p>The idea behind image generators: from the score function and Langevin dynamics to the forward and
+      reverse process, DDPM/DDIM and guidance &mdash; every step worked by hand on a running toy, with a live
+      2-D noise&rarr;data demo.</p>
+      <ul class="pages">
+        <li>Score</li><li>Langevin</li><li>Forward SDE</li><li>Noising</li>
+        <li>Training</li><li>Reverse</li><li>DDIM</li><li>Guidance</li>
+      </ul>
+      <p class="meta">29 pages &middot; six live demos &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-blue" href="kalman_filters.html">
+      <div class="mnum">17</div>
+      <h3>Kalman &amp; extended Kalman filters</h3>
+      <p>The recursive estimator behind GPS, tracking and sensor fusion &mdash; predict&ndash;update, the Kalman gain and covariance, the extended filter for nonlinear models, tuning and smoothing &mdash; full derivations, worked numbers and six live filter runs.</p>
+      <ul class="pages">
+        <li>Predict</li><li>Update</li><li>Kalman gain</li><li>2-D tracking</li><li>EKF</li><li>Q/R tuning</li><li>Smoother</li>
+      </ul>
+      <p class="meta">30 pages &middot; six live animations &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-green" href="sbi_abc.html">
+      <div class="mnum">18</div>
+      <h3>ABC &amp; simulation-based inference</h3>
+      <p>Bayesian inference when you can simulate but can&rsquo;t write down a likelihood: rejection, MCMC and SMC ABC, synthetic likelihood, and the neural methods NPE/NLE/NRE &mdash; one running example, worked by hand and run live.</p>
+      <ul class="pages">
+        <li>Rejection ABC</li><li>Tolerance</li><li>Summaries</li><li>ABC-SMC</li><li>Synthetic lik.</li><li>NPE</li><li>NLE</li><li>NRE</li><li>Calibration</li>
+      </ul>
+      <p class="meta">45 pages &middot; eleven live demos &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-orange" href="quantum_computing.html">
+      <div class="mnum">19</div>
+      <h3>Quantum computing &amp; HPC emulation</h3>
+      <p>Qubits, gates, entanglement and Grover&rsquo;s search worked out on a calculator &mdash; then a from-scratch state-vector simulator, the 2&#8319; memory wall, and an MPI-distributed emulator for HPC.</p>
+      <ul class="pages">
+        <li>Qubit</li><li>Gates</li><li>Bloch sphere</li><li>Entanglement</li><li>Grover</li><li>Simulator</li><li>2&#8319; wall</li><li>MPI</li>
+      </ul>
+      <p class="meta">33 pages &middot; six live widgets &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-green" href="software_ecosystem.html">
+      <div class="mnum">30</div>
+      <h3>From laptop to supercomputer: Python, C++ and Fortran</h3>
+      <p>A field guide to the three languages of scientific and industrial computing, with tested code throughout. The Python core, environments and packaging, NumPy, pandas, Polars, scikit-learn, PyTorch and JAX; modern C++, CMake and its toolchain; modern Fortran and modernising legacy code. Then the HPC side &mdash; OpenMP, MPI, GPUs and Python bindings &mdash; debugging and profiling on a Mac, a workstation and a cluster, git, testing, CI/CD and Docker, how each language changed from 2016 to 2026, and which skills each kind of role uses.</p>
+      <ul class="pages">
+        <li>Python core</li><li>Packaging</li><li>Scientific stack</li><li>ML &amp; AI</li><li>Performance</li><li>Testing &amp; CI</li><li>Modern C++</li><li>CMake</li><li>OpenMP &amp; MPI</li><li>Modern Fortran</li><li>Debugging</li><li>Profiling</li><li>Docker</li><li>Skills by role</li>
+      </ul>
+      <p class="meta">19 chapters + 4 appendices &middot; tested Python, C++ and Fortran code &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-purple" href="kinetic_hierarchies.html">
+      <div class="mnum">29</div>
+      <h3>Kinetic hierarchies: from Liouville to Euler</h3>
+      <p>How BBGKY, Vlasov, Boltzmann, Fokker&ndash;Planck and the fluid equations fit together &mdash; two orthogonal hierarchies, one closed in correlations and one in velocity moments &mdash; derived from the Hamiltonian up, with every quantity defined. The same ladder is then climbed in cosmology, fusion plasma and MHD, and stellar dynamics, showing where each closure breaks; the CMB appears as photons passing from tight-coupled fluid to free-streaming Vlasov gas. How the equations are actually simulated &mdash; PM, P<sup>3</sup>M, TreePM and FMM (GADGET), PIC, grid and SPH MHD &mdash; with pointers into 30 open-source codes, and a physics-informed neural network trained to recover a closure coefficient.</p>
+      <ul class="pages">
+        <li>First principles</li><li>Two hierarchies</li><li>Liouville &amp; BBGKY</li><li>Vlasov, Boltzmann, Fokker&ndash;Planck</li><li>Moment closures</li><li>Collisionality</li><li>Cosmology</li><li>Fusion &amp; MHD</li><li>Stellar dynamics</li><li>Simulations &amp; codes</li><li>The CMB</li><li>PINNs &amp; MHD</li><li>Effective field theory</li><li>Derivations</li>
+      </ul>
+      <p class="meta">13 sections + derivations &middot; 5 live simulations &middot; 30 codes mapped &middot; 5 trained PINNs &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-blue" href="llm_note.html">
+      <div class="mnum">28</div>
+      <h3>Large Language Models: from pen-and-paper to physics</h3>
+      <p>What a language model is, how it is built and trained, why it works and where it fails &mdash; built from first principles with every derivation. A bigram model worked by hand, byte-pair tokens, embeddings and rotary positions, attention derived on a one-dimensional rod, the transformer and its parameter and FLOP counts, cross-entropy and AdamW, scaling laws and the Chinchilla optimum, RLHF and DPO derived, LoRA and RAG, how a model solves equations and integrals (checked line by line), temperature as a Boltzmann distribution, Hopfield energies, transformers over physical fields and masked autoencoders for radio interference, and twenty questions with full answers.</p>
+      <ul class="pages">
+        <li>Bigram by hand</li><li>BPE</li><li>Embeddings &amp; RoPE</li><li>Attention</li><li>Transformer</li><li>Training</li><li>Scaling laws</li><li>DPO</li><li>LoRA &amp; RAG</li><li>Decoding</li><li>Solving equations</li><li>Integration &amp; linear algebra</li><li>Physics</li><li>Directions</li><li>Limits</li><li>Code</li><li>Software</li><li>Q&amp;A</li>
+      </ul>
+      <p class="meta">19 pages &middot; 16 computed figures &middot; 8 runnable programs &middot; 20 Q&amp;A &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-green" href="quant_toolkit.html">
+      <div class="mnum">27</div>
+      <h3>The Quant Toolkit: physics, mathematics and statistics for finance</h3>
+      <p>Every piece of maths, statistics and physics the finance industry actually uses, built from first principles with worked examples and computed figures. Discounting and bonds, fat tails, estimation and signal-to-noise, covariance and PCA, the heat equation, Brownian motion and It&ocirc;, Black&ndash;Scholes, Greeks and hedging, smiles, rate models, numerical pricing, time series, GARCH, random matrix theory, Markowitz and Kelly, risk measures, ML for signals, backtesting, and the physics view.</p>
+      <ul class="pages">
+        <li>Bonds &amp; duration</li><li>Fat tails</li><li>Estimation</li><li>PCA</li><li>Heat equation</li><li>It&ocirc;</li><li>Black&ndash;Scholes</li><li>Greeks</li><li>Smiles</li><li>Rates</li><li>Monte Carlo</li><li>GARCH</li><li>RMT</li><li>Kelly</li><li>VaR/ES</li><li>Backtesting</li><li>Physics</li>
+      </ul>
+      <p class="meta">22 chapters &middot; 25 computed figures &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-orange" href="optimisation.html">
+      <div class="mnum">26</div>
+      <h3>Optimisation, from first principles to deep learning</h3>
+      <p>Gradient descent to natural gradients &mdash; how every modern model is actually trained, built from the calculus and linear algebra you already know. Convexity and conditioning, momentum and Nesterov, line search and trust regions, Newton and quasi-Newton, Gauss&ndash;Newton/LM, duality and KKT, SGD and Adam, K-FAC, Shampoo/SOAP, large-model training and Bayesian optimisation.</p>
+      <ul class="pages">
+        <li>Convexity</li><li>Gradient descent</li><li>Momentum</li><li>Newton</li><li>BFGS/L-BFGS</li><li>Gauss&ndash;Newton</li><li>Duality/KKT</li><li>SGD</li><li>Adam</li><li>Natural gradient</li><li>Shampoo/SOAP</li><li>Large models</li><li>Bayesian opt</li>
+      </ul>
+      <p class="meta">17 chapters &middot; derivations and computed examples &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-blue" href="conformal_prediction.html">
+      <div class="mnum">25</div>
+      <h3>Conformal prediction</h3>
+      <p>Honest, distribution-free error bars for any model &mdash; split conformal prediction, why it works, adaptive intervals, prediction sets for classification, and how it compares with Bayesian uncertainty.</p>
+      <ul class="pages">
+        <li>Idea</li><li>Split conformal</li><li>Why it works</li><li>Adaptive</li><li>Classification sets</li><li>vs Bayesian</li>
+      </ul>
+      <p class="meta">interactive notes &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-pink" href="mass_mapping.html">
+      <div class="mnum">20</div>
+      <h3>Fast mass mapping</h3>
+      <p>Reconstructing dark-matter maps from weak-lensing shear with deep generative models &mdash; a conditional GAN, conformal calibration, moment networks and flow matching &mdash; with coverage tests and 1-D warm-ups.</p>
+      <ul class="pages">
+        <li>Shear</li><li>Kaiser&ndash;Squires</li><li>Wiener</li><li>GAN</li><li>Conformal</li><li>Moments</li><li>Flow</li><li>Coverage</li>
+      </ul>
+      <p class="meta">17 pages &middot; live demos &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-purple" href="reading_two_billion_stars.html">
+      <div class="mnum">21</div>
+      <h3>Reading two billion stars</h3>
+      <p>An interactive tour of ESA&rsquo;s Gaia catalogue &mdash; from parallax and proper motion to colour&ndash;magnitude diagrams and the structure of the Milky Way &mdash; the data behind our map of the Galaxy.</p>
+      <ul class="pages">
+        <li>Parallax</li><li>Proper motion</li><li>HR diagram</li><li>Kinematics</li><li>Structure</li>
+      </ul>
+      <p class="meta">14 pages &middot; interactive figures &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-orange" href="hpc-cluster/index.html">
+      <div class="mnum">22</div>
+      <h3>Running things on an HPC cluster</h3>
+      <p>Parallel CPU and GPU jobs under PBS &mdash; Monte-Carlo &pi; and a 2-D heat solver, MPI reductions, GPU offload, job scripts and profiling: the commands that matter and the mistakes that quietly cost you a factor of thirty.</p>
+      <ul class="pages">
+        <li>MPI basics</li><li>Monte-Carlo &pi;</li><li>Reductions</li><li>Heat solver</li>
+        <li>GPU offload</li><li>PBS scripts</li><li>Profiling</li>
+      </ul>
+      <p class="meta">13 pages &middot; worked examples &amp; scripts &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-blue" href="compression_ai.html">
+      <div class="mnum">23</div>
+      <h3>Data compression &amp; AI</h3>
+      <p>Why learning <em>is</em> compression &mdash; from Shannon and MDL through PCA, MOPED, autoencoders,
+      VAEs and normalizing flows &mdash; with weak-lensing examples, a worked demo, and 1-D/2-D
+      pen-and-paper exercises throughout.</p>
+      <ul class="pages">
+        <li>Shannon/MDL</li><li>PCA</li><li>MOPED</li><li>Autoencoders</li><li>VAE</li><li>Flows</li><li>ICA</li><li>Demo</li>
+      </ul>
+      <p class="meta">two parts (main note + appendices) &middot; every figure reproducible &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-green" href="filters.html">
+      <div class="mnum">24</div>
+      <h3>Filters: from pen and paper to 3D</h3>
+      <p>Predict, then correct &mdash; the Kalman, extended, unscented and particle filters, from a scalar
+      worked by hand to 3D radar tracking, GNSS positioning and data assimilation on a chaotic system.</p>
+      <ul class="pages">
+        <li>Predict/update</li><li>1-D Kalman</li><li>2-D track</li><li>EKF</li><li>UKF</li><li>Particle</li><li>Radar</li><li>GNSS</li><li>EnKF</li>
+      </ul>
+      <p class="meta">19 pages &middot; three 3-D demos &middot; every figure reproducible &middot; <span class="go">Open &rarr;</span></p>
+    </a>
+    <a class="tcard c-purple" href="bayesian-physics/index.html">
+      <div class="mnum">25</div>
       <h3>The physics of Bayesian inference</h3>
       <p>A posterior is a Boltzmann distribution, the evidence is a partition function, and the likelihood of a
       simulator is a path integral. Every estimator, from the Laplace approximation to neural posterior
@@ -199,16 +399,6 @@
       <p class="meta">38 chapters in 287 pages &middot; 117 worked examples with code &middot; eleven experiments
       computed live &middot; <span class="go">Open &rarr;</span></p>
     </a>
-  </div>
-</section>
-
-<section class="sec">
-  <h2>In preparation</h2>
-  <p class="note">Written up but not yet converted into interactive pages.</p>
-  <div class="soon">
-    <div class="scard"><h3>Running things on an HPC cluster</h3>
-      <p>Parallel CPU and GPU jobs under PBS: worked examples, the commands that matter, and the mistakes that
-      quietly cost you a factor of thirty.</p></div>
   </div>
 </section>
 

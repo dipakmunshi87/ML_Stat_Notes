@@ -1,0 +1,59 @@
+<h2><span class="n">13</span>Numerical methods for pricing: trees, finite differences and Monte Carlo</h2>
+<p class="lead">Most contracts have no closed-form price. Three numerical methods cover almost everything, and the choice between them is governed by dimension, early exercise and path dependence.</p>
+
+<h3>13.1 Binomial trees</h3>
+<p>
+Cox, Ross and Rubinstein (1979) discretised GBM onto a recombining lattice: in each step of length $\Delta t$ the price moves to $Su$ or $Sd$ with $u = e^{\sigma\sqrt{\Delta t}}$, $d = 1/u$, and the risk-neutral probability of an up-move, fixed by requiring the expected growth to be $e^{r\Delta t}$, is $p = (e^{r\Delta t} - d)/(u - d)$. The option value is computed backwards from the terminal payoffs, $V_k = e^{-r\Delta t}\big(pV_{k+1}^{u} + (1-p)V_{k+1}^{d}\big)$, and American exercise is handled by replacing $V_k$ with $\max(V_k, \text{intrinsic})$ at each node. The tree is the Black&ndash;Scholes argument in miniature &mdash; with two states per step, one stock and one bond span every payoff, so the option is replicable and its price is forced &mdash; and it converges to the Black&ndash;Scholes value as $n\to\infty$, with the characteristic odd&ndash;even sawtooth of a strike that alternately sits on and between nodes. For the canonical call the tree gives {{v:c13_tree_10}}, {{v:c13_tree_50}}, {{v:c13_tree_100}}, {{v:c13_tree_500}} and {{v:c13_tree_2000}} for $n = 10, 50, 100, 500, 2000$ against {{v:c9_call}}. Trees are simple, handle early exercise trivially, and are hopeless beyond two underlyings.
+</p>
+<div class="box g">
+<h4>Worked example: the American put premium</h4>
+<p>The European put is worth {{v:c13_eu_put}}. A 2,000-step tree prices the American put at {{v:c13_am_put_2000}}: the right to exercise early is worth {{v:c13_am_premium}}, about 9% of the option. (An American <em>call</em> on a non-dividend stock is never exercised early &mdash; the time value of the strike is always worth keeping &mdash; so its price equals the European one; this is why puts are the standard test case.)</p>
+</div>
+
+<h3>13.2 Finite differences</h3>
+<p>
+Discretise the Black&ndash;Scholes PDE on a grid in $(S, t)$ and march backwards from expiry, as in Chapter&nbsp;5. The explicit scheme is a trinomial tree in disguise and inherits the stability limit $\Delta t \lesssim \Delta S^2/(\sigma^2S^2)$. The implicit scheme evaluates the spatial derivatives at the new time level and requires solving a tridiagonal system each step ($O(N)$ via the Thomas algorithm); it is unconditionally stable but only first-order accurate in time. <em>Crank&ndash;Nicolson</em> averages the two, is second-order in both $\Delta S$ and $\Delta t$, and is the default:
+$$\frac{V_i^{k+1} - V_i^{k}}{\Delta t} = \tfrac12\big(\mathcal L V^{k+1} + \mathcal L V^{k}\big)_i,\qquad \mathcal L V = rS\,\partial_S V + \tfrac12\sigma^2S^2\,\partial_S^2 V - rV .$$
+Boundary conditions are needed at $S = 0$ (the call is worthless) and at some large $S_{\max}$ (the call equals $S - Ke^{-r\tau}$). A $400\times400$ Crank&ndash;Nicolson grid prices the canonical call at {{v:c13_cn}}; a coarse $50\times50$ grid gives {{v:c13_cn_coarse}}. American exercise is imposed by projecting $V \ge$ intrinsic after each step (or, more accurately, by solving the linear complementarity problem with projected SOR). Finite differences are the right tool for one or two state variables with early exercise or barriers &mdash; most single-name equity and FX exotics &mdash; and give the Greeks for free from the grid. They suffer the curse of dimensionality: a three-asset problem on $400^3$ points is already $6\times10^7$ unknowns per time step.
+</p>
+
+<h3>13.3 Monte Carlo</h3>
+<p>
+Simulate $M$ risk-neutral paths, average the discounted payoffs. The standard error is $s/\sqrt M$, where $s$ is the standard deviation of the discounted payoff, independent of dimension &mdash; which is the whole reason Monte Carlo exists. A basket option on 50 assets, a path-dependent Asian option, a credit portfolio of 1,000 names: all cost the same per path as a vanilla. The price is slow convergence: ten times the accuracy needs a hundred times the paths. Variance reduction attacks $s$ instead of $M$.
+</p>
+<p>
+<em>Antithetic variates</em> pair each path driven by $Z$ with one driven by $-Z$; the average of the pair has lower variance when the payoff is monotone in $Z$. <em>Control variates</em> use a correlated quantity with known expectation: for a call the discounted stock itself, $e^{-rT}S_T$, whose expectation is $S_0$. The estimator $\hat C - \beta(\overline{e^{-rT}S_T} - S_0)$ with $\beta = \mathrm{Cov}(C, S)/\mathrm{Var}(S)$ removes the part of the noise that is explained by the stock. <em>Importance sampling</em> shifts the drift so that rare payoffs (deep out-of-the-money options, default events) occur often and reweights by the likelihood ratio &mdash; Girsanov used as a numerical technique. <em>Quasi-Monte Carlo</em> replaces pseudo-random numbers by low-discrepancy sequences (Sobol), which fill space more uniformly and converge nearly as $1/M$ in moderate dimension.
+</p>
+<div class="box g">
+<h4>Worked example: four estimators, $10^5$ paths</h4>
+<p>Plain: {{v:c13_mc_plain}} $\pm$ {{v:c13_mc_plain_se}}. Antithetic: {{v:c13_mc_anti}} $\pm$ {{v:c13_mc_anti_se}}. Control variate with $\beta = {{v:c13_cv_beta}}$: {{v:c13_mc_cv}} $\pm$ {{v:c13_mc_cv_se}}, a variance reduction by a factor {{v:c13_mc_varred}}, i.e. the same accuracy as {{v:c13_mc_varred}}$\times10^5$ plain paths. Scrambled Sobol with $2^{17}$ points: {{v:c13_qmc}}, which agrees with the exact {{v:c9_call}} to four decimals. All are consistent with the analytic price within their errors.</p>
+</div>
+{{fig:c13_convergence|Left: the binomial-tree price as a function of the number of steps, converging to Black–Scholes with the odd/even sawtooth. Right: the standard error of the Monte Carlo price against the number of paths for the plain, antithetic and control-variate estimators; all decay as 1/√M, the variance-reduced ones from a lower starting point.}}
+
+<h3>13.4 American options by simulation: Longstaff&ndash;Schwartz</h3>
+<p>
+Monte Carlo runs forward; early exercise needs a backward comparison of the exercise value with the <em>continuation value</em> $\mathbb E[\text{future payoff}\,|\,S_t]$, which is unknown. Longstaff and Schwartz (2001) estimate it by regression: at each exercise date, regress the realised discounted future cash flows of the in-the-money paths on polynomials in $S_t$, use the fitted value as the continuation estimate, and exercise where intrinsic exceeds it. The method (LSMC) is a backward induction on simulated paths with a regression standing in for the conditional expectation, and it extends to any number of underlyings. With $10^5$ paths, 50 exercise dates and a cubic basis it prices the American put at {{v:c13_lsmc}} $\pm$ {{v:c13_lsmc_se}}, against the tree's {{v:c13_am_put_2000}}; LSMC is biased slightly low because the regression gives a sub-optimal exercise rule (any rule gives a lower bound), and the dual (Rogers&ndash;Haugh&ndash;Kogan) method provides an upper bound to bracket the true value.
+</p>
+
+<h3>13.5 Choosing the method</h3>
+<table>
+<tr><th>Situation</th><th>Method</th><th>Why</th></tr>
+<tr><td>One or two underlyings, European or American, barriers</td><td>Finite differences (Crank&ndash;Nicolson)</td><td>Fast, accurate, Greeks from the grid, early exercise easy</td></tr>
+<tr><td>Quick American price, teaching, sanity checks</td><td>Binomial tree</td><td>Transparent; converges with a sawtooth</td></tr>
+<tr><td>Many underlyings, path dependence, credit portfolios</td><td>Monte Carlo</td><td>Cost independent of dimension; use variance reduction and QMC</td></tr>
+<tr><td>Many underlyings with early exercise</td><td>LSMC</td><td>Regression-based continuation values; bracket with a dual bound</td></tr>
+<tr><td>Affine model, many strikes</td><td>Fourier / FFT</td><td>Characteristic function known; all strikes at once</td></tr>
+</table>
+<p>
+Whatever the method, the Greeks are the hard part. Finite-difference "bump and reprice" with Monte Carlo is noisy unless common random numbers are used; pathwise and likelihood-ratio estimators differentiate inside the expectation; and adjoint algorithmic differentiation (AAD), which computes every sensitivity of a simulation in a fixed small multiple of the cost of the simulation itself, has become standard on large books. AAD is the backpropagation of deep learning under another name, and the reverse-mode differentiation machinery of JAX or PyTorch is directly usable for it.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Trees</dt><dd>Replication in miniature; sawtooth convergence; American exercise by $\max$ at each node.</dd>
+<dt>Crank&ndash;Nicolson</dt><dd>Second-order, unconditionally stable; the default for low-dimensional PDE pricing.</dd>
+<dt>Monte Carlo</dt><dd>Error $s/\sqrt M$ regardless of dimension; reduce $s$ with antithetics, control variates, importance sampling, QMC.</dd>
+<dt>LSMC</dt><dd>Regression for continuation values makes early exercise tractable by simulation.</dd>
+</dl>
+</div>

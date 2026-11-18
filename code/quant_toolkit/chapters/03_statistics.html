@@ -1,0 +1,63 @@
+<h2><span class="n">3</span>Statistics: estimation, uncertainty and the arithmetic of signal-to-noise</h2>
+<p class="lead">In physics one can usually repeat the experiment. In finance there is one history, it is short, and the quantity one most wants &mdash; the expected return &mdash; is the hardest thing in it to measure. This chapter is about knowing how little you know.</p>
+
+<h3>3.1 Estimators and their standard errors</h3>
+<p>
+Given $T$ observations $x_1,\dots,x_T$ assumed independent with mean $\mu$ and variance $\sigma^2$, the sample mean $\hat\mu = \frac1T\sum x_t$ is unbiased and has variance $\sigma^2/T$, so its <em>standard error</em> is $\sigma/\sqrt T$. This innocent formula is the central fact of empirical finance. An asset with annual expected return $\mu = 8\%$ and volatility $\sigma = 20\%$ has a signal-to-noise ratio $\mu/\sigma = 0.4$ per year. To establish that $\mu > 0$ at the conventional two-standard-error level one needs $\sqrt T \ge 2\sigma/\mu$, i.e.
+$$T \ge \Big(\frac{2\sigma}{\mu}\Big)^2 = {{v:c3_T_needed}}\ \text{years}.$$
+After one year the standard error of the mean is {{v:c3_se_1y}}%, larger than the mean itself; after ten years it is still {{v:c3_se_10y}}%. Sampling more often does not help: daily data give $250$ times as many points but each with $1/250$ of the variance per unit time, and the standard error of the <em>annualised</em> mean over a fixed window is $\sigma/\sqrt{T_{\rm years}}$ regardless. The mean is determined by the endpoints: $\hat\mu = (\ln S_T - \ln S_0)/T$ for log-returns. Everything in between is noise.
+</p>
+<p>
+Variance is a different story. The sample variance $\hat\sigma^2 = \frac{1}{T-1}\sum(x_t-\hat\mu)^2$ has, for Gaussian data, a relative standard error of $\sqrt{2/T}$ in the variance and $1/\sqrt{2T}$ in the standard deviation, and here $T$ counts <em>observations</em>, so sampling faster does help. One year of daily data pins the volatility down to about {{v:c3_se_vol_rel}}%; one year of daily data pins the mean down to nothing. This asymmetry &mdash; volatility is measurable, expected return is not &mdash; shapes the whole industry. It is why option pricing (which needs $\sigma$ but, as we will see, not $\mu$) is a science while asset allocation (which needs $\mu$) is partly an art.
+</p>
+
+<h3>3.2 The Sharpe ratio and its sampling distribution</h3>
+<p>
+The Sharpe ratio $\mathrm{SR} = (\mu - r_f)/\sigma$ is the signal-to-noise ratio of a strategy, annualised. Its estimator $\widehat{\mathrm{SR}} = \hat\mu/\hat\sigma$ inherits the noise of $\hat\mu$: for Gaussian returns and $T$ years of data (Lo 2002),
+$$\mathrm{se}\big(\widehat{\mathrm{SR}}\big) \approx \sqrt{\frac{1 + \tfrac12 \mathrm{SR}^2}{T}} .$$
+For a true $\mathrm{SR} = 0.4$ this is {{v:c3_se_sr_1}} after one year, {{v:c3_se_sr_3}} after three and {{v:c3_se_sr_10}} after ten. A three-year track record with a Sharpe of 0.4 is statistically indistinguishable from zero. (Non-Gaussian returns make it worse: skewness and kurtosis add terms to the numerator.)
+</p>
+<div class="box g">
+<h4>Worked example: 20,000 three-year track records</h4>
+<p>We simulate 20,000 independent three-year daily return histories with true annual $\mu = 8\%$, $\sigma = 20\%$ (true SR $= {{v:c3_sr_true}}$) and compute the sample Sharpe of each. The standard deviation across histories is {{v:c3_sr_sd_sim}}, matching the formula. {{v:c3_sr_frac_neg}}% of the histories show a <em>negative</em> Sharpe and {{v:c3_sr_frac_gt1}}% show a Sharpe above 1.0 &mdash; all from the same strategy. An allocator who hires the top decile and fires the bottom decile after three years is mostly selecting on luck.</p>
+</div>
+{{fig:c3_sharpe|The sampling distribution of a three-year Sharpe ratio when the true Sharpe is 0.40. The spread is of the same size as the quantity being estimated.}}
+
+<h3>3.3 Maximum likelihood and the Fisher information</h3>
+<p>
+The general machine for estimation is maximum likelihood. Given a model $p(x\,|\,\theta)$ and independent data, the log-likelihood is $\ell(\theta) = \sum_t \ln p(x_t\,|\,\theta)$ and $\hat\theta_{\rm ML}$ maximises it. Two properties make it the default. It is asymptotically efficient: no unbiased estimator does better. And its uncertainty is computable from the curvature of $\ell$ at the maximum, the <em>Fisher information</em>
+$$\mathcal I(\theta) = -\mathbb E\Big[\frac{\partial^2 \ell}{\partial\theta\,\partial\theta^\top}\Big],
+\qquad \mathrm{Cov}(\hat\theta) \ge \mathcal I^{-1}$$
+(the Cram&eacute;r&ndash;Rao bound, attained asymptotically by ML). For the Gaussian mean, $\mathcal I_{\mu\mu} = T/\sigma^2$, giving back $\mathrm{Var}(\hat\mu) = \sigma^2/T$: with $\sigma = 0.2$ and $T = 10$ this is {{v:c3_crlb_mu}}. A physicist knows this matrix from Fisher forecasting of survey constraints; it is the same object, and the same intuition &mdash; a sharply peaked likelihood means a well-determined parameter &mdash; transfers intact.
+</p>
+<div class="box g">
+<h4>Worked example: fitting the tail index</h4>
+<p>Maximum-likelihood fitting of a Student-$t$ to the 40-year simulated series of Chapter&nbsp;2 recovers $\hat\nu = {{v:c3_nu_hat}}$ (true value 4) and a scale of {{v:c3_sc_hat}}$\sigma$ (true value $\sqrt{(\nu-2)/\nu} = 0.707$). Note what the fit does <em>not</em> use: the sample kurtosis. For $\nu$ near 4 the kurtosis is a terrible statistic (it barely exists), whereas the likelihood uses the whole shape of the distribution and converges normally. Method-of-moments estimators are often the worst choice precisely where the tails matter.</p>
+</div>
+
+<h3>3.4 Confidence intervals and hypothesis tests</h3>
+<p>
+A $95\%$ confidence interval for a parameter is $\hat\theta \pm 1.96\,\mathrm{se}(\hat\theta)$ when the estimator is approximately normal. A hypothesis test of $H_0: \mu = 0$ uses the $t$-statistic $\hat\mu/\mathrm{se}(\hat\mu)$ and rejects when $|t| > 1.96$ (at the 5% level). A trading signal that has averaged 3 bp a day with a 1% daily standard deviation over 500 days has $t = {{v:c3_tstat}}$ and $p = {{v:c3_pval}}$: no evidence at all, even though "3 bp a day" is 7.5% a year and would be a fine strategy if real. The $t$-statistic is the universal currency for "is this effect real", and Chapter&nbsp;20 will show why even $t = 3$ is not enough once one has searched over many candidate strategies.
+</p>
+
+<h3>3.5 The bootstrap: uncertainty without formulas</h3>
+<p>
+When no formula for a standard error exists &mdash; for a quantile, a drawdown, a Sharpe ratio under fat tails &mdash; resample. The bootstrap draws $T$ observations <em>with replacement</em> from the data, recomputes the statistic, and repeats $B$ times; the spread of the $B$ values estimates the sampling distribution. For time series the draws must respect dependence (block bootstrap: resample contiguous blocks). As an example, the empirical one-day 99% VaR of the first three years of the $t$-returns is {{v:c3_var_hat}}%, with a bootstrap 95% interval of [{{v:c3_var_lo}}%, {{v:c3_var_hi}}%]: a tail quantile estimated from 750 points, 7 or 8 of which lie beyond it, is uncertain by about $\pm10\%$ of its value, and that is before model error.
+</p>
+
+<h3>3.6 Bayesian estimation: shrinkage as a prior</h3>
+<p>
+Given that expected returns are so poorly determined by data, it is natural to combine data with prior belief. Bayes' theorem, $p(\theta\,|\,x) \propto p(x\,|\,\theta)\,p(\theta)$, does exactly that, and for a Gaussian likelihood with a Gaussian prior the posterior mean is a precision-weighted average:
+$$\hat\mu_{\rm post} = \frac{T/\sigma^2}{T/\sigma^2 + 1/\tau^2}\,\hat\mu + \frac{1/\tau^2}{T/\sigma^2 + 1/\tau^2}\,\mu_0 ,$$
+where $\mu_0$ and $\tau^2$ are the prior mean and variance. Data pull the estimate towards the sample mean, the prior pulls it towards $\mu_0$, and the weights are the inverse variances. This is <em>shrinkage</em>, and it recurs everywhere in finance under other names: the Black&ndash;Litterman model (shrink expected returns towards those implied by the market portfolio), Ledoit&ndash;Wolf covariance estimation (shrink the sample covariance towards a structured target, Chapter&nbsp;16), ridge regression (shrink coefficients towards zero, Chapter&nbsp;6). Whenever one has many noisy estimates, shrinking them towards a common value lowers total error &mdash; the James&ndash;Stein result &mdash; and the finance industry is a machine for producing many noisy estimates.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>$\sigma/\sqrt T$</dt><dd>Means need decades; variances need months. Expected return is the least measurable quantity in finance.</dd>
+<dt>Sharpe se</dt><dd>$\approx 1/\sqrt{T_{\rm years}}$: a three-year track record is one noisy data point.</dd>
+<dt>Fisher information</dt><dd>Curvature of the log-likelihood; the Cram&eacute;r&ndash;Rao bound; the same matrix as in survey forecasting.</dd>
+<dt>Shrinkage</dt><dd>Bayesian averaging of a noisy estimate with a prior; the cure for noisy means and covariances.</dd>
+</dl>
+</div>

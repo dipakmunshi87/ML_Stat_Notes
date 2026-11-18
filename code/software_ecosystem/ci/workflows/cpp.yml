@@ -1,0 +1,23 @@
+name: cpp
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        config:
+          - {build: Release, sanitizers: "OFF"}
+          - {build: Debug, sanitizers: "ON"}        # catches memory errors and undefined behaviour
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build }} -DENABLE_SANITIZERS=${{ matrix.config.sanitizers }}
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

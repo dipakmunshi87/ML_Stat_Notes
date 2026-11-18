@@ -1,0 +1,60 @@
+<!-- PART: Part IV — The physics view, and the whole subject on one page -->
+<div class="part">Part IV <span>The physics view, and the whole subject on one page</span></div>
+<h2><span class="n">21</span>The physics toolkit: what a physicist already knows</h2>
+<p class="lead">Much of quantitative finance was invented, or reinvented, by physicists, and the correspondences are not analogies but identities: the same equations with the symbols relabelled. This chapter collects them, so that a reader coming from physics can see which parts of the subject they already own.</p>
+
+<h3>21.1 Statistical mechanics: entropy, Boltzmann weights and the pricing measure</h3>
+<p>
+The Gaussian is the maximum-entropy distribution for a given variance; the exponential is the maximum-entropy distribution for a given mean on the half-line; the Boltzmann distribution $p(E) \propto e^{-\beta E}$ is the maximum-entropy distribution for a given mean energy. Jaynes' principle &mdash; assume the least-informative distribution consistent with the constraints &mdash; is the physicist's version of the statistician's prior, and it explains why the Gaussian is the default (Chapter&nbsp;2) and why a power law appears whenever the constraint is on a logarithm. The risk-neutral measure of Chapter&nbsp;9 has the same structure. Girsanov's change of measure reweights each path by $\exp(-\lambda W_T - \tfrac12\lambda^2T)$: a Boltzmann factor with the market price of risk $\lambda$ playing the role of inverse temperature and the Brownian path the role of energy. The <em>Esscher transform</em> of actuarial science, $q(x) \propto e^{\theta x}p(x)$, is exactly a Boltzmann reweighting of the real-world distribution, and for the lognormal it reproduces the risk-neutral measure; for jump and L&eacute;vy models it is one of the standard ways of choosing a pricing measure in an incomplete market, and it can be derived as the minimum-relative-entropy measure &mdash; the one closest to the real-world distribution subject to the martingale constraint. The logarithm of the pricing kernel is a free energy; the partition function $Z(\theta) = \mathbb E[e^{\theta x}]$ is the moment-generating function, and its derivatives are the cumulants. A physicist who has computed a partition function has computed a characteristic function and, through Chapter&nbsp;5, an option price.
+</p>
+
+<h3>21.2 Langevin, Fokker&ndash;Planck and the Kolmogorov pair</h3>
+<p>
+The Langevin equation for a Brownian particle, $m\dot v = -\gamma v + \eta(t)$ with white noise $\eta$, is the Ornstein&ndash;Uhlenbeck process of Chapter&nbsp;8 with $\kappa = \gamma/m$. Its stationary variance $\sigma^2/2\kappa$ is the equipartition theorem, $\langle v^2\rangle = k_BT/m$, and the fluctuation&ndash;dissipation relation that links the noise strength to the friction is the same identity that links the volatility of a mean-reverting spread to its half-life. Geometric Brownian motion is the Langevin equation for $\ln S$ with constant drift; the Vasicek and CIR rate models are OU with and without a state-dependent diffusion. The Fokker&ndash;Planck equation that a physicist derives for the velocity distribution is, symbol for symbol, the forward Kolmogorov equation for the density of a diffusion, and the backward Kolmogorov equation &mdash; which becomes Black&ndash;Scholes &mdash; is its adjoint. Detailed balance, the condition that the stationary state carries no probability current, is the condition that the discounted price process is a martingale: in both cases a drift is being cancelled against a diffusion so that nothing flows on average.
+</p>
+
+<h3>21.3 Path integrals and Feynman&ndash;Kac</h3>
+<p>
+The Feynman path integral for the propagator of a particle in a potential $V$ in imaginary time is $\int\mathcal Dx\,\exp\big(-\int[\tfrac12\dot x^2 + V(x)]\,\mathrm d\tau\big)$. Kac's version of the same formula says that this is the expectation over Brownian paths of $\exp(-\int V(x_\tau)\,\mathrm d\tau)$, i.e. the solution of the heat equation with a potential term. With $V = r$ the exponential is the discount factor and the formula is the risk-neutral pricing formula of Chapter&nbsp;9; with $V = r(x)$ a state-dependent rate it is the bond-pricing formula of Chapter&nbsp;12. The classical path that dominates the integral at small "$\hbar$" (small volatility) gives the leading saddle-point approximation, which is how the short-maturity asymptotics of implied volatility are computed (the geodesic distance in the metric defined by the local volatility: Berestycki, Busca and Florent 2004). Perturbation theory around the Gaussian &mdash; Feynman diagrams &mdash; gives expansions of option prices in powers of the volatility-of-volatility, and the Wiener&ndash;Hermite / Wick calculus for Gaussian expectations is the Malliavin calculus that computes Greeks by simulation. A physicist's intuition that "the propagator spreads as $\sqrt t$ and sees the potential as a reweighting" is the whole of option pricing in one sentence.
+</p>
+
+<h3>21.4 Random matrices</h3>
+<p>
+Wigner introduced random matrices to describe the energy levels of heavy nuclei: a Hamiltonian too complicated to write down was replaced by a symmetric matrix of Gaussian entries, whose eigenvalue density is the semicircle law and whose level-spacing statistics show repulsion. Marchenko and Pastur's law for sample covariance matrices (Chapter&nbsp;16) is the Wishart analogue, the spiked model (a low-rank signal plus noise) is the model of a market with a few factors, and the tools &mdash; the resolvent, the Stieltjes transform, free probability &mdash; transfer directly. The level-repulsion intuition carries over too: sample eigenvalues are spread apart relative to true ones, which is exactly why the smallest sample eigenvalue of a covariance matrix is biased low and the optimiser over-levers its direction. The physics of disordered systems (spin glasses, localisation) supplies the intuition for how many effective dimensions a 500-stock market has, and the replica method has been used to compute the out-of-sample risk of portfolios optimised on noisy data in closed form.
+</p>
+
+<h3>21.5 Scaling, universality and rough volatility</h3>
+<p>
+Brownian motion scales as $t^{1/2}$. Fractional Brownian motion (Mandelbrot and van Ness 1968) scales as $t^H$ with Hurst exponent $H\in(0,1)$: $H > \tfrac12$ is persistent (positively autocorrelated increments, long memory), $H < \tfrac12$ anti-persistent and rough. Returns themselves have $H\approx\tfrac12$ (no exploitable memory, as the efficient-market argument requires), but the <em>log-volatility</em>, measured from realised variance at all frequencies, has $H\approx0.1$ (Gatheral, Jaisson and Rosenbaum 2018): volatility is far rougher than Brownian motion, and a model in which the variance is driven by fractional Brownian motion with $H\approx0.1$ reproduces the at-the-money skew's $T^{H - 1/2}$ blow-up at short maturities with two or three parameters. The identification of a universal exponent, its measurement from a structure function $\langle|\ln\sigma_{t+\tau} - \ln\sigma_t|^q\rangle \propto \tau^{qH}$, and the construction of a model from the scaling law alone are the methods of critical phenomena and turbulence; multifractal models of returns (Mandelbrot, Bacry&ndash;Muzy) were built explicitly on the cascade models of turbulent energy dissipation. The universality of fat-tailed return distributions across assets, countries and decades &mdash; the "inverse cubic law" for the tail exponent of returns, $\alpha\approx3$ &mdash; is the kind of empirical regularity a physicist expects to find a mechanism for, and the leading candidates (order-flow impact with a power-law distribution of order sizes; herding) are agent-based.
+</p>
+
+<h3>21.6 Interacting agents: Ising models, herding and the minority game</h3>
+<p>
+A market is many agents influencing each other, which is the setting of statistical mechanics. In an Ising model each spin aligns with its neighbours against thermal noise; below a critical temperature the system magnetises spontaneously. Map spins to buy/sell decisions and neighbours to the traders one imitates, and the model produces herding, bubbles (a phase with nonzero magnetisation) and crashes (the collapse of the ordered phase), with the fat tails and volatility clustering of real returns appearing near criticality (Cont and Bouchaud 2000). The minority game (Challet and Zhang 1997) takes agents who must choose between two options and win if they are in the minority &mdash; a stylised market in which buying when others sell is profitable &mdash; and shows a phase transition between an inefficient crowded phase and an efficient one as the number of agents relative to the information available varies. These models are not used to price anything, but they are the right framework for questions the diffusion models cannot ask: why volatility clusters, why liquidity vanishes in a crisis, how the trades of a crowd of similar algorithms interact. The 2010 flash crash and the 2007 quant meltdown were phenomena of this kind, and the growing literature on systemic risk in networks of banks is percolation theory on a financial graph.
+</p>
+
+<h3>21.7 A dictionary</h3>
+<table>
+<tr><th>Physics</th><th>Finance</th><th>Where in this note</th></tr>
+<tr><td>Diffusion equation, heat kernel</td><td>Black&ndash;Scholes equation, option price as smoothed payoff</td><td>Ch.&nbsp;5, 9</td></tr>
+<tr><td>Langevin equation, equipartition</td><td>OU process, stationary variance $\sigma^2/2\kappa$</td><td>Ch.&nbsp;8</td></tr>
+<tr><td>Fokker&ndash;Planck / adjoint</td><td>Forward / backward Kolmogorov</td><td>Ch.&nbsp;8</td></tr>
+<tr><td>Boltzmann weight, partition function</td><td>Risk-neutral measure, Esscher transform, moment-generating function</td><td>Ch.&nbsp;9, 21</td></tr>
+<tr><td>Path integral in imaginary time</td><td>Feynman&ndash;Kac, Monte Carlo pricing</td><td>Ch.&nbsp;5, 9, 13</td></tr>
+<tr><td>Fisher information (forecasting)</td><td>Cram&eacute;r&ndash;Rao for estimators; curvature of likelihood</td><td>Ch.&nbsp;3</td></tr>
+<tr><td>Wigner / Marchenko&ndash;Pastur</td><td>Noise spectrum of covariance matrices; cleaning</td><td>Ch.&nbsp;16</td></tr>
+<tr><td>Scaling exponents, universality</td><td>Hurst exponent, rough volatility, inverse cubic law</td><td>Ch.&nbsp;21</td></tr>
+<tr><td>Ising model, criticality</td><td>Herding, bubbles, volatility clustering</td><td>Ch.&nbsp;21</td></tr>
+<tr><td>Kalman filter, data assimilation</td><td>Tracking betas, spreads, latent prices</td><td>Ch.&nbsp;14</td></tr>
+<tr><td>Signal-to-noise, $1/\sqrt N$</td><td>Standard error of mean returns; Sharpe-ratio noise</td><td>Ch.&nbsp;3, 20</td></tr>
+</table>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Same equations</dt><dd>Diffusion, Langevin, Fokker&ndash;Planck, path integrals and random matrices appear unchanged.</dd>
+<dt>Measure = Boltzmann</dt><dd>Risk-neutral reweighting is a Boltzmann factor; pricing kernels are free energies.</dd>
+<dt>Scaling</dt><dd>$H\approx\tfrac12$ for returns, $\approx0.1$ for volatility; tails with $\alpha\approx3$; universality across markets.</dd>
+<dt>Agents</dt><dd>Herding, phase transitions and crises are statistical mechanics, not stochastic calculus.</dd>
+</dl>
+</div>

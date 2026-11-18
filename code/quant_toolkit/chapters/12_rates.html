@@ -1,0 +1,57 @@
+<h2><span class="n">12</span>Interest-rate models: Vasicek, CIR and the term structure</h2>
+<p class="lead">Rates are harder than stocks: the underlying is a whole curve, the rate is both the thing being modelled and the thing used to discount, and bonds have a fixed maturity. The affine models solve all three problems with one trick &mdash; the PDE collapses to ODEs.</p>
+
+<h3>12.1 The short rate and the bond-pricing equation</h3>
+<p>
+Model the instantaneous rate $r_t$ as a diffusion, $\mathrm dr = a(r,t)\,\mathrm dt + b(r,t)\,\mathrm dW$ under the risk-neutral measure. A zero-coupon bond paying 1 at $T$ is worth
+$$P(t,T) = \mathbb E^{\mathbb Q}\Big[\exp\Big(-\int_t^T r_s\,\mathrm ds\Big)\,\Big|\,r_t\Big],$$
+the expected discount factor along random rate paths. By Feynman&ndash;Kac this $P(r,t)$ satisfies the backward equation with the discounting term,
+$$\frac{\partial P}{\partial t} + a\frac{\partial P}{\partial r} + \tfrac12 b^2\frac{\partial^2P}{\partial r^2} - rP = 0,\qquad P(r,T) = 1 ,$$
+which is the Black&ndash;Scholes equation with $r$ as the state variable and the subtlety that $r$ appears both as the drift's argument and in the $-rP$ term. The yield is $y(t,T) = -\ln P/(T-t)$; the model's whole term structure, for every maturity, follows from the current $r_t$ and the parameters.
+</p>
+
+<h3>12.2 Vasicek: the OU short rate</h3>
+<p>
+Vasicek (1977) took the OU process, $\mathrm dr = \kappa(\theta - r)\,\mathrm dt + \sigma\,\mathrm dW$. Try the <em>affine</em> ansatz $P = e^{A(\tau) - B(\tau)r}$ with $\tau = T - t$. Substituting into the PDE and collecting the terms proportional to $r$ and the terms free of $r$ gives two ODEs,
+$$B' = 1 - \kappa B,\qquad A' = -\kappa\theta B + \tfrac12\sigma^2B^2,\qquad A(0) = B(0) = 0,$$
+with solutions
+$$B(\tau) = \frac{1 - e^{-\kappa\tau}}{\kappa},\qquad A(\tau) = \Big(\theta - \frac{\sigma^2}{2\kappa^2}\Big)\big(B(\tau) - \tau\big) - \frac{\sigma^2B(\tau)^2}{4\kappa}.$$
+$B(\tau)$ is the bond's sensitivity to the short rate &mdash; its duration with respect to $r$ &mdash; and it saturates at $1/\kappa$ instead of growing like $\tau$: because the rate mean-reverts, a 30-year bond is barely more exposed to today's short rate than a 10-year one. (For $\kappa = 0.3$, $B(5) = {{v:c12_B5}}$ and $B(10) = {{v:c12_B10}}$ against naive durations of 5 and 10.) The long-run yield is $y_\infty = \theta - \sigma^2/2\kappa^2$, which for the example parameters is {{v:c12_yinf}}%: slightly below $\theta$, because Jensen's inequality (the convexity of $e^{-\int r}$) makes random rates worth more than certain ones.
+</p>
+<div class="box g">
+<h4>Worked example: a 5-year bond under Vasicek</h4>
+<p>With $\kappa = 0.3$, $\theta = 5\%$, $\sigma = 1\%$ and $r_0 = 5\%$ the 5-year discount factor is $P = {{v:c12_P5_5}}$ against the naive $e^{-0.05\times5} = {{v:c12_P5_5_naive}}$; the small excess is the convexity value. A Monte Carlo with 50,000 rate paths gives {{v:c12_P5_5_mc}}. The 10-year yield is {{v:c12_y10_2}}%, {{v:c12_y10_5}}% and {{v:c12_y10_8}}% for $r_0 = 2\%, 5\%, 8\%$: starting below $\theta$ the curve is upward-sloping, starting above it is inverted, and in all cases it converges towards $y_\infty$. Over the 5-year simulation {{v:c12_rneg}}% of paths went negative &mdash; a known defect of the Gaussian model that became a feature after 2009, when negative rates arrived.</p>
+</div>
+{{fig:c12_vasicek|Vasicek zero-coupon yield curves for three starting short rates. Mean reversion pulls every curve towards the same long-run yield y∞ ≈ 4.94%; the shape (normal, flat, inverted) is set by where r₀ sits relative to θ.}}
+
+<h3>12.3 Cox&ndash;Ingersoll&ndash;Ross and the square root</h3>
+<p>
+CIR (1985) replaced $\sigma\,\mathrm dW$ by $\sigma\sqrt r\,\mathrm dW$. The volatility of the rate vanishes as $r\to0$, so with $2\kappa\theta \ge \sigma^2$ (the Feller condition again; it holds here) the rate never reaches zero. The model stays affine &mdash; the ansatz $e^{A - Br}$ still works, with a Riccati equation $B' = 1 - \kappa B - \tfrac12\sigma^2B^2$ that is solvable in closed form &mdash; and the rate's distribution becomes non-central chi-squared rather than Gaussian. The same square-root process is the variance process in Heston, which is why the Heston formula looks like a bond price: it is the same Riccati machinery. The general statement (Duffie&ndash;Kan 1996) is that any model with affine drift and affine squared diffusion has exponential-affine bond prices and a closed-form characteristic function; the affine family is the set of models in which the PDE becomes ODEs, and essentially every tractable model in rates, credit and volatility belongs to it.
+</p>
+
+<h3>12.4 Fitting the curve: Hull&ndash;White and HJM</h3>
+<p>
+One-factor models with constant parameters cannot reproduce an arbitrary initial curve, which a desk must do exactly (the curve is observable, and mispricing a bond against it is arbitrage). Hull&ndash;White makes $\theta(t)$ time-dependent and chooses it to match today's forwards; the model remains Gaussian and affine. Heath&ndash;Jarrow&ndash;Morton go further and model the whole forward curve $f(t,T)$ directly as a field, $\mathrm df(t,T) = \alpha(t,T)\,\mathrm dt + \sigma(t,T)\,\mathrm dW$, with the no-arbitrage condition fixing the drift completely in terms of the volatility: $\alpha(t,T) = \sigma(t,T)\int_t^T\sigma(t,u)\,\mathrm du$. In HJM there is nothing to calibrate but the volatility structure, and the market-standard LIBOR/SOFR market models are HJM written in terms of discretely compounded forward rates so that caps and swaptions have Black-formula prices. Multi-factor versions (two or three Brownian motions driving level, slope and curvature &mdash; the PCA of Chapter&nbsp;4 applied to yield changes, where three components explain over 95% of the variance) are the production tools.
+</p>
+
+<h3>12.5 Interest-rate derivatives in one paragraph</h3>
+<p>
+A swap exchanges fixed for floating payments and is worth zero at inception when the fixed rate equals the par swap rate, a weighted average of forwards. A cap is a strip of call options on the floating rate; a swaption is an option to enter a swap. In a Gaussian (Vasicek/Hull&ndash;White) model all of these have closed forms via Jamshidian's trick, which decomposes an option on a coupon bond into options on zeros. Under the market model each caplet is priced by Black's formula with a lognormal forward rate. The pricing is standard; the risk is in the curve-building and in the correlation between forwards, which is where multi-factor models earn their keep.
+</p>
+
+<h3>12.6 Credit as a rate: hazard rates and credit default swaps</h3>
+<p>
+The same machinery prices default risk. Model default as the first jump of a Poisson process with intensity (<em>hazard rate</em>) $h_t$: the probability of surviving to $T$ is $Q(T) = \mathbb E\big[\exp(-\int_0^T h_s\,\mathrm ds)\big]$, which is the bond-pricing formula with $h$ in place of $r$. A defaultable zero-coupon bond with zero recovery is then worth $P(T)\,Q(T) = \mathbb E[e^{-\int(r_s + h_s)\mathrm ds}]$: the hazard rate is a spread added to the discount rate, and all the affine technology of Section&nbsp;12.3 applies to it &mdash; a CIR hazard rate gives closed-form survival probabilities. With recovery $R$ paid at default, the price acquires a second term, and the <em>credit spread</em> over the risk-free yield is approximately $h(1-R)$: a 2% annual default probability with 40% recovery is a spread of about 120 bp. A <em>credit default swap</em> is the insurance contract: the buyer pays a running premium $s$ until default or maturity and receives $(1-R)$ at default. Its fair premium equates the present values of the two legs,
+$$s\sum_i\Delta_i\,P(T_i)\,Q(T_i) = (1-R)\int_0^T P(t)\,\big(-\mathrm dQ(t)\big),$$
+and the "credit triangle" $s\approx h(1-R)$ is the flat-hazard approximation. Inverting quoted CDS spreads for a term structure of hazard rates is bootstrapping a curve, exactly as for discount factors, and portfolios of credits are priced with correlated default times &mdash; which is where the Gaussian copula of Chapter&nbsp;2 entered, and failed. The lesson of this section is structural: once one has seen that a bond is $\mathbb E[e^{-\int r}]$, a defaultable bond, a survival probability, a CDS and (with $h$ replaced by a dividend yield or a convenience yield) a commodity forward are all the same formula with different names for the exponent.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Bond PDE</dt><dd>Black&ndash;Scholes in $r$ with a $-rP$ term; $P = \mathbb E^{\mathbb Q}[e^{-\int r}]$.</dd>
+<dt>Affine ansatz</dt><dd>$P = e^{A(\tau) - B(\tau)r}$ turns the PDE into Riccati ODEs; $B$ saturates at $1/\kappa$.</dd>
+<dt>Convexity</dt><dd>Random rates raise bond prices (Jensen); $y_\infty = \theta - \sigma^2/2\kappa^2$.</dd>
+<dt>HJM</dt><dd>Model the forward curve; no arbitrage fixes the drift from the volatility.</dd>
+</dl>
+</div>

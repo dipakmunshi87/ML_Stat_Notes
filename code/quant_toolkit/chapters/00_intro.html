@@ -1,0 +1,24 @@
+<h2><span class="n">0</span>Overview: what this note is, and how to read it</h2>
+<p class="lead">The finance industry runs on a surprisingly compact body of mathematics. This note builds all of it, from first principles, in the order in which each idea becomes necessary.</p>
+
+<p>
+Ask a quant what they actually use and the honest list is short: discounting and compounding; probability with heavy tails; estimation theory and the brutal arithmetic of signal-to-noise; linear algebra, above all the covariance matrix and its eigenvectors; calculus, ordinary differential equations and one partial differential equation (the heat equation, which turns out to be Black&ndash;Scholes in disguise); stochastic calculus; numerical methods; time-series statistics; optimisation under constraints; and a set of ideas imported wholesale from physics &mdash; diffusion, Langevin dynamics, the Fokker&ndash;Planck equation, path integrals, random matrices, entropy and scaling. Everything else is these tools, applied with judgement to a particular desk's problem.
+</p>
+
+<p>
+The note is organised as a single continuous argument in four parts. <strong>Part&nbsp;I</strong> (Chapters 1&ndash;6) is the mathematical foundation: the time value of money, probability with fat tails, statistical estimation, linear algebra, calculus and the heat equation, and regression. <strong>Part&nbsp;II</strong> (Chapters 7&ndash;13) is the stochastic world of derivatives: random walks, Brownian motion and It&ocirc;'s lemma, the Black&ndash;Scholes equation and its solution, Greeks and hedging, volatility smiles and the models that produce them, interest-rate models, and the numerical methods (trees, finite differences, Monte Carlo) used to price what has no closed form. <strong>Part&nbsp;III</strong> (Chapters 14&ndash;20) is the statistics of quantitative research and trading: time series and cointegration, volatility models, random matrix theory and covariance cleaning, portfolio theory and bet sizing, risk measures, machine learning for signals, and the multiple-testing problem that makes most backtests lie. <strong>Part&nbsp;IV</strong> (Chapters 21&ndash;22) steps back: it collects the physics that underlies the whole subject, and then compresses the entire note onto one page. An appendix gives the code that produced every number and figure.
+</p>
+
+<div class="box">
+<h4>How the worked examples work</h4>
+<p>Every number quoted in the text &mdash; a bond price, a Sharpe-ratio standard error, an option price, a Monte Carlo estimate &mdash; is computed by the code in the appendix with fixed random seeds, and the figures are produced by the same code. Nothing is drawn from live market data; the point is the mathematics and the mechanism, which do not change from year to year, rather than any particular market's numbers, which do. Where a real-world magnitude matters (how fat equity tails are, how long it takes to establish that a strategy works) the examples use realistic parameters and say so.</p>
+</div>
+
+<h3>Notation and conventions</h3>
+<p>
+Prices are $S_t$, interest rates $r$, volatilities $\sigma$, time $t$ measured in years. Returns are log-returns $x_t = \ln(S_t/S_{t-1})$ unless stated otherwise. A standard normal variable is $Z \sim \mathcal N(0,1)$, with density $\varphi(z)$ and distribution function $\Phi(z)$. Vectors are bold lower case ($\mathbf w$ for portfolio weights), matrices bold upper case ($\boldsymbol\Sigma$ for a covariance matrix). Expectations are $\mathbb E[\cdot]$; under the risk-neutral measure, which we meet in Chapter&nbsp;9, they are $\mathbb E^{\mathbb Q}[\cdot]$. A "basis point" (bp) is 0.01%. Trading years have 250 days (some desks use 252; it changes nothing that matters). $\mathrm d W_t$ is the increment of a Brownian motion, and the single most important identity in the note is $(\mathrm d W_t)^2 = \mathrm d t$.
+</p>
+
+<p>
+A reader with an undergraduate physics or mathematics background has everything required. A reader who knows the derivatives material can start at Part&nbsp;III; a reader who wants the physics perspective first can start at Chapter&nbsp;21 and work backwards. Chapter&nbsp;22 is a one-page summary of everything and is worth reading twice: once now, to see the shape of the subject, and once at the end.
+</p>

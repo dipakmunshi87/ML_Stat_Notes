@@ -1,0 +1,15 @@
+name: fortran
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 13
+      - name: Debug build with run-time checks
+        run: gfortran -g -O0 -fcheck=all -fbacktrace -ffpe-trap=invalid,zero,overflow -std=f2018 heat.f90 -o heat
+      - name: Run (fails the job on any bounds or floating-point error)
+        run: ./heat

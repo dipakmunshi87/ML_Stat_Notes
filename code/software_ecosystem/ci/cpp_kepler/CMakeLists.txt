@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.20)
+project(cpp_kepler LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(ENABLE_SANITIZERS "Build with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+if(ENABLE_SANITIZERS)
+  add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address,undefined)
+endif()
+if(NOT MSVC)
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+add_library(kepler src/kepler.cpp)
+target_include_directories(kepler PUBLIC include)
+
+enable_testing()
+add_executable(test_kepler tests/test_kepler.cpp)
+target_link_libraries(test_kepler PRIVATE kepler)
+add_test(NAME kepler COMMAND test_kepler)

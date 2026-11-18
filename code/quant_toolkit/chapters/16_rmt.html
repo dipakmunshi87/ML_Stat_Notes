@@ -1,0 +1,51 @@
+<h2><span class="n">16</span>Random matrix theory and covariance cleaning</h2>
+<p class="lead">A covariance matrix of 500 stocks estimated from two years of data has more parameters than observations. Random matrix theory says exactly what noise looks like in its spectrum, and therefore exactly which eigenvalues to believe.</p>
+
+<h3>16.1 The problem: $N$ comparable to $T$</h3>
+<p>
+The sample covariance of $N$ assets from $T$ observations has $N(N+1)/2$ free entries estimated from $NT$ numbers. When $q = N/T$ is not small the estimate is noisy in a structured way: it is unbiased entry by entry, but its eigenvalues are spread out &mdash; the largest too large, the smallest too small &mdash; and the smallest are exactly the ones a portfolio optimiser inverts. With $N = 500$ stocks and $T = 500$ days ($q = 1$) the smallest sample eigenvalue of a true identity covariance is zero: the sample matrix is singular and the "minimum-variance portfolio" has zero in-sample risk and arbitrary out-of-sample risk. This is the estimation-error problem of Chapter&nbsp;3 in its matrix form, and physics supplies the solution.
+</p>
+
+<h3>16.2 The Marchenko&ndash;Pastur law</h3>
+<p>
+Let $\mathbf X$ be a $T\times N$ matrix of independent standard normals, so the true correlation matrix is the identity. Marchenko and Pastur (1967) showed that as $N, T\to\infty$ with $q = N/T$ fixed, the eigenvalues of the sample correlation matrix $\mathbf X^\top\mathbf X/T$ have the density
+$$\rho(\lambda) = \frac{\sqrt{(\lambda_+ - \lambda)(\lambda - \lambda_-)}}{2\pi q\lambda},\qquad \lambda_\pm = \big(1 \pm \sqrt q\,\big)^2 ,$$
+supported on $[\lambda_-, \lambda_+]$. Pure noise does not give eigenvalues of 1; it gives a continuous bulk spread around 1 whose width is set by $q$. For $q = {{v:c16_q}}$ ($N = 200$, $T = 500$) the edges are $\lambda_- = {{v:c16_lmin}}$ and $\lambda_+ = {{v:c16_lmax}}$; a simulated noise matrix has extreme eigenvalues {{v:c16_ev_noise_min}} and {{v:c16_ev_noise_max}}, sitting just inside. The law is universal &mdash; it does not depend on the distribution of the entries as long as the variance is finite &mdash; and the derivation uses the same resolvent and free-probability methods a physicist meets in disordered systems. The consequence for finance (Laloux, Cizeau, Bouchaud and Potters 1999; Plerou et al. 1999) is a sharp test: <em>any eigenvalue of a sample correlation matrix inside $[\lambda_-, \lambda_+]$ is indistinguishable from noise, and only those above $\lambda_+$ carry information</em>.
+</p>
+<div class="box g">
+<h4>Worked example: the spectrum of a factor model</h4>
+<p>Returns for 200 assets over 500 days driven by one market factor, four sector factors and idiosyncratic noise have a sample correlation matrix whose five largest eigenvalues are {{v:c16_ev_top}}. Exactly {{v:c16_n_above}} lie above $\lambda_+ = {{v:c16_lmax}}$: the market and three of the four sectors are resolved (the fourth sector's eigenvalue is swallowed by the bulk, i.e. it is too weak to detect in 500 days). The remaining 196 eigenvalues follow the Marchenko&ndash;Pastur density, slightly deformed by the factors. Real equity markets look exactly like this: one huge market eigenvalue (a quarter to a half of the trace), a handful of sector eigenvalues, and a bulk of noise.</p>
+</div>
+{{fig:c16_mp|Left: eigenvalues of a 200×200 correlation matrix of pure noise estimated from 500 days, against the Marchenko–Pastur density for q = 0.4. Right: the same for a four-factor model; the bulk is still Marchenko–Pastur and the informative eigenvalues sit far to the right of λ₊.}}
+
+<h3>16.3 Cleaning the matrix</h3>
+<p>
+<em>Eigenvalue clipping</em> keeps the eigenvectors but replaces every eigenvalue inside the bulk by their average (so that the trace is preserved), then reassembles $\boldsymbol\Sigma_{\rm clean} = \mathbf Q\boldsymbol\Lambda_{\rm clean}\mathbf Q^\top$ and re-normalises the diagonal. The directions of the noise eigenvectors are meaningless, so giving them all the same variance stops the optimiser from favouring any of them. Refinements (rotationally invariant estimators, Bun, Bouchaud and Potters 2017) shrink each eigenvalue optimally given its position, using the fact that the sample eigen<em>vectors</em> are themselves rotated away from the true ones by a computable amount.
+</p>
+<p>
+<em>Ledoit&ndash;Wolf shrinkage</em> (2004) takes the Bayesian route of Chapter&nbsp;3: $\boldsymbol\Sigma_{\rm LW} = (1-\alpha)\mathbf S + \alpha\mathbf F$, a convex combination of the sample matrix $\mathbf S$ and a structured target $\mathbf F$ (scaled identity, constant correlation, or a factor model), with the weight $\alpha$ chosen analytically to minimise expected Frobenius error. It is simple, always positive definite, and is the standard in many production systems. Its weakness is the target: shrinking towards the identity when the true matrix has a dominant market factor is shrinking towards the wrong thing, and the optimal $\alpha$ then comes out small &mdash; {{v:c16_lw_alpha}} in our example &mdash; because most of the Frobenius error lives in the large market eigenvalue, which the identity target cannot help with. Shrinking towards a one-factor target, or clipping, addresses the bulk directly. A factor model (Chapter&nbsp;6) is the third route: impose the structure $\mathbf B\boldsymbol\Sigma_f\mathbf B^\top + \mathbf D$ outright, which is what commercial risk models do.
+</p>
+
+<h3>16.4 The test that matters: out-of-sample risk</h3>
+<p>
+The point of cleaning is not a prettier spectrum but a portfolio that behaves as predicted. The cleanest test builds the minimum-variance portfolio $\mathbf w \propto \boldsymbol\Sigma^{-1}\mathbf 1$ from each estimate on an in-sample window and measures its realised volatility on fresh data.
+</p>
+<div class="box g">
+<h4>Worked example: minimum-variance portfolios, in and out of sample</h4>
+<p>From a 500-day window of the 200-asset factor model, the sample-covariance minimum-variance portfolio has an in-sample volatility of {{v:c16_is_sample}}% &mdash; and an out-of-sample volatility of {{v:c16_oos_sample}}%, against {{v:c16_oos_true}}% for the portfolio built from the true covariance. The in-sample number is a fiction: the optimiser has found and exploited the noise eigenvalues. Eigenvalue clipping brings the out-of-sample risk to {{v:c16_oos_clip}}%; identity-target Ledoit&ndash;Wolf to {{v:c16_oos_lw}}%. The gross leverage $\sum|w_i|$ tells the same story: {{v:c16_gross_sample}} for the sample matrix, {{v:c16_gross_lw}} for Ledoit&ndash;Wolf, {{v:c16_gross_clip}} for clipping &mdash; the raw matrix takes larger offsetting positions in directions that do not exist. Even the cleaned portfolios remain well above the true-covariance benchmark: 500 days cannot determine a 200-asset covariance, and the honest conclusion is that the optimiser should be constrained (position limits, factor exposure limits) as well as fed a cleaned matrix.</p>
+</div>
+
+<h3>16.5 What else random matrices say</h3>
+<p>
+The largest eigenvalue of a sample covariance with a true "spike" of size $\lambda$ is detectable only if $\lambda > 1 + \sqrt q$ (the Baik&ndash;Ben Arous&ndash;P&eacute;ch&eacute; transition); below that threshold the factor is lost in the bulk no matter how it is analysed, which is why the fourth sector above disappeared. The overlap between the sample and true top eigenvector is $\sqrt{(1 - q/(\lambda-1)^2)/(1 + q/(\lambda-1))}$ &mdash; less than one even for a strong factor, so the "market portfolio" estimated from data is itself tilted by noise. Cross-correlation matrices between two sets of variables (lagged returns and future returns, say) have their own null spectrum, which gives a noise floor for lead&ndash;lag signals. And Wigner's semicircle law for symmetric random matrices &mdash; the original random-matrix result, from nuclear physics &mdash; appears in the spectrum of empirical Hessians of trading objectives and of the weight matrices of neural networks. The common lesson is the one Chapter&nbsp;3 began with: before believing a number estimated from data, know what the same calculation gives on pure noise.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Marchenko&ndash;Pastur</dt><dd>Noise eigenvalues fill $[(1-\sqrt q)^2, (1+\sqrt q)^2]$, $q = N/T$; only eigenvalues above $\lambda_+$ are signal.</dd>
+<dt>Clipping</dt><dd>Average the bulk eigenvalues, keep the top ones; stops the optimiser trading noise.</dd>
+<dt>Shrinkage</dt><dd>$(1-\alpha)\mathbf S + \alpha\mathbf F$; the target matters more than $\alpha$.</dd>
+<dt>Out-of-sample</dt><dd>In-sample minimum variance is a fiction; the only test is fresh data.</dd>
+</dl>
+</div>

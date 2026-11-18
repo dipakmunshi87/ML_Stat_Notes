@@ -1,0 +1,54 @@
+<h2><span class="n">2</span>Probability for markets: returns, moments and fat tails</h2>
+<p class="lead">Prices are random. The question is <em>how</em> random: which distribution, with which tails, aggregating how. Getting this wrong is the single most expensive mistake in the history of the industry, so we take it slowly.</p>
+
+<h3>2.1 Returns: simple versus log</h3>
+<p>
+The simple return over a period is $R_t = S_t/S_{t-1} - 1$; the log-return is $x_t = \ln(S_t/S_{t-1}) = \ln(1+R_t)$. They agree to first order ($\ln(1+R) \approx R$ for small $R$) but differ in two ways that matter. Log-returns <em>add</em> over time: the return over $n$ periods is $\sum x_t$, whereas simple returns compound, $\prod(1+R_t)-1$. Simple returns <em>add across assets</em>: a portfolio's simple return is the weighted sum of its constituents' simple returns, which is not true of log-returns. So time-series work (volatility, random walks, option pricing) uses log-returns and portfolio work uses simple returns, with the conversion $R = e^{x}-1$ between them. A log-return of $+0.10$ is a simple return of {{v:c2_simple_ex}}%; a fall of 50% is a log-return of {{v:c2_log_ex}}, and the asymmetry is the point: log-returns are symmetric about zero in a way that simple returns are not (a $-50\%$ move needs $+100\%$ to recover).
+</p>
+
+<h3>2.2 Moments: mean, variance, skewness, kurtosis</h3>
+<p>
+For a random variable $X$ with density $p(x)$, the mean is $\mu = \mathbb E[X]$ and the central moments are $m_k = \mathbb E[(X-\mu)^k]$. The variance is $\sigma^2 = m_2$, the <em>skewness</em> is $m_3/\sigma^3$ (asymmetry; equity returns are usually negatively skewed, crashes being sharper than rallies) and the <em>excess kurtosis</em> is $m_4/\sigma^4 - 3$ (the 3 being the Gaussian value, so that excess kurtosis measures how much fatter than Gaussian the tails are). For daily equity-index returns the excess kurtosis is typically between 5 and 20; for a Gaussian it is zero. That one number says the Gaussian is the wrong model for daily returns, and much of risk management is about what to use instead.
+</p>
+<p>
+Volatility is the annualised standard deviation of returns. If daily log-returns are independent with standard deviation $\sigma_d$, then over $n$ days the variance is $n\sigma_d^2$ (variances of independent variables add), so the standard deviation grows as $\sqrt n$: the <em>square-root-of-time rule</em>. A daily $\sigma_d = 1\%$ is an annual volatility of $1\% \times\sqrt{250} = {{v:c2_ann_vol}}\%$. This $\sqrt t$ scaling is diffusion &mdash; the same law that governs a random walk or heat spreading in a bar &mdash; and we will derive it properly in Chapter&nbsp;7. It fails when returns are autocorrelated (trending or mean-reverting), which is one way to test for those.
+</p>
+
+<h3>2.3 The Gaussian and why it is the default</h3>
+<p>
+The normal density $\varphi(z) = e^{-z^2/2}/\sqrt{2\pi}$ is the default for three reasons. It is the maximum-entropy distribution for a given mean and variance (Chapter&nbsp;21), i.e. the least-informative assumption once you know the scale. It is stable under addition: sums of Gaussians are Gaussian. And the <em>central limit theorem</em> says that a sum of many independent variables with finite variance tends to a Gaussian whatever their individual distributions. A daily return is the sum of thousands of individual trades, so the Gaussian is a natural first guess, and the <em>lognormal</em> model for prices ($\ln S_T$ Gaussian) is the model behind Black&ndash;Scholes. For a lognormal with $\ln S \sim \mathcal N(\mu, s^2)$ the mean is $e^{\mu + s^2/2}$ and the median is $e^{\mu}$: with $\mu = 0.08, s = 0.2$ these are {{v:c2_logn_mean}} and {{v:c2_logn_med}}. The gap, $s^2/2$, is the "volatility drag" that will reappear in It&ocirc;'s lemma.
+</p>
+
+<h3>2.4 Fat tails: the Student-$t$ and the power law</h3>
+<p>
+The CLT needs finite variance and independence, and it says nothing about how fast the tails converge. Real returns have <em>fat tails</em>: extreme moves occur far more often than the Gaussian predicts. The simplest useful model is the Student-$t$ distribution with $\nu$ degrees of freedom, whose density decays as a power law $p(x) \propto |x|^{-(\nu+1)}$ rather than as $e^{-x^2/2}$. Its variance is finite only for $\nu > 2$ (and equals $\nu/(\nu-2)$ for a unit-scale $t$), its kurtosis is finite only for $\nu > 4$, and moments of order $\ge\nu$ do not exist at all. Fitted values for daily equity returns are typically $\nu \approx 3$&ndash;$5$, which means the fourth moment is on the edge of existing: sample kurtosis estimates are then dominated by the few largest observations and never settle down, which is exactly what one sees in practice.
+</p>
+<div class="box g">
+<h4>Worked example: same volatility, different world</h4>
+<p>We simulate {{v:c2_N}} daily returns (40 years) from a Gaussian with $\sigma = 1\%$ and from a Student-$t$ with $\nu = 4$ scaled to the same $\sigma = 1\%$. The sample excess kurtosis is {{v:c2_kurt_g}} for the Gaussian and {{v:c2_kurt_t}} for the $t$ (whose population kurtosis is infinite at $\nu=4$). The largest loss in the Gaussian sample is {{v:c2_max_g}}$\sigma$; in the $t$ sample it is {{v:c2_max_t}}$\sigma$. Moves beyond $4\sigma$ occur {{v:c2_n4_g}} times in the Gaussian sample and {{v:c2_n4_t}} times in the $t$ sample.</p>
+<p>The probability of a move beyond $5\sigma$ on a given day is {{v:c2_p5_g}} under the Gaussian &mdash; once every {{v:c2_yrs5_g}} years &mdash; and {{v:c2_p5_t}} under the $t$, once every {{v:c2_yrs5_t}} years. Markets deliver $5\sigma$ days every few years. The Gaussian is not slightly wrong about tails; it is wrong by three or four orders of magnitude.</p>
+</div>
+{{fig:c2_tails|Left: histograms (log scale) of the two simulated return series, both with σ = 1%; the Gaussian density is the thin grey line. Right: a quantile–quantile plot of the t-returns against the normal; the S-shape is the signature of fat tails.}}
+<p>
+The same point in risk-management units: the one-day 99% value-at-risk (the loss exceeded one day in a hundred, Chapter&nbsp;18) is {{v:c2_var_g}}% under the Gaussian and {{v:c2_var_t}}% under the $t$ &mdash; not so different, because at the 99% point the two distributions have not yet parted company. At 99.9% they have: {{v:c2_var_g_999}}% versus {{v:c2_var_t_999}}%. The further into the tail a risk question goes, the more the choice of distribution dominates everything else.
+</p>
+
+<h3>2.5 Aggregation: the tails thin out, slowly</h3>
+<p>
+Summing fat-tailed returns over longer horizons does move them towards the Gaussian (the CLT does apply, since $\nu = 4$ has finite variance), but slowly. The 20-day sums of our $t$-returns have excess kurtosis {{v:c2_kurt_20d}} against {{v:c2_kurt_t}} for the daily series. Monthly returns look nearly Gaussian; daily returns do not; intraday returns are wilder still. A model has to be matched to the horizon at which it will be used. For <em>infinite</em>-variance distributions (the L&eacute;vy-stable family with tail index $\alpha < 2$) the CLT fails altogether and sums converge to a stable law with the same $\alpha$; Mandelbrot proposed these for cotton prices in 1963, and although the consensus is that financial tails have $\alpha \approx 3$&ndash;$4$ (finite variance, infinite or borderline kurtosis), the stable family is the right mental model for "the biggest event dominates the sum".
+</p>
+
+<h3>2.6 Dependence: correlation and its failure</h3>
+<p>
+For two returns the covariance is $\mathrm{Cov}(X,Y) = \mathbb E[(X-\mu_X)(Y-\mu_Y)]$ and the correlation $\rho = \mathrm{Cov}/(\sigma_X\sigma_Y) \in [-1,1]$. For jointly Gaussian variables $\rho$ captures the whole dependence; for anything else it does not. Two things go wrong in markets. Correlations are not constant: they rise sharply in crises, when diversification is needed most. And linear correlation is blind to <em>tail dependence</em> &mdash; the probability that one asset has an extreme move given that another has. The modern tool for separating the marginal distributions from the dependence structure is the <em>copula</em>: by Sklar's theorem any joint distribution can be written as $F(x,y) = C\big(F_X(x), F_Y(y)\big)$ for a copula $C$ on the unit square. The Gaussian copula with Gaussian marginals is the multivariate normal; the Gaussian copula has <em>zero</em> tail dependence, which is why its use to price portfolios of mortgage tranches in the 2000s, with a single correlation parameter, was a disaster. The $t$-copula does have tail dependence and is the usual minimum upgrade.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Log-returns</dt><dd>Add over time; use for dynamics. Simple returns add across assets; use for portfolios.</dd>
+<dt>$\sqrt t$ scaling</dt><dd>Variance is linear in time for independent increments: the signature of diffusion.</dd>
+<dt>Kurtosis</dt><dd>Daily returns are fat-tailed ($t$ with $\nu\approx 3$&ndash;$5$); the Gaussian under-prices tail events by orders of magnitude.</dd>
+<dt>Correlation</dt><dd>Only the whole story for Gaussians; tail dependence and crisis correlation are separate facts.</dd>
+</dl>
+</div>

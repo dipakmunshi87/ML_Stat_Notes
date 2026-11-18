@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaussian Processes</title>
+<meta name="description" content="A complete pedagogical, interactive guide to Gaussian processes: intuition, the maths of conditioning, kernels, regression, the marginal likelihood, a worked example, computation, and applications across physics and astronomy.">
+<style>
+:root{--blue2:#245a95;--blue:#3D7EBF;--red:#e51d2c;--ink:#22303f;--mut:#5b6b7a;
+      --bg:#f4f7fb;--card:#ffffff;--line:#dbe4ee;--palered:#ef8073;--palered-t:#e6402f;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 22px 40px;min-height:100%}
+.topnav{position:sticky;top:0;z-index:40;background:rgba(244,247,251,.96);backdrop-filter:blur(6px);
+        border-bottom:1px solid var(--line);padding:9px 0 9px;margin-bottom:8px;
+        display:flex;flex-wrap:nowrap;gap:12px;align-items:center}
+.topnav .brand{color:var(--blue);font-weight:800;letter-spacing:.02em;font-size:.95rem;margin-right:2px;white-space:nowrap}
+.tocbtn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:999px;
+        padding:6px 15px;font-size:.85rem;font-weight:650;cursor:pointer;white-space:nowrap}
+.tocbtn:hover{background:var(--blue2)}
+.pagenum{color:var(--mut);font-size:.85rem;margin-left:auto;white-space:nowrap}
+.tocback{display:none;position:fixed;inset:0;background:rgba(20,40,70,.14);z-index:44}
+.tocback.open{display:block}
+.toc{display:none;position:fixed;top:54px;left:50%;transform:translateX(-50%);
+     width:min(960px,93vw);max-height:70vh;overflow-y:auto;background:#fff;
+     border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 34px rgba(20,50,90,.20);
+     padding:14px;z-index:46}
+.toc.open{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.navbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;
+        padding:5px 12px;font-size:.82rem;cursor:pointer;transition:.15s}
+.navbtn:hover{border-color:var(--blue);color:var(--blue2)}
+.navbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:650}
+.page{display:none;animation:fade .25s ease}
+.page.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.kick{color:var(--blue);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem;margin:14px 0 8px}
+h1{color:var(--blue2);font-size:1.94rem;line-height:1.16;margin:0 0 12px;font-weight:800;letter-spacing:-.01em}
+h2{color:var(--blue2);font-size:1.4rem;margin:6px 0 6px;font-weight:770}
+h3{color:var(--blue2);font-size:1.05rem;margin:22px 0 2px;font-weight:700}
+.sub{color:var(--mut);font-size:1.07rem;margin:0 0 6px;max-width:74ch}
+p{margin:11px 0;max-width:80ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+      box-shadow:0 1px 2px rgba(20,50,90,.05);padding:14px;margin:18px 0}
+.cap{color:var(--mut);font-size:.9rem;margin:11px 4px 2px;text-align:center}
+.eqbox{background:#ffffff;border:1.5px solid var(--palered);border-radius:10px;
+       color:var(--palered-t);text-align:center;padding:15px 18px;margin:18px auto;max-width:720px;
+       font-size:1.08rem;box-shadow:0 1px 2px rgba(200,60,50,.05)}
+.eqbox small{display:block;color:var(--mut);font-size:.82rem;margin-top:8px;font-style:italic}
+.res{color:var(--red);font-weight:650}
+b,strong{color:var(--ink)}
+.take{background:#fbfdff;border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:13px 18px;margin:20px 0}
+.take b{color:var(--blue2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.mcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mcard h3{margin-top:2px}
+code{background:#eef3f9;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em}
+.foot{color:var(--mut);font-size:.86rem;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+.pager{display:flex;justify-content:space-between;margin-top:26px;gap:10px}
+.pager button{border:1px solid var(--line);background:#fff;color:var(--blue2);border-radius:10px;
+        padding:9px 18px;font-size:.92rem;cursor:pointer;font-weight:600}
+.pager button:hover{border-color:var(--blue)}
+.pager button:disabled{opacity:.35;cursor:default}
+ul{max-width:82ch}li{margin:5px 0}
+.reflist{max-width:88ch}
+.reflist .ref{margin:9px 0;padding-left:1.4em;text-indent:-1.4em;font-size:.95rem}
+.reflist a{color:var(--blue);text-decoration:none;border-bottom:1px solid #cfe0f0}
+.reflist a:hover{color:var(--blue2);border-color:var(--blue)}
+.refhead{color:var(--blue2);font-weight:750;font-size:1.02rem;margin:20px 0 4px;border-bottom:1px solid var(--line);padding-bottom:3px}
+.iwrap{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(20,50,90,.05);padding:16px;margin:18px 0}
+.iwrap canvas{display:block;width:100%;height:auto;background:#fff;border-radius:8px;touch-action:none}
+.iwrap h3{margin-top:2px}
+.ctrls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:12px;font-size:.9rem;color:var(--mut)}
+.ctrls label{display:flex;align-items:center;gap:8px}
+.ctrls input[type=range]{accent-color:var(--blue);width:130px}
+.ctrls .val{color:var(--blue2);font-weight:700;min-width:38px;display:inline-block}
+.ibtn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:8px;padding:6px 13px;font-size:.86rem;font-weight:650;cursor:pointer}
+.ibtn:hover{background:var(--blue2)}
+.ibtn.alt{background:#fff;color:var(--blue2)}
+.ibtn.on{background:var(--red);border-color:var(--red)}
+.readout{margin-top:12px;font-size:.96rem;color:var(--ink)}
+.badge{display:inline-block;border-radius:6px;padding:2px 10px;font-weight:700;color:#fff;font-size:.9rem}
+.hint{color:var(--mut);font-size:.85rem;margin-top:8px}
+</style></head><body>
+<div class="wrap">
+  <div class="topnav"><span class="brand">Gaussian processes</span><button class="tocbtn" onclick="toggleTOC()">&#9776; Contents</button><span class="pagenum" id="pagenum"></span></div>
+  <div class="tocback" id="tocback" onclick="toggleTOC()"></div>
+  <div class="toc" id="toc"><button class="navbtn" onclick="show(0)">1. Overview</button><button class="navbtn" onclick="show(1)">2. From Gaussians to functions</button><button class="navbtn" onclick="show(2)">3. Sampling a prior</button><button class="navbtn" onclick="show(3)">4. The kernel zoo</button><button class="navbtn" onclick="show(4)">5. Regression: conditioning</button><button class="navbtn" onclick="show(5)">6. Regression in action</button><button class="navbtn" onclick="show(6)">7. Hyperparameters &amp; Occam</button><button class="navbtn" onclick="show(7)">8. A worked example by hand</button><button class="navbtn" onclick="show(8)">9. More worked examples</button><button class="navbtn" onclick="show(9)">10. Computation &amp; scaling</button><button class="navbtn" onclick="show(10)">11. Connections</button><button class="navbtn" onclick="show(11)">12. Special case I: linear regression</button><button class="navbtn" onclick="show(12)">13. Special case II: splines &amp; kriging</button><button class="navbtn" onclick="show(13)">14. Special case III: wide neural networks</button><button class="navbtn" onclick="show(14)">15. Special case IV: random fields &amp; P(k)</button><button class="navbtn" onclick="show(15)">16. GPs in physics</button><button class="navbtn" onclick="show(16)">17. Physics I: emulators</button><button class="navbtn" onclick="show(17)">18. Physics II: Bayesian optimisation</button><button class="navbtn" onclick="show(18)">19. Physics III: latent force models</button><button class="navbtn" onclick="show(19)">20. Physics IV: ML interatomic potentials</button><button class="navbtn" onclick="show(20)">21. Physics V: uncertainty propagation</button><button class="navbtn" onclick="show(21)">22. Physics VI: solving differential equations</button><button class="navbtn" onclick="show(22)">23. GPs in astronomy I: time domain</button><button class="navbtn" onclick="show(23)">24. Astro I.a: stellar activity</button><button class="navbtn" onclick="show(24)">25. Astro I.b: transit detrending</button><button class="navbtn" onclick="show(25)">26. Astro I.c: the damped random walk</button><button class="navbtn" onclick="show(26)">27. Astro I.d: celerite &amp; asteroseismology</button><button class="navbtn" onclick="show(27)">28. GPs in astronomy II: cosmology</button><button class="navbtn" onclick="show(28)">29. Astro II.a: reconstructing H(z)</button><button class="navbtn" onclick="show(29)">30. Astro II.b: photometric redshifts</button><button class="navbtn" onclick="show(30)">31. Astro II.c: emulating Boltzmann codes</button><button class="navbtn" onclick="show(31)">32. Astro II.d: primordial power spectrum</button><button class="navbtn" onclick="show(32)">33. Limitations &amp; extensions</button><button class="navbtn" onclick="show(33)">34. Limits I: scaling &amp; inducing points</button><button class="navbtn" onclick="show(34)">35. Limits II: GP classification</button><button class="navbtn" onclick="show(35)">36. Limits III: non-stationary noise</button><button class="navbtn" onclick="show(36)">37. Limits IV: deep &amp; multi-output GPs</button><button class="navbtn" onclick="show(37)">38. Software &amp; tools</button><button class="navbtn" onclick="show(38)">39. References &amp; further reading</button></div>
+  <section class="page" id="p0">
+<p class="kick">Physics &times; Machine Learning &mdash; distributions over functions</p>
+<h1>Gaussian processes<br>Putting error bars on functions</h1>
+<p class="sub">A Gaussian process (GP) is a probability distribution not over numbers but over <em>whole functions</em>. Give it a few noisy data points and it returns not a single best-fit curve but a full posterior: a mean function <em>and</em> a principled uncertainty band that widens where you have no data and pinches shut where you do. It is nonparametric, Bayesian, and analytic &mdash; the predictive equations are just linear algebra &mdash; and it is the natural language for interpolation, emulation and uncertainty quantification across physics and astronomy.</p>
+<div class="two" style="margin-top:18px">
+  <div class="mcard"><h3>The one idea</h3><p style="margin:6px 0">Any finite set of function values is jointly Gaussian. Fix the mean and the <b>covariance function</b> (the kernel), and conditioning on data is just the conditional of a multivariate Gaussian &mdash; done in closed form.</p></div>
+  <div class="mcard"><h3>What it delivers</h3><p style="margin:6px 0">A predictive mean with calibrated error bars, a marginal likelihood that tunes its own smoothness (Occam&rsquo;s razor built in), and a single framework that contains splines, kriging and ridge regression as special cases.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>What&rsquo;s inside</h3><p style="margin:6px 0">The intuition; the maths of conditioning; the kernel zoo; regression and hyperparameters; a worked example by hand; computation; connections; and dedicated tours of GPs in physics and in astronomy &mdash; all with <b>five live widgets</b> you can drive.</p></div>
+  <div class="mcard"><h3>Where it&rsquo;s used</h3><p style="margin:6px 0">Simulation emulators, Bayesian optimisation, stellar-activity detrending for exoplanets, AGN and time-domain variability, photometric redshifts, and non-parametric reconstruction of the cosmic expansion history.</p></div>
+</div>
+<p style="margin-top:16px;color:var(--mut)">Tabs above, or Prev / Next (or &larr; &rarr; arrow keys), move through the pages. Several pages carry <b>interactive animations</b> &mdash; drag the sliders, click to add data, hit play.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p1">
+<h2>A function is just a very long vector</h2>
+<p>Start with the humble multivariate Gaussian. A vector <b>f</b> = (f<sub>1</sub>,&hellip;,f<sub>n</sub>) is Gaussian if</p>
+<div class="eqbox">
+  <b>f</b> &sim; &Nscr;(<b>&mu;</b>, K), &nbsp;&nbsp; p(<b>f</b>) &prop; exp( &minus;&frac12;(<b>f</b>&minus;<b>&mu;</b>)<sup>T</sup> K<sup>&minus;1</sup>(<b>f</b>&minus;<b>&mu;</b>) )
+  <small>&mu;<sub>i</sub> is the mean of component i; K<sub>ij</sub> is the covariance between components i and j</small>
+</div>
+<p>Now imagine indexing the components not by an integer i but by a continuous input x: write f(x) instead of f<sub>i</sub>. The mean vector becomes a <b>mean function</b> m(x), and the covariance matrix becomes a <b>covariance function</b> k(x,x&prime;). A function evaluated on a grid of inputs is then just a Gaussian vector &mdash; a very long one, one entry per grid point.</p>
+<div class="eqbox">
+  f(x) &sim; &Gscr;&Pscr;( m(x), &nbsp; k(x,x&prime;) )
+  <small>a Gaussian <em>process</em>: any finite collection { f(x<sub>1</sub>),&hellip;,f(x<sub>n</sub>) } is a multivariate Gaussian</small>
+</div>
+<div class="take"><b>The definition.</b> A Gaussian process is a (possibly infinite) collection of random variables, any finite subset of which is jointly Gaussian. It is fully specified by two functions: the mean m(x) (usually taken to be 0) and the kernel k(x,x&prime;), which sets how strongly two points move together.</p></div>
+<p>Everything else &mdash; drawing sample functions, fitting data, quantifying uncertainty &mdash; follows from two facts about Gaussians: they are closed under <b>marginalisation</b> (ignore some components and the rest are still Gaussian) and under <b>conditioning</b> (fix some components and the rest are Gaussian with a shifted mean and shrunk covariance).</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p2">
+<h2>What does a &ldquo;distribution over functions&rdquo; look like?</h2>
+<p>Pick a grid of inputs, build the covariance matrix K<sub>ij</sub>=k(x<sub>i</sub>,x<sub>j</sub>), and draw <b>f</b>&nbsp;&sim;&nbsp;&Nscr;(0,K). Each draw is a sample <em>function</em>. The kernel controls what these functions look like &mdash; how wiggly (the <b>length scale</b> &ell;) and how tall (the <b>amplitude</b> &sigma;). Below, the samples are generated live by a Cholesky factorisation of K, exactly as a real GP library does it.</p>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Sample functions from a GP prior</h3>
+  <p class="hint" style="margin:4px 0 10px">Five random functions drawn from &Nscr;(0,K). Shorten &ell; and they wiggle faster; raise &sigma; and they get taller. Nothing is fitted &mdash; this is the prior belief, before any data.</p>
+  <canvas id="prC" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <label>length scale &ell; &nbsp;<input type="range" id="prL" min="0.08" max="2.2" step="0.01" value="0.7"><span class="val" id="prLv">0.70</span></label>
+    <label>amplitude &sigma; &nbsp;<input type="range" id="prS" min="0.3" max="2.2" step="0.01" value="1.0"><span class="val" id="prSv">1.00</span></label>
+    <button class="ibtn" id="prNew">&#8635; Resample</button>
+    <button class="ibtn alt" id="prAnim">&#9654; Animate</button>
+  </div>
+  <div class="readout" id="prOut"></div>
+</div>
+<p>Notice two things. Every sample passes through a cloud of typical height &sigma;, and neighbouring values are correlated over a distance &ell;. The <em>envelope</em> (the grey band at &plusmn;2&sigma;) is the marginal uncertainty at each point &mdash; constant here, because we have no data yet.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p3">
+<h2>The kernel <em>is</em> the model</h2>
+<p>Choosing a GP is choosing a covariance function. It encodes every assumption you make about the unknown function &mdash; its smoothness, periodicity, and characteristic scales. A few standard kernels (with r = |x&minus;x&prime;|):</p>
+<div class="eqbox" style="font-size:1.0rem">
+  RBF: &sigma;<sup>2</sup>e<sup>&minus;r<sup>2</sup>/2&ell;<sup>2</sup></sup> &nbsp;&bull;&nbsp;
+  Mat&eacute;rn-3/2: &sigma;<sup>2</sup>(1+&radic;3 r/&ell;)e<sup>&minus;&radic;3 r/&ell;</sup> &nbsp;&bull;&nbsp;
+  Exponential: &sigma;<sup>2</sup>e<sup>&minus;r/&ell;</sup> &nbsp;&bull;&nbsp;
+  Periodic: &sigma;<sup>2</sup>e<sup>&minus;2sin<sup>2</sup>(&pi;r/p)/&ell;<sup>2</sup></sup>
+  <small>the squared-exponential (RBF) gives infinitely smooth functions; Mat&eacute;rn is rougher; exponential is the roughest (Markov); periodic repeats with period p</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Kernel explorer &mdash; pick a covariance, see its functions</h3>
+  <p class="hint" style="margin:4px 0 10px">Top: three prior samples for the chosen kernel. Bottom: the kernel itself, k(0,r) &mdash; how correlation falls with separation. The smoothness of the samples is dictated by the shape of k near r=0.</p>
+  <canvas id="kkC" width="920" height="360"></canvas>
+  <div class="ctrls">
+    <button class="ibtn on" id="kkRBF">RBF (smooth)</button>
+    <button class="ibtn alt" id="kkM32">Mat&eacute;rn-3/2</button>
+    <button class="ibtn alt" id="kkExp">Exponential</button>
+    <button class="ibtn alt" id="kkPer">Periodic</button>
+    <label style="margin-left:6px">&ell; &nbsp;<input type="range" id="kkL" min="0.1" max="2.0" step="0.01" value="0.6"><span class="val" id="kkLv">0.60</span></label>
+    <button class="ibtn alt" id="kkNew">&#8635; New</button>
+  </div>
+  <div class="readout" id="kkOut"></div>
+</div>
+<h3>What controls smoothness: the Mat&eacute;rn family</h3>
+<p>The Mat&eacute;rn kernel has a smoothness parameter &nu;: the sample functions are &lceil;&nu;&rceil;&minus;1 times differentiable. &nu;=1/2 is the exponential (continuous but nowhere differentiable &mdash; a Markov process); &nu;=3/2 and 5/2 are the popular &ldquo;once&rdquo; and &ldquo;twice differentiable&rdquo; choices used when the RBF&rsquo;s infinite smoothness is unrealistically strong; &nu;&rarr;&infin; recovers the RBF. Choosing &nu; is choosing how rough you believe the truth to be &mdash; a real modelling decision, not a technicality.</p>
+<h3>Kernels are Lego</h3>
+<p>Sums and products of valid kernels are valid kernels (a sum is an OR of explanations, a product an AND), which is how you build structured models:</p>
+<ul>
+  <li><code>periodic &times; RBF</code> &rarr; a <b>quasi-periodic</b> signal that repeats but slowly drifts &mdash; exactly the stellar-activity kernel.</li>
+  <li><code>long-RBF + short-RBF</code> &rarr; a slow trend <em>plus</em> fast fluctuations, each with its own scale, cleanly separated.</li>
+  <li><code>RBF + constant + white</code> &rarr; signal, an unknown offset, and independent measurement noise &mdash; the everyday regression kernel.</li>
+  <li><b>ARD</b> (automatic relevance determination): give each input dimension its own length scale &ell;<sub>d</sub>; the fitted &ell;<sub>d</sub> reveal which inputs matter (large &ell;<sub>d</sub> &rArr; that feature is irrelevant), a built-in feature selection.</li>
+</ul>
+<p>Two more staples: the <b>rational quadratic</b> &sigma;<sup>2</sup>(1+r<sup>2</sup>/2&alpha;&ell;<sup>2</sup>)<sup>&minus;&alpha;</sup> is an infinite scale-mixture of RBFs (good when several length scales coexist), and the <b>linear</b> kernel &sigma;<sup>2</sup>x x&prime; is non-stationary and reproduces Bayesian linear regression. The design of the kernel is where the physics goes in &mdash; it is the single most important modelling choice in a GP.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p4">
+<h2>Fitting data is just conditioning a Gaussian</h2>
+<p>Here is the whole of GP regression. We have training inputs X with noisy outputs <b>y</b> = f(X)+&epsilon;, &epsilon;&sim;&Nscr;(0,&sigma;<sub>n</sub><sup>2</sup>), and we want f at test inputs X<sub>&lowast;</sub>. Because training and test values are <em>jointly</em> Gaussian,</p>
+<div class="eqbox">
+  &#10077; <b>y</b>, <b>f</b><sub>&lowast;</sub> &#10078; &sim; &Nscr;&#10077; 0, &nbsp;
+  [ K(X,X)+&sigma;<sub>n</sub><sup>2</sup>I &nbsp; K(X,X<sub>&lowast;</sub>) ; &nbsp; K(X<sub>&lowast;</sub>,X) &nbsp; K(X<sub>&lowast;</sub>,X<sub>&lowast;</sub>) ] &#10078;
+  <small>the joint prior over observed data and unknown test values</small>
+</div>
+<p>Applying the Gaussian conditioning formula gives the posterior over f<sub>&lowast;</sub> directly &mdash; a mean and a covariance, in closed form:</p>
+<div class="eqbox">
+  <b>&fnof;&#773;</b><sub>&lowast;</sub> = K(X<sub>&lowast;</sub>,X)&nbsp;[K+&sigma;<sub>n</sub><sup>2</sup>I]<sup>&minus;1</sup><b>y</b>
+</div>
+<div class="eqbox">
+  cov(<b>f</b><sub>&lowast;</sub>) = K(X<sub>&lowast;</sub>,X<sub>&lowast;</sub>) &minus; K(X<sub>&lowast;</sub>,X)&nbsp;[K+&sigma;<sub>n</sub><sup>2</sup>I]<sup>&minus;1</sup>K(X,X<sub>&lowast;</sub>)
+  <small>the predictive mean is a weighted average of the data; the variance is the prior variance <em>minus</em> what the data explain</small>
+</div>
+<div class="take"><b>Read the two lines.</b> The mean is linear in <b>y</b> &mdash; a smoothing of the observations by kernel weights. The covariance does <em>not</em> depend on <b>y</b> at all: uncertainty is set purely by <em>where</em> you sampled, shrinking near data and returning to the prior far from it. This is the signature of a GP: honest error bars that know what they don&rsquo;t know.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p5">
+<h2>Click to teach it</h2>
+<p>The predictive equations from the previous page, evaluated live. Click on the panel to drop data points; the posterior mean (blue) and its &plusmn;2&sigma; band (shaded) update instantly, and a few faint <em>posterior samples</em> show the functions still consistent with what you have told it. Watch the band pinch at every point and balloon in the gaps.</p>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Interactive GP regression</h3>
+  <p class="hint" style="margin:4px 0 10px">Click to add points. The band is the model&rsquo;s honest uncertainty; the dashed lines are posterior sample functions. Tune the length scale, the amplitude and the observation noise, and watch the fit and the log marginal likelihood respond.</p>
+  <canvas id="rgC" width="920" height="360" style="cursor:crosshair"></canvas>
+  <div class="ctrls">
+    <label>&ell; &nbsp;<input type="range" id="rgL" min="0.15" max="3.0" step="0.01" value="0.9"><span class="val" id="rgLv">0.90</span></label>
+    <label>&sigma; &nbsp;<input type="range" id="rgS" min="0.3" max="2.5" step="0.01" value="1.2"><span class="val" id="rgSv">1.20</span></label>
+    <label>noise &sigma;<sub>n</sub> &nbsp;<input type="range" id="rgN" min="0.01" max="0.6" step="0.01" value="0.1"><span class="val" id="rgNv">0.10</span></label>
+    <button class="ibtn" id="rgSamp">&#8635; New samples</button>
+    <button class="ibtn alt" id="rgDemo">Load a curve</button>
+    <button class="ibtn alt" id="rgClr">Clear</button>
+  </div>
+  <div class="readout" id="rgOut"></div>
+</div>
+<p>Try this: load a curve, then shorten &ell; until the mean overfits (chases every point) and lengthen it until it underfits (too stiff). Somewhere in between the log marginal likelihood is maximal &mdash; that is the next page.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p6">
+<h2>The marginal likelihood tunes the model itself</h2>
+<p>The kernel has hyperparameters &mdash; length scale &ell;, amplitude &sigma;, noise &sigma;<sub>n</sub>. We do not fit them by cross-validation; the GP scores them with the <b>marginal likelihood</b> (the evidence), the probability of the data with the function integrated out:</p>
+<div class="eqbox">
+  log p(<b>y</b>|&theta;) = &minus;&frac12;<b>y</b><sup>T</sup>[K<sub>&theta;</sub>+&sigma;<sub>n</sub><sup>2</sup>I]<sup>&minus;1</sup><b>y</b> &minus; &frac12;log|K<sub>&theta;</sub>+&sigma;<sub>n</sub><sup>2</sup>I| &minus; (n/2)log2&pi;
+  <small>data-fit term &nbsp;&minus;&nbsp; complexity penalty &nbsp;&minus;&nbsp; constant</small>
+</div>
+<p>The two terms fight. The first rewards fitting the data; the second, the log-determinant, <b>penalises complexity</b> &mdash; a short length scale makes K flexible but raises |K| and is charged for it. Maximising the sum automatically finds the smoothness the data actually support: <b>Occam&rsquo;s razor, quantified</b>.</p>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Occam&rsquo;s razor live &mdash; slide the length scale</h3>
+  <p class="hint" style="margin:4px 0 10px">A fixed data set. Left: the GP fit at the current &ell;. Right: log marginal likelihood versus &ell;, with your position marked. Too small &rarr; overfits and is penalised; too large &rarr; underfits; the peak is the evidence-optimal &ell;.</p>
+  <canvas id="mlC" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <label>length scale &ell; &nbsp;<input type="range" id="mlL" min="0.08" max="2.6" step="0.01" value="0.5"><span class="val" id="mlLv">0.50</span></label>
+    <button class="ibtn" id="mlOpt">&#9737; Jump to optimum</button>
+    <button class="ibtn alt" id="mlNew">&#8635; New data</button>
+  </div>
+  <div class="readout" id="mlOut"></div>
+</div>
+<p>In practice one maximises log&nbsp;p(<b>y</b>|&theta;) over all hyperparameters by gradient ascent (the gradients are analytic). The evidence can be multimodal &mdash; a short-&ell; &ldquo;explain-it-all-as-noise&rdquo; solution and a long-&ell; &ldquo;smooth-signal&rdquo; solution &mdash; which is itself diagnostic.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p7">
+<h2>Three points, one prediction &mdash; all the numbers</h2>
+<p>Take the RBF kernel k(x,x&prime;)=exp(&minus;(x&minus;x&prime;)<sup>2</sup>/2) (so &ell;=&sigma;=1) with a little noise &sigma;<sub>n</sub><sup>2</sup>=0.01. Three observations:</p>
+<div class="eqbox" style="font-size:1.0rem">
+  (x<sub>1</sub>,y<sub>1</sub>)=(&minus;2,&minus;1), &nbsp; (x<sub>2</sub>,y<sub>2</sub>)=(0, 2), &nbsp; (x<sub>3</sub>,y<sub>3</sub>)=(2,&minus;1)
+</div>
+<p>Build the covariance matrix. With k(x<sub>i</sub>,x<sub>j</sub>)=exp(&minus;(x<sub>i</sub>&minus;x<sub>j</sub>)<sup>2</sup>/2): k(&minus;2,0)=e<sup>&minus;2</sup>&asymp;0.135, k(&minus;2,2)=e<sup>&minus;8</sup>&asymp;0.0003, k(0,2)&asymp;0.135, so</p>
+<div class="eqbox" style="font-size:0.98rem">
+  K+&sigma;<sub>n</sub><sup>2</sup>I = [ 1.01 &nbsp; 0.135 &nbsp; 0.000 ; &nbsp; 0.135 &nbsp; 1.01 &nbsp; 0.135 ; &nbsp; 0.000 &nbsp; 0.135 &nbsp; 1.01 ]
+</div>
+<p>Solve (K+&sigma;<sub>n</sub><sup>2</sup>I)<b>&alpha;</b>=<b>y</b> for the weight vector:  <b>&alpha;</b> &asymp; (&minus;1.30,&nbsp;2.33,&nbsp;&minus;1.30)<sup>T</sup>. Now predict at x<sub>&lowast;</sub>=1. The test-to-train covariances are k<sub>&lowast;</sub>=(e<sup>&minus;4.5</sup>,e<sup>&minus;0.5</sup>,e<sup>&minus;0.5</sup>)&asymp;(0.011,0.607,0.607), so</p>
+<div class="eqbox">
+  &fnof;&#773;(1) = k<sub>&lowast;</sub><sup>T</sup><b>&alpha;</b> &asymp; <span class="res">0.61</span>, &nbsp;&nbsp;
+  var(1) = 1 &minus; k<sub>&lowast;</sub><sup>T</sup>(K+&sigma;<sub>n</sub><sup>2</sup>I)<sup>&minus;1</sup>k<sub>&lowast;</sub> &asymp; 0.35 &nbsp;&rArr;&nbsp; &sigma;(1) &asymp; <span class="res">0.59</span>
+  <small>a prediction of 0.61 &plusmn; 0.59 at x=1 &mdash; pulled between the y=2 point at x=0 and the y=&minus;1 point at x=2</small>
+</div>
+<div class="take"><b>That is the entire algorithm.</b> Build K, solve one linear system for <b>&alpha;</b> (the &ldquo;training&rdquo;), then every prediction is a dot product k<sub>&lowast;</sub><sup>T</sup><b>&alpha;</b> for the mean and one more solve for the variance. The interactive widgets on the previous pages run exactly this, just with more points and a Cholesky factorisation for stability.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p8">
+<h2>Three one-line calculations that build the intuition</h2>
+<p>All use the RBF kernel k(x,x&prime;)=&sigma;<sup>2</sup>e<sup>&minus;(x&minus;x&prime;)<sup>2</sup>/2&ell;<sup>2</sup></sup> with &ell;=&sigma;=1 and zero prior mean. With a single observation the predictive formulas collapse to something you can evaluate in your head.</p>
+
+<h3>Example 1 &mdash; one noiseless point: interpolation</h3>
+<p>Observe f(0)=1.5 <em>exactly</em> (&sigma;<sub>n</sub>=0). The predictive equations reduce to just the two kernel values k(x,0) and k(0,0)=1:</p>
+<div class="eqbox">
+  &fnof;&#773;(x)= [k(x,0)/k(0,0)]&times;1.5 = 1.5&thinsp;e<sup>&minus;x<sup>2</sup>/2</sup>, &nbsp;&nbsp;
+  var(x)= k(0,0) &minus; k(x,0)<sup>2</sup>/k(0,0) = 1 &minus; e<sup>&minus;x<sup>2</sup></sup>
+  <small>evaluate at a few x: (0)&rarr;1.50&plusmn;0.00, (1)&rarr;0.91&plusmn;0.79, (2)&rarr;0.20&plusmn;0.98, (&infin;)&rarr;0.00&plusmn;1.00</small>
+</div>
+<p>Read it off: at the data point the mean is exactly 1.5 and the variance is <b>zero</b> &mdash; a noiseless GP interpolates. Move away and the prediction decays back to the prior mean 0 over a distance &ell;, while the uncertainty grows back to the prior &sigma;=1. That single line is the whole behaviour of a GP in miniature.</p>
+
+<h3>Example 2 &mdash; one <em>noisy</em> point: shrinkage (this is ridge regression)</h3>
+<p>Now allow observation noise &sigma;<sub>n</sub><sup>2</sup>=0.25. The denominator picks up the noise:</p>
+<div class="eqbox">
+  &fnof;&#773;(x)= [k(x,0)/(k(0,0)+&sigma;<sub>n</sub><sup>2</sup>)]&times;1.5 = 1.2&thinsp;e<sup>&minus;x<sup>2</sup>/2</sup>, &nbsp;&nbsp;
+  var(x)= 1 &minus; k(x,0)<sup>2</sup>/1.25
+  <small>at x=0: mean=1.2 (not 1.5!) and var=1&minus;1/1.25=0.20, so &sigma;(0)=0.45 &mdash; the point is no longer hit exactly</small>
+</div>
+<p>Two things changed. The estimate at the data point is <b>shrunk</b> from 1.5 toward the prior mean 0 (to 1.2), because the GP now distrusts a noisy measurement; and the variance there is no longer zero. This shrinkage is <em>exactly</em> the ridge-regression / James&ndash;Stein effect &mdash; the noise plays the role of the ridge penalty.</p>
+
+<h3>Example 3 &mdash; two points: correlation carries information</h3>
+<p>Observe f(0)=1 and f(0.5)=1.2 (noiseless). Since k(0,0.5)=e<sup>&minus;0.125</sup>=0.882, the covariance and its solution are</p>
+<div class="eqbox" style="font-size:1.0rem">
+  K = [ 1 &nbsp; 0.882 ; &nbsp; 0.882 &nbsp; 1 ], &nbsp;&nbsp;
+  <b>&alpha;</b> = K<sup>&minus;1</sup><b>y</b> = (&minus;0.27, &nbsp;1.44)<sup>T</sup>
+</div>
+<p>Predict at x<sub>&lowast;</sub>=1, where k<sub>&lowast;</sub>=(e<sup>&minus;0.5</sup>,e<sup>&minus;0.125</sup>)=(0.607,0.882):</p>
+<div class="eqbox">
+  &fnof;&#773;(1)=k<sub>&lowast;</sub><sup>T</sup><b>&alpha;</b>&asymp;<span class="res">1.11</span>, &nbsp;&nbsp; &sigma;(1)&asymp;<span class="res">0.30</span>
+  <small>the two points define a gentle upward slope, and the GP extrapolates it a little way &mdash; then reverts to the prior mean beyond &sim;&ell; from the data</small>
+</div>
+<div class="take"><b>The pattern in all three.</b> The mean is a kernel-weighted blend of the observations; noiseless data are hit exactly and noisy data are shrunk; the variance depends only on <em>where</em> you sampled, collapsing at data and returning to the prior far away. Everything the widgets do is these formulas with more points.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p9">
+<h2>The cost, and how to beat it</h2>
+<p>The bottleneck is the term [K+&sigma;<sub>n</sub><sup>2</sup>I]<sup>&minus;1</sup>. In practice one never inverts; one takes the <b>Cholesky</b> factor K+&sigma;<sub>n</sub><sup>2</sup>I=LL<sup>T</sup> and solves triangular systems. That costs O(n<sup>3</sup>) time and O(n<sup>2</sup>) memory &mdash; fine for n up to a few thousand, prohibitive at n=10<sup>5</sup>+.</p>
+<div class="eqbox" style="font-size:1.0rem">
+  <b>&alpha;</b> = L<sup>T</sup>\(L\<b>y</b>), &nbsp; log|K+&sigma;<sub>n</sub><sup>2</sup>I| = 2&sum;<sub>i</sub>log L<sub>ii</sub>
+  <small>train once (the factorisation), then predictions and the marginal likelihood are cheap</small>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Sparse / inducing points</h3><p style="margin:6px 0">Represent the whole data set by m&nbsp;&Lscr;&nbsp;n <b>inducing points</b> <b>u</b>=f(Z) and only ever handle the m&times;m covariance. FITC (Snelson&ndash;Ghahramani 2006) does this with an approximate likelihood; the variational approach (Titsias 2009) instead maximises a rigorous <em>lower bound</em> on the marginal likelihood, choosing Z to lose as little information as possible. Cost drops from O(n<sup>3</sup>) to <b>O(nm<sup>2</sup>)</b>, and stochastic variational GPs (Hensman 2013) push it to mini-batches and millions of points &mdash; the workhorse for large catalogues.</p></div>
+  <div class="mcard"><h3>Structured kernels</h3><p style="margin:6px 0">When the covariance has special structure the solves get cheap. On a regular grid K is <b>Toeplitz</b>/Kronecker and matrix&ndash;vector products are O(n log n) by FFT. The <code>celerite</code> family uses <b>semiseparable</b> kernels (sums of damped cosines) whose Cholesky is exactly <b>O(n)</b> in 1-D &mdash; the breakthrough that made GP fits to million-epoch light curves and asteroseismic time series routine rather than heroic.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Iterative &amp; GPU</h3><p style="margin:6px 0">Avoid the factorisation entirely: solve (K+&sigma;<sub>n</sub><sup>2</sup>I)<b>&alpha;</b>=<b>y</b> by <b>conjugate gradients</b>, needing only fast matrix&ndash;vector products, and estimate the log-determinant with stochastic Lanczos quadrature (Hutchinson trace estimator). With kernel-matrix&ndash;vector products computed on the fly on a GPU (KeOps, <code>GPyTorch</code>), exact GPs reach 10<sup>5</sup>&ndash;10<sup>6</sup> points without ever forming K. Preconditioning (a partial pivoted Cholesky) makes CG converge in a handful of iterations.</p></div>
+  <div class="mcard"><h3>Conditioning &amp; the jitter</h3><p style="margin:6px 0">When two inputs nearly coincide, or &ell; is large, K becomes numerically singular (its condition number explodes) and the Cholesky fails. A tiny diagonal <b>jitter</b> &mdash; add 10<sup>&minus;6</sup>&hellip;10<sup>&minus;8</sup> to the diagonal, formally a minute white-noise term &mdash; restores positive-definiteness at negligible cost. It is exactly what these in-browser widgets add before every factorisation. Always work with the Cholesky factor, never an explicit inverse.</p></div>
+</div>
+<div class="take"><b>The training/prediction split.</b> Everything expensive &mdash; the O(n<sup>3</sup>) Cholesky and the O(n<sup>2</sup>) storage &mdash; happens <em>once</em>. Afterwards each posterior mean is an O(n) dot product and each variance an O(n<sup>2</sup>) solve, and the marginal likelihood and its gradients come almost for free from the same factor, which is why hyperparameter optimisation is cheap.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p10">
+<h2>What GPs contain as special cases</h2>
+<div class="two">
+  <div class="mcard"><h3>Linear / ridge regression</h3><p style="margin:6px 0">Bayesian linear regression f(x)=<b>w</b><sup>T</sup>&phi;(x) with a Gaussian prior <b>w</b>&sim;&Nscr;(0,&Sigma;<sub>p</sub>) is a GP with kernel k(x,x&prime;)=&phi;(x)<sup>T</sup>&Sigma;<sub>p</sub>&phi;(x&prime;). Its posterior mean is the <b>ridge</b> estimate <b>&fnof;&#773;</b>=&Phi;(&Phi;<sup>T</sup>&Phi;+&lambda;I)<sup>&minus;1</sup>&hellip; = the kernel-ridge solution K(K+&lambda;I)<sup>&minus;1</sup><b>y</b>, with &lambda;=&sigma;<sub>n</sub><sup>2</sup>. The <b>kernel trick</b> then lets &phi; be infinite-dimensional (RBF = infinitely many Gaussian bumps) while you only ever compute the n&times;n matrix K. The GP gives the same point estimate <em>and</em> a variance ridge never provides.</p></div>
+  <div class="mcard"><h3>Splines &amp; kriging</h3><p style="margin:6px 0">The cubic <b>smoothing spline</b> that minimises &sum;(y<sub>i</sub>&minus;f(x<sub>i</sub>))<sup>2</sup>+&lambda;&int;f&Prime;(x)<sup>2</sup>dx is exactly the posterior mean of a GP whose kernel is that of the (twice-)integrated Wiener process; the roughness penalty <em>is</em> the log-prior. <b>Kriging</b> in geostatistics is GP regression under another name (Matheron, 1960s): &ldquo;ordinary kriging&rdquo; = GP with unknown constant mean, and the kriging <em>variance map</em> is the GP predictive variance. Radial-basis-function and thin-plate-spline interpolation are the noiseless limits.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>The neural-network limit</h3><p style="margin:6px 0">Neal (1996) proved that a one-hidden-layer network with i.i.d. random weights and infinitely many units converges to a GP by the central limit theorem; the induced kernel is computable in closed form (the <b>arccosine kernel</b> for ReLU). The same holds layer-by-layer for deep nets &mdash; the <b>NNGP</b> kernel &mdash; and the training dynamics of a wide net under gradient descent are governed by the <b>Neural Tangent Kernel</b> (Jacot 2018), so a wide network <em>is</em> kernel regression. GPs are thus the analytic lens on deep learning&rsquo;s infinite-width limit.</p></div>
+  <div class="mcard"><h3>Random fields &amp; the power spectrum</h3><p style="margin:6px 0">A GP over 2- or 3-D space <em>is</em> a Gaussian random field &mdash; the primordial density field of cosmology. The kernel is the real-space two-point correlation function &xi;(r), and by the <b>Wiener&ndash;Khinchin</b> theorem its Fourier transform is the power spectrum P(k). <b>Bochner&rsquo;s theorem</b> makes this exact: a stationary function is a valid covariance <em>iff</em> its Fourier transform is a non-negative measure &mdash; the spectral density. So &ldquo;choose a kernel&rdquo; and &ldquo;choose a power spectrum&rdquo; are the same act, and the RBF kernel is a Gaussian P(k).</p></div>
+</div>
+<div class="take"><b>One framework, many names.</b> Ridge regression, kernel machines, splines, kriging, random fields and wide neural networks are all the same Gaussian object viewed through different kernels &mdash; and, via Bochner, through different power spectra. The next four pages take each in turn, with a worked example and a live animation.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p11">
+<h2>The linear kernel <em>is</em> Bayesian linear regression</h2>
+<p>Take the model f(x)=w<sub>0</sub>+w<sub>1</sub>x with a Gaussian prior on the weights, <b>w</b>&sim;&Nscr;(0,&sigma;<sub>p</sub><sup>2</sup>I). Marginalising <b>w</b>, the function values are Gaussian with covariance</p>
+<div class="eqbox">
+  k(x,x&prime;)=&sigma;<sub>p</sub><sup>2</sup>(1+x x&prime;)
+  <small>the &ldquo;linear&rdquo; kernel &mdash; a GP whose sample functions are straight lines</small>
+</div>
+<h3>Worked example</h3>
+<p>Fit four points (&minus;1,&minus;0.8), (0,0.2), (1,1.1), (2,1.6). With design matrix X (columns [1,x]) and noise &sigma;<sub>n</sub><sup>2</sup>, the posterior over <b>w</b> is Gaussian with</p>
+<div class="eqbox" style="font-size:1.0rem">
+  &Sigma;<sub>post</sub>=(&sigma;<sub>n</sub><sup>&minus;2</sup>X<sup>T</sup>X+&sigma;<sub>p</sub><sup>&minus;2</sup>I)<sup>&minus;1</sup>, &nbsp;
+  <b>&mu;</b><sub>post</sub>=&sigma;<sub>n</sub><sup>&minus;2</sup>&Sigma;<sub>post</sub>X<sup>T</sup><b>y</b>
+</div>
+<p>which is <em>exactly</em> the <b>ridge</b> estimate with &lambda;=&sigma;<sub>n</sub><sup>2</sup>/&sigma;<sub>p</sub><sup>2</sup>. For these numbers the posterior mean line is y&asymp;0.12+0.81x. But the GP gives more than a line: the predictive variance at input x is</p>
+<div class="eqbox">
+  var(x)=[1,x]&thinsp;&Sigma;<sub>post</sub>&thinsp;[1,x]<sup>T</sup> = &Sigma;<sub>00</sub>+2x&Sigma;<sub>01</sub>+x<sup>2</sup>&Sigma;<sub>11</sub>
+  <small>quadratic in x &mdash; the error band is a <b>funnel</b>, narrowest at the data centroid and widening as you extrapolate</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Posterior over lines &mdash; click to add data</h3>
+  <p class="hint" style="margin:4px 0 10px">Each faint line is a sample from the posterior over (w<sub>0</sub>,w<sub>1</sub>); blue is the mean (the ridge fit); the shaded band is &plusmn;2&sigma;. Watch it <b>funnel</b> outward &mdash; the honest uncertainty ordinary least-squares hides behind flat error bars.</p>
+  <canvas id="lnC" width="920" height="330" style="cursor:crosshair"></canvas>
+  <div class="ctrls">
+    <label>prior width &sigma;<sub>p</sub> &nbsp;<input type="range" id="lnSp" min="0.4" max="4" step="0.05" value="1.5"><span class="val" id="lnSpv">1.50</span></label>
+    <label>noise &sigma;<sub>n</sub> &nbsp;<input type="range" id="lnN" min="0.05" max="0.8" step="0.01" value="0.20"><span class="val" id="lnNv">0.20</span></label>
+    <button class="ibtn alt" id="lnDemo">Load 4 points</button>
+    <button class="ibtn" id="lnNew">&#8635; Resample lines</button>
+    <button class="ibtn alt" id="lnClr">Clear</button>
+  </div>
+  <div class="readout" id="lnOut"></div>
+</div>
+<div class="take"><b>The point.</b> Bayesian linear regression is the simplest GP. The kernel trick then swaps the two features [1,x] for infinitely many (an RBF is infinitely many Gaussian bumps), and everything &mdash; the ridge mean, the funnel variance &mdash; carries straight over.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p12">
+<h2>Smoothing splines and kriging are GPs in disguise</h2>
+<p>The cubic <b>smoothing spline</b> is the function minimising a fit term plus a roughness penalty:</p>
+<div class="eqbox">
+  &fnof;&#770; = argmin<sub>f</sub> &sum;<sub>i</sub>(y<sub>i</sub>&minus;f(x<sub>i</sub>))<sup>2</sup> + &lambda;&int; f&Prime;(x)<sup>2</sup> dx
+  <small>data fit &nbsp;+&nbsp; &lambda; &times; wiggliness</small>
+</div>
+<h3>Worked correspondence</h3>
+<p>Compare with the GP posterior, whose negative log density is &frac12;&sigma;<sub>n</sub><sup>&minus;2</sup>&sum;(y<sub>i</sub>&minus;f<sub>i</sub>)<sup>2</sup>+&frac12;<b>f</b><sup>T</sup>K<sup>&minus;1</sup><b>f</b>. Term by term:</p>
+<div class="eqbox" style="font-size:1.0rem">
+  &lambda;&int;f&Prime;<sup>2</sup>dx &nbsp;&harr;&nbsp; <b>f</b><sup>T</sup>K<sup>&minus;1</sup><b>f</b> &nbsp;&nbsp;(the roughness penalty <em>is</em> the log-prior)
+</div>
+<p>The roughness penalty &int;f&Prime;<sup>2</sup> corresponds to a specific kernel (that of the twice-integrated Wiener process); the spline is then the <b>posterior mean of that GP</b>, and &lambda;=&sigma;<sub>n</sub><sup>2</sup>. The <b>representer theorem</b> guarantees the minimiser is a sum of kernel functions centred on the data &mdash; which is precisely &fnof;&#773;(x)=k<sub>&lowast;</sub><sup>T</sup>(K+&lambda;I)<sup>&minus;1</sup><b>y</b>. And <b>kriging</b>, the geostatistician&rsquo;s interpolator (Matheron, 1960s), is this same GP regression; its &ldquo;estimation-variance map&rdquo; is the GP predictive variance.</p>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">One knob, two limits &mdash; slide the smoothing &lambda;</h3>
+  <p class="hint" style="margin:4px 0 10px">The blue curve is simultaneously the smoothing spline and the GP posterior mean of the same fixed data. As &lambda;&rarr;0 it interpolates every point (a rough spline); as &lambda; grows it stiffens toward a straight line. The band is the kriging variance.</p>
+  <canvas id="spC2" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <label>smoothing &lambda; &nbsp;<input type="range" id="spLam" min="0.001" max="1.2" step="0.001" value="0.05"><span class="val" id="spLamv">0.050</span></label>
+    <button class="ibtn alt" id="spNew2">&#8635; New data</button>
+  </div>
+  <div class="readout" id="spOut2"></div>
+</div>
+<div class="take"><b>The point.</b> &ldquo;Fit a smoothing spline&rdquo;, &ldquo;krige the field&rdquo; and &ldquo;take a GP posterior mean&rdquo; are three names for one computation. The GP viewpoint adds what the other two lack: a full posterior, hence calibrated error bars and a marginal likelihood to choose &lambda; itself.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p13">
+<h2>An infinitely wide neural network <em>is</em> a Gaussian process</h2>
+<p>Consider a one-hidden-layer network with M units, f(x)=(1/&radic;M)&sum;<sub>j</sub>v<sub>j</sub>&thinsp;h(w<sub>j</sub>x+b<sub>j</sub>), with all weights drawn i.i.d. from a zero-mean prior. This is Neal&rsquo;s celebrated observation (1996).</p>
+<h3>Worked argument</h3>
+<p>The output is a sum of M i.i.d. random terms, so by the <b>central limit theorem</b> it becomes Gaussian as M&rarr;&infin;. Its mean is 0 and its covariance is independent of M:</p>
+<div class="eqbox">
+  Cov(f(x),f(x&prime;)) = &#120124;<sub>w,b</sub>[ h(wx+b)&thinsp;h(wx&prime;+b) ] &equiv; k(x,x&prime;)
+  <small>for ReLU units this integral is the closed-form <b>arccosine kernel</b>; the network output is a GP sample</small>
+</div>
+<p>So a wide random network <em>draws functions from a GP</em> with a specific kernel &mdash; the <b>NNGP</b> kernel. Stacking layers composes the kernel; and the way a wide network <em>trains</em> under gradient descent is governed by a related fixed kernel, the <b>Neural Tangent Kernel</b> (Jacot 2018), so a wide network learning by gradient descent is doing kernel regression.</p>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Watch random networks converge to a GP</h3>
+  <p class="hint" style="margin:4px 0 10px">Each blue line is one random network. The grey band is the empirical mean &plusmn;2&sigma; over many of them; the red histogram is the distribution of f(0). Widen the network with the slider: few units give lumpy, non-Gaussian functions; many units give a smooth Gaussian band and a bell-shaped histogram &mdash; a GP.</p>
+  <canvas id="nnC" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <label>width M &nbsp;<input type="range" id="nnM" min="1" max="60" step="1" value="3"><span class="val" id="nnMv">3</span></label>
+    <button class="ibtn" id="nnNew">&#8635; Resample</button>
+    <button class="ibtn alt" id="nnAnim">&#9654; Animate</button>
+  </div>
+  <div class="readout" id="nnOut"></div>
+</div>
+<div class="take"><b>The point.</b> The infinite-width limit turns deep networks into GPs, giving an analytic handle on why over-parametrised nets generalise and linking modern deep learning back to kernel methods.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p14">
+<h2>A kernel is a power spectrum &mdash; Bochner&rsquo;s theorem</h2>
+<p>A GP over space is a <b>Gaussian random field</b> &mdash; the object of the primordial density field in cosmology. For a stationary field the kernel depends only on separation, k(r), and two theorems tie it to the power spectrum:</p>
+<div class="eqbox">
+  <b>Bochner:</b> k(r) is a valid covariance &hArr; its Fourier transform S(k)&ge;0. &nbsp;&nbsp;
+  <b>Wiener&ndash;Khinchin:</b> P(k)=&int; k(r)&thinsp;e<sup>&minus;i k r</sup> dr
+  <small>the spectral density S(k)=P(k) is non-negative &mdash; that is exactly what makes k a legal kernel</small>
+</div>
+<h3>Worked pair</h3>
+<p>The Fourier transform of a Gaussian is a Gaussian, so the RBF kernel and its spectrum are a matched pair:</p>
+<div class="eqbox">
+  k(r)=e<sup>&minus;r<sup>2</sup>/2&ell;<sup>2</sup></sup> &nbsp;&harr;&nbsp; P(k) &prop; e<sup>&minus;&ell;<sup>2</sup>k<sup>2</sup>/2</sup>
+  <small>short correlation &ell; &rArr; <b>broad</b> spectrum &rArr; power at high k &rArr; small-scale structure; long &ell; &rArr; narrow spectrum &rArr; large blobs</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Kernel &harr; spectrum, live</h3>
+  <p class="hint" style="margin:4px 0 10px">Left: a 2-D Gaussian random field (a GP over the plane), flowing as its Fourier modes drift. Right: the power spectrum P(k) it is drawn from. Change the correlation length and watch both respond in lock-step &mdash; Bochner&rsquo;s theorem in motion.</p>
+  <canvas id="fd2C" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>correlation length &nbsp;<input type="range" id="fd2L" min="0.04" max="0.32" step="0.005" value="0.13"><span class="val" id="fd2Lv">0.13</span></label>
+    <button class="ibtn" id="fd2Play">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="fd2New">&#8635; New field</button>
+  </div>
+  <div class="readout" id="fd2Out"></div>
+</div>
+<div class="take"><b>The point.</b> &ldquo;Choose a kernel&rdquo; and &ldquo;choose a power spectrum&rdquo; are the same act. The correlation function a cosmologist measures <em>is</em> a GP kernel, and its Fourier transform is the P(k) that structure-formation theory predicts &mdash; the deepest instance of the GP idea in physics.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p15">
+<h2>Where GPs earn their keep in physics</h2>
+<div class="two">
+  <div class="mcard"><h3>Emulators / surrogates</h3><p style="margin:6px 0">A first-principles simulation &mdash; lattice QCD, a climate model, a hydro or N-body run &mdash; may cost days per evaluation, far too slow for an MCMC that needs 10<sup>6</sup> of them. Train a GP on a few hundred runs placed by a space-filling <b>Latin-hypercube</b> design and it predicts the output anywhere in parameter space in microseconds, <em>with</em> a calibrated error bar. That variance drives <b>active learning</b>: run the next expensive simulation exactly where the emulator is least certain. This is how the Coyote and Mira&ndash;Titan cosmic emulators and countless engineering surrogates are built.</p></div>
+  <div class="mcard"><h3>Bayesian optimisation</h3><p style="margin:6px 0">To optimise a costly black box &mdash; a detector geometry, an accelerator setting, a fusion pulse, a hyperparameter &mdash; fit a GP to the evaluations so far and pick the next point by maximising an <b>acquisition function</b>: expected improvement EI, upper confidence bound &mu;(x)+&kappa;&sigma;(x), or probability of improvement. Each balances exploiting the current best against exploring where &sigma;(x) is large. A handful of evaluations often suffice where grid search would need thousands.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Latent force models</h3><p style="margin:6px 0">Put a GP prior on the unknown <em>forcing</em> u(t) of a linear ODE/PDE, &Lscr;f=u. Because a linear operator acting on a GP yields another GP, the observable f is itself a GP whose kernel is the <b>Green&rsquo;s-function convolution</b> of the forcing kernel. Data on f then infer the hidden input u &mdash; mechanistic physics and data-driven inference fused in one Gaussian model (&Aacute;lvarez, Luengo &amp; Lawrence). The same trick imposes physical constraints (divergence-free fields, conservation laws) by building them into the kernel.</p></div>
+  <div class="mcard"><h3>Interpolating potentials / PES</h3><p style="margin:6px 0">Machine-learned interatomic potentials (<b>GAP</b>, Bart&oacute;k et al.) write the total energy as a sum of local atomic energies, each a GP regression over a rotation/permutation-invariant descriptor (SOAP) of the neighbourhood, trained on quantum-chemistry (DFT) points. Forces are analytic derivatives of the GP mean, and the predictive variance flags configurations off the training manifold &mdash; telling you which new structures to compute <em>ab initio</em> next.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Uncertainty quantification</h3><p style="margin:6px 0">To propagate an uncertain input distribution p(&theta;) through an expensive code, push it through a GP emulator: the output uncertainty then has two, separable parts &mdash; the spread from p(&theta;) and the emulator&rsquo;s own &sigma;(x). Sensitivity indices (Sobol&rsquo;) and calibration against experiment (the Kennedy&ndash;O&rsquo;Hagan framework, with a GP discrepancy term) are standard in inertial-confinement fusion, materials discovery and detector modelling.</p></div>
+  <div class="mcard"><h3>Solving &amp; discovering PDEs</h3><p style="margin:6px 0">Place a GP prior on the solution of a differential equation and condition on the equation holding at collocation points: the linear-operator trick again makes everything Gaussian, so you <em>solve</em> the PDE and get a posterior variance on the answer (probabilistic numerics; Raissi, Perdikaris &amp; Karniadakis). Run it backwards and the same machinery <em>discovers</em> the operator &mdash; a probabilistic cousin of PINNs that returns honest error bars.</p></div>
+</div>
+<div class="take"><b>The common thread.</b> Physics reaches for a GP whenever evaluations are expensive and honest error bars matter &mdash; to emulate, to optimise, to interpolate, to propagate uncertainty, and to say clearly where the model should <em>not</em> be trusted. The next six pages take each in turn, with a worked example and a live animation.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p16">
+<h2>Emulating an expensive simulation &mdash; and choosing the next run</h2>
+<p>A first-principles code may cost hours per evaluation. Train a GP on a handful of runs and it predicts the output everywhere in microseconds <em>with error bars</em>. The variance is the payoff: it says <b>where to spend the next expensive run</b> &mdash; active learning picks the input of maximum predictive uncertainty.</p>
+<div class="eqbox">
+  x<sub>next</sub> = argmax<sub>x</sub> &sigma;(x) &nbsp;&nbsp;(&ldquo;most uncertain point&rdquo;), &nbsp;&nbsp;
+  &sigma;(x)<sup>2</sup> = k(x,x) &minus; k<sub>&lowast;</sub><sup>T</sup>(K+&sigma;<sub>n</sub><sup>2</sup>I)<sup>&minus;1</sup>k<sub>&lowast;</sub>
+  <small>evaluate the true code at x<sub>next</sub>, add it, refit &mdash; the band collapses fastest where it was widest</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Active learning &mdash; watch the emulator converge</h3>
+  <p class="hint" style="margin:4px 0 10px">The red dashed curve is the (expensive) truth, blue the GP emulator, shaded its &plusmn;2&sigma;. The green line marks the maximum-variance input. Add points there and the emulator locks onto the truth with remarkably few runs.</p>
+  <canvas id="emC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="emStep">&#43; Run at max &sigma;</button>
+    <button class="ibtn alt" id="emAuto">&#9654; Auto (8 runs)</button>
+    <button class="ibtn alt" id="emReset">&#8635; Reset</button>
+  </div>
+  <div class="readout" id="emOut"></div>
+</div>
+<div class="take"><b>The point.</b> A GP emulator turns an intractable simulation budget into a tractable one, and its uncertainty doubles as an experimental-design oracle &mdash; the basis of the Coyote and Mira&ndash;Titan cosmic emulators.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p17">
+<h2>Optimising a costly black box in a handful of evaluations</h2>
+<p>To maximise an expensive function &mdash; a detector design, an accelerator tune, a fusion pulse &mdash; fit a GP to the evaluations so far and pick the next input by maximising an <b>acquisition function</b> that balances exploiting the current best against exploring where the GP is uncertain:</p>
+<div class="eqbox">
+  UCB: &alpha;(x)=&mu;(x)+&kappa;&thinsp;&sigma;(x) &nbsp;&bull;&nbsp; EI: &alpha;(x)=&#120124;[max(f(x)&minus;f<sub>best</sub>,0)]
+  <small>evaluate where &alpha; peaks; large &sigma; drives exploration, large &mu; drives exploitation</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Bayesian optimisation, stepping to the peak</h3>
+  <p class="hint" style="margin:4px 0 10px">Top: the GP surrogate (blue) chasing the true objective (red dashed). Bottom: the acquisition &alpha;(x)=&mu;+&kappa;&sigma;; the red line is its argmax &mdash; the next evaluation. Step it and watch the search home in on the maximum.</p>
+  <canvas id="boC" width="920" height="345"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="boStep">&#9654; Next evaluation</button>
+    <button class="ibtn alt" id="boAuto">&#9654;&#9654; Auto (9 steps)</button>
+    <button class="ibtn alt" id="boReset">&#8635; Reset</button>
+  </div>
+  <div class="readout" id="boOut"></div>
+</div>
+<div class="take"><b>The point.</b> A handful of GP-guided evaluations often beat thousands of blind ones. The same loop tunes machine-learning hyperparameters, designs experiments, and optimises instruments.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p18">
+<h2>Inferring the hidden force behind a differential equation</h2>
+<p>Put a GP prior on the unknown <em>forcing</em> u(t) of a linear ODE, &Lscr;f=u. A linear operator acting on a GP gives another GP, so the observable f is itself a GP whose kernel is the forcing kernel <b>convolved twice with the Green&rsquo;s function</b> G:</p>
+<div class="eqbox">
+  &Lscr;f = u, &nbsp; u &sim; &Gscr;&Pscr;(0,k<sub>u</sub>) &nbsp;&rArr;&nbsp; f &sim; &Gscr;&Pscr;(0, G&lowast;k<sub>u</sub>&lowast;G)
+  <small>data on the output f then infer the latent input u &mdash; mechanistic physics fused with data-driven inference</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A forcing and its response, live</h3>
+  <p class="hint" style="margin:4px 0 10px">Top (red): a random latent forcing u(t) drawn from a GP. Bottom (blue): the response x(t) of the ODE x&prime;=&minus;x/&tau;+u &mdash; a smoothed, lagged version of the forcing, and itself a Gaussian process. Change the response time &tau;.</p>
+  <canvas id="lfC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>response time &tau; &nbsp;<input type="range" id="lfTau" min="0.15" max="2.0" step="0.01" value="0.6"><span class="val" id="lfTauv">0.60</span></label>
+    <button class="ibtn" id="lfPlay">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="lfNew">&#8635; New forcing</button>
+  </div>
+  <div class="readout" id="lfOut"></div>
+</div>
+<div class="take"><b>The point.</b> Latent force models let you keep the physics (the operator &Lscr;) and be data-driven about what you don&rsquo;t know (the forcing) &mdash; and the same construction imposes hard constraints like divergence-free fields by building them into the kernel.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p19">
+<h2>Machine-learned force fields from quantum chemistry</h2>
+<p>Potentials like <b>GAP</b> write the total energy as a sum of local atomic energies, each a GP regression over a symmetry-invariant descriptor of the neighbourhood, trained on expensive DFT points. Because the derivative of a GP mean is analytic, the <b>forces come for free</b>, and the predictive variance flags configurations off the training manifold.</p>
+<div class="eqbox">
+  E(x) = GP mean, &nbsp;&nbsp; F(x) = &minus;dE/dx = &minus;(d/dx)&thinsp;k<sub>&lowast;</sub><sup>T</sup>(K+&sigma;<sub>n</sub><sup>2</sup>I)<sup>&minus;1</sup><b>y</b>
+  <small>the force is another Gaussian process; large &sigma; means &ldquo;compute a new DFT point here&rdquo;</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A potential-energy surface, learned &mdash; click to add DFT points</h3>
+  <p class="hint" style="margin:4px 0 10px">A double-well potential (red dashed = truth). The GP energy (blue) and its band come from a few points; the green curve is the force &minus;dE/dx, the analytic derivative of the GP. Click to add a quantum-chemistry point and watch both sharpen.</p>
+  <canvas id="peC" width="920" height="320" style="cursor:crosshair"></canvas>
+  <div class="ctrls">
+    <button class="ibtn alt" id="peReset">&#8635; Reset points</button>
+  </div>
+  <div class="readout" id="peOut"></div>
+</div>
+<div class="take"><b>The point.</b> One GP delivers energies, forces <em>and</em> a &ldquo;trust map&rdquo; in a single object &mdash; which is why active-learned GP potentials now drive large-scale molecular-dynamics simulations at near-DFT accuracy.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p20">
+<h2>Pushing an uncertain input through the model</h2>
+<p>Given an uncertain input &theta;&sim;p(&theta;), what is the uncertainty on the output? Push the distribution through a GP emulator. To first order the output variance separates into a <b>propagated-input</b> part and the <b>emulator&rsquo;s own</b> part:</p>
+<div class="eqbox">
+  var(y) &asymp; [m&prime;(&theta;&#772;)]<sup>2</sup>&thinsp;&sigma;<sub>&theta;</sub><sup>2</sup> &nbsp;+&nbsp; &sigma;<sub>emu</sub><sup>2</sup>(&theta;&#772;)
+  <small>where the emulator is steep, input uncertainty is amplified; where it is untrained, its own &sigma; dominates</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Propagate a distribution through the emulator</h3>
+  <p class="hint" style="margin:4px 0 10px">The blue curve is the emulator y=m(&theta;); the red bump on the axis is the input p(&theta;). Monte-Carlo samples pushed through give the output distribution p(y) on the right. Slide the input mean into a steep region and watch the output spread grow.</p>
+  <canvas id="uqC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>input mean &theta;&#772; &nbsp;<input type="range" id="uqMu" min="-3" max="3" step="0.02" value="0.2"><span class="val" id="uqMuv">0.20</span></label>
+    <label>input width &sigma;<sub>&theta;</sub> &nbsp;<input type="range" id="uqSig" min="0.15" max="1.4" step="0.01" value="0.6"><span class="val" id="uqSigv">0.60</span></label>
+  </div>
+  <div class="readout" id="uqOut"></div>
+</div>
+<div class="take"><b>The point.</b> Emulator-based uncertainty quantification underlies calibration (Kennedy&ndash;O&rsquo;Hagan, with a GP discrepancy term) and sensitivity analysis in fusion, climate and detector modelling &mdash; and it keeps the two sources of error cleanly separate.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p21">
+<h2>A Gaussian process can solve the equation itself</h2>
+<p>Put a GP prior on the solution f and <b>condition on the equation holding</b> at a set of collocation points. Because a linear differential operator maps a GP to a GP, the pair (f, &Lscr;f) is jointly Gaussian &mdash; with cross-covariances that are derivatives of the kernel &mdash; so conditioning on &Lscr;f=g and the boundary values yields a posterior that <em>is</em> the solution, with error bars (probabilistic numerics).</p>
+<div class="eqbox">
+  f &sim; &Gscr;&Pscr;(0,k), &nbsp; condition on &nbsp; f&prime;(x<sub>j</sub>)=g(x<sub>j</sub>) &nbsp;and&nbsp; f(0)=0
+  <small>here &Lscr;=d/dx and g(x)=cos x, whose solution is sin x &mdash; recovered below purely by conditioning</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Solving f&prime;(x)=cos x, f(0)=0 by GP collocation</h3>
+  <p class="hint" style="margin:4px 0 10px">The GP is conditioned on the derivative equalling cos x at the green collocation points and on f(0)=0. Its posterior mean (blue) reconstructs the true solution sin x (red dashed); add points and the band collapses onto it. No time-stepping &mdash; just conditioning a Gaussian.</p>
+  <canvas id="pdC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <label>collocation points &nbsp;<input type="range" id="pdN" min="2" max="14" step="1" value="4"><span class="val" id="pdNv">4</span></label>
+  </div>
+  <div class="readout" id="pdOut"></div>
+</div>
+<div class="take"><b>The point.</b> Framing a solver as GP inference returns a <em>distribution</em> over solutions &mdash; honest uncertainty from discretisation &mdash; and, run in reverse, the same machinery <b>discovers</b> the governing operator from data, a probabilistic cousin of PINNs.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p22">
+<h2>Astronomy runs on Gaussian processes &mdash; starting with time</h2>
+<p>Astronomical light curves and radial-velocity (RV) series are noisy, gappy, and contaminated by stellar signals that are not the thing you want. GPs are the standard tool for modelling the nuisance and the signal together, with uncertainty.</p>
+<div class="two">
+  <div class="mcard"><h3>Stellar activity &amp; exoplanets</h3><p style="margin:6px 0">Star spots rotate in and out of view, injecting a coherent-but-drifting signal that mimics or masks a planet in RV and photometry. The standard model is the <b>quasi-periodic kernel</b> k(&tau;)=A&thinsp;exp[&minus;&tau;<sup>2</sup>/2&ell;<sup>2</sup> &minus; &Gamma;sin<sup>2</sup>(&pi;&tau;/P<sub>rot</sub>)]: the sine term repeats at the rotation period P<sub>rot</sub>, the exponential lets the pattern evolve over a spot-lifetime &ell;. Fitting it recovers P<sub>rot</sub> <em>and</em> lets the planet&rsquo;s Keplerian be inferred underneath &mdash; now routine in RV searches for small planets.</p></div>
+  <div class="mcard"><h3>Transit detrending</h3><p style="margin:6px 0">Kepler/TESS/JWST light curves carry instrumental and stellar systematics on the very scale of the transit. Fitting the transit <em>after</em> detrending double-counts and biases the depth; instead the GP correlated-noise model is fit <b>jointly</b> with the transit shape (via <code>exoplanet</code>/<code>PyMC</code>), so the planet radius, its covariances with limb-darkening, and the true error bars all come out together &mdash; critical for the shallow transits and transmission spectra JWST now measures.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>AGN &amp; the damped random walk</h3><p style="margin:6px 0">Quasar optical variability is described remarkably well by a GP with an exponential kernel k(&tau;)=&sigma;<sup>2</sup>e<sup>&minus;|&tau;|/&tau;<sub>d</sub></sup> &mdash; the <b>damped random walk</b>, a Gaussian Ornstein&ndash;Uhlenbeck process, equivalently CARMA(1,0). Its amplitude &sigma; and damping timescale &tau;<sub>d</sub> correlate with black-hole mass and luminosity, so they are physical diagnostics used to classify variables and reject them from transient searches across ZTF and (soon) LSST. Richer CARMA/DHO kernels capture the higher-frequency structure.</p></div>
+  <div class="mcard"><h3>celerite &amp; scalable light curves</h3><p style="margin:6px 0">A general 1-D GP costs O(n<sup>3</sup>) &mdash; hopeless for a million-epoch light curve. <code>celerite</code> (Foreman-Mackey et al. 2017) restricts to kernels that are sums of damped cosines, e<sup>&minus;c&tau;</sup>[a&thinsp;cos(d&tau;)+b&thinsp;sin(d&tau;)], whose covariance is <b>semiseparable</b> and whose Cholesky is exactly <b>O(n)</b>. That single trick made GP modelling of asteroseismic oscillations, granulation, and long survey light curves an everyday tool.</p></div>
+</div>
+<div class="take"><b>Why a GP and not a parametric model?</b> Because stellar and instrumental noise is <em>correlated</em> in time, and ignoring the correlation gives error bars that are wildly overconfident &mdash; a spurious planet at 3&sigma; that is really 1&sigma;. The GP models the covariance directly, so the detection significance is honest. The next four pages take each in turn, with a worked example and a live animation.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p23">
+<h2>The quasi-periodic kernel &mdash; modelling star spots</h2>
+<p>A rotating star carries spots that come and go, producing a signal that <em>repeats</em> at the rotation period but slowly <em>evolves</em> as spots form and decay. No pure sinusoid captures this; the <b>quasi-periodic</b> kernel does &mdash; a periodic kernel multiplied by a slow squared-exponential:</p>
+<div class="eqbox">
+  k(&tau;) = A&thinsp;exp[ &minus;&tau;<sup>2</sup>/2&ell;<sup>2</sup> &minus; &Gamma;&thinsp;sin<sup>2</sup>(&pi;&tau;/P<sub>rot</sub>) ]
+  <small>P<sub>rot</sub> sets the repeat, &ell; the spot lifetime (how fast it drifts), &Gamma; the within-period wiggliness</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A rotating, spotted star &mdash; live</h3>
+  <p class="hint" style="margin:4px 0 10px">A GP sample from the quasi-periodic kernel: it repeats every P<sub>rot</sub> but the shape drifts over a few rotations (the spot lifetime &ell;). This is the signal a GP subtracts to reveal a planet underneath in radial-velocity data.</p>
+  <canvas id="acC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>rotation period P<sub>rot</sub> &nbsp;<input type="range" id="acP" min="1.2" max="4.5" step="0.05" value="2.5"><span class="val" id="acPv">2.50</span></label>
+    <label>spot lifetime &ell; &nbsp;<input type="range" id="acL" min="1.5" max="12" step="0.1" value="5"><span class="val" id="acLv">5.0</span></label>
+    <button class="ibtn" id="acPlay">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="acNew">&#8635; New star</button>
+  </div>
+  <div class="readout" id="acOut"></div>
+</div>
+<div class="take"><b>The point.</b> Fitting the quasi-periodic GP jointly with a Keplerian recovers the rotation period <em>and</em> the planet, and is now the default treatment of stellar activity in radial-velocity planet searches.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p24">
+<h2>Cleaning a transit out of correlated systematics</h2>
+<p>A Kepler/TESS/JWST light curve is a shallow transit dip buried in slow instrumental and stellar drifts of comparable size. Detrending <em>then</em> fitting biases the depth; the honest approach models the correlated noise with a GP and the transit together. The idea in miniature: mask the transit, learn the drift with a GP, and subtract it &mdash; the clean transit emerges with correct error bars.</p>
+<div class="eqbox">
+  flux(t) = transit(t) + <span style="color:var(--red)">drift(t)</span> + noise, &nbsp;&nbsp; <span style="color:var(--red)">drift</span> &sim; &Gscr;&Pscr;(0,k)
+  <small>the GP absorbs the correlated drift so it cannot be mistaken for a change in transit depth</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Raw light curve &rarr; GP-detrended</h3>
+  <p class="hint" style="margin:4px 0 10px">Top: the observed flux &mdash; a transit lost inside a red correlated drift. Bottom: after subtracting the GP model of the drift, the clean transit (blue = truth) stands out. Raise the systematic amplitude and the naive eye loses the transit while the GP still finds it.</p>
+  <canvas id="trC" width="920" height="330"></canvas>
+  <div class="ctrls">
+    <label>systematics amplitude &nbsp;<input type="range" id="trA" min="0.2" max="3" step="0.05" value="1.4"><span class="val" id="trAv">1.40</span></label>
+    <button class="ibtn alt" id="trNew">&#8635; New light curve</button>
+  </div>
+  <div class="readout" id="trOut"></div>
+</div>
+<div class="take"><b>The point.</b> Because the GP and the transit are fit together, the recovered planet radius and its uncertainty are unbiased &mdash; essential for the shallow transits and transmission spectra JWST now measures.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p25">
+<h2>Quasar variability as a Gaussian process</h2>
+<p>The optical brightness of an accreting quasar wanders stochastically. It is described remarkably well by a GP with an <b>exponential</b> kernel &mdash; the <b>damped random walk</b> (DRW), a Gaussian Ornstein&ndash;Uhlenbeck process:</p>
+<div class="eqbox">
+  k(&Delta;t) = &sigma;<sup>2</sup>&thinsp;e<sup>&minus;|&Delta;t|/&tau;<sub>d</sub></sup> &nbsp;&hArr;&nbsp; dx = &minus;(x/&tau;<sub>d</sub>)&thinsp;dt + &radic;(2&sigma;<sup>2</sup>/&tau;<sub>d</sub>)&thinsp;dW
+  <small>two parameters: the long-term amplitude &sigma; and the damping timescale &tau;<sub>d</sub></small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A quasar light curve, streaming</h3>
+  <p class="hint" style="margin:4px 0 10px">A DRW light curve generated live as an Ornstein&ndash;Uhlenbeck process, scrolling in time. Short &tau;<sub>d</sub> gives fast, forgetful flicker; long &tau;<sub>d</sub> gives slow, correlated swings. The amplitude and timescale are the physical diagnostics fit to survey data.</p>
+  <canvas id="drC" width="920" height="280"></canvas>
+  <div class="ctrls">
+    <label>timescale &tau;<sub>d</sub> &nbsp;<input type="range" id="drT" min="0.3" max="8" step="0.1" value="2.5"><span class="val" id="drTv">2.5</span></label>
+    <label>amplitude &sigma; &nbsp;<input type="range" id="drS" min="0.3" max="2" step="0.05" value="1"><span class="val" id="drSv">1.00</span></label>
+    <button class="ibtn" id="drPlay">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="drNew">&#8635; Restart</button>
+  </div>
+  <div class="readout" id="drOut"></div>
+</div>
+<div class="take"><b>The point.</b> Because the DRW is a GP, its likelihood is exact and cheap, so &sigma; and &tau;<sub>d</sub> are measured for millions of quasars &mdash; classifying variables and rejecting them from transient searches across ZTF and LSST.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p26">
+<h2>Scalable GPs: the driven damped oscillator</h2>
+<p>A general GP on a light curve costs O(N<sup>3</sup>) &mdash; hopeless at a million epochs. <code>celerite</code> restricts to kernels that are sums of damped cosines, for which the Cholesky is exactly <b>O(N)</b>. The workhorse member is the <b>stochastically-driven damped harmonic oscillator</b> (SHO), whose power spectrum is a tunable peak &mdash; ideal for stellar oscillations and granulation:</p>
+<div class="eqbox">
+  S(&omega;) &prop; &omega;<sub>0</sub><sup>4</sup> / [ (&omega;<sup>2</sup>&minus;&omega;<sub>0</sub><sup>2</sup>)<sup>2</sup> + &omega;<sub>0</sub><sup>2</sup>&omega;<sup>2</sup>/Q<sup>2</sup> ]
+  <small>&omega;<sub>0</sub> is the oscillation frequency, Q the quality factor (how sharp/long-lived the mode is)</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">An oscillation and its power spectrum</h3>
+  <p class="hint" style="margin:4px 0 10px">Left: a driven damped-oscillator time series (an asteroseismic mode plus noise). Right: its power spectrum &mdash; a Lorentzian peak at &omega;<sub>0</sub> whose width is set by Q. High Q gives a long-lived, sharp mode; low Q gives broadband granulation-like noise.</p>
+  <canvas id="shoC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>frequency &omega;<sub>0</sub> &nbsp;<input type="range" id="shoW" min="1" max="6" step="0.1" value="3"><span class="val" id="shoWv">3.0</span></label>
+    <label>quality Q &nbsp;<input type="range" id="shoQ" min="1" max="30" step="0.5" value="10"><span class="val" id="shoQv">10</span></label>
+    <button class="ibtn alt" id="shoNew">&#8635; New realisation</button>
+  </div>
+  <div class="readout" id="shoOut"></div>
+</div>
+<div class="take"><b>The point.</b> Restricting the kernel to this semiseparable family buys a factor of N<sup>2</sup> in speed, turning GP modelling of Kepler/TESS asteroseismology and long survey light curves from impossible into routine.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p27">
+<h2>Non-parametric cosmology and beyond</h2>
+<div class="two">
+  <div class="mcard"><h3>Reconstructing the expansion history</h3><p style="margin:6px 0">Rather than assume a dark-energy model, put a GP prior directly on H(z) and condition on supernovae, cosmic chronometers and BAO (<code>GaPP</code>, Seikel et al. 2012). Because a derivative of a GP is another GP, you also get H&prime;(z) and the <b>Om(z)</b> diagnostic with error bands &mdash; a model-independent test of &Lambda;CDM and a probe of the Hubble tension. The caveat, worth stating: the result depends on the kernel and its length-scale prior, so robustness to that choice must always be checked.</p></div>
+  <div class="mcard"><h3>Photometric redshifts</h3><p style="margin:6px 0">With spectra for only a sliver of the billions of galaxies imaged, redshift must be inferred from broadband colours. GP regression (e.g. <b>GPz</b>) maps colours&rarr;redshift and, crucially, returns a <em>per-object</em> variance that widens in sparse regions of colour space &mdash; and a heteroscedastic version models the input-dependent noise, so the redshift PDFs that feed weak-lensing and clustering analyses are properly calibrated.</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Emulating Boltzmann codes</h3><p style="margin:6px 0">CAMB/CLASS take seconds per evaluation; an MCMC needs millions. A GP emulator trained on a few thousand runs predicts the matter power spectrum or CMB C<sub>&ell;</sub> across parameter space in milliseconds with controlled error, accelerating inference by orders of magnitude. GP emulators underlie the Coyote, EuclidEmulator and Mira&ndash;Titan power-spectrum predictions; today&rsquo;s neural emulators (CosmoPower) are the same idea scaled up, but the GP versions still win when training data are scarce and error bars matter.</p></div>
+  <div class="mcard"><h3>Primordial power spectrum</h3><p style="margin:6px 0">Put a GP prior on the primordial spectrum &Pscr;<sub>&Rscr;</sub>(k) &mdash; its length scale is literally a prior on how much the spectrum may wiggle &mdash; and reconstruct it from CMB and large-scale-structure data without assuming the near-scale-invariant power law. It is a principled, uncertainty-aware search for inflationary <b>features</b> (steps, oscillations) that a fixed n<sub>s</sub> parametrisation would erase by construction.</p></div>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A Gaussian random field, live &mdash; the cosmologist&rsquo;s GP</h3>
+  <p class="hint" style="margin:4px 0 10px">A GP over 2-D space is a Gaussian random field: exactly the object of the primordial density field. The kernel sets the correlation length &mdash; the size of the blobs. Slide it and watch structure coarsen; the field flows because each Fourier mode drifts in phase.</p>
+  <canvas id="fdC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>correlation length &nbsp;<input type="range" id="fdL" min="0.04" max="0.32" step="0.005" value="0.13"><span class="val" id="fdLv">0.13</span></label>
+    <button class="ibtn" id="fdPlay">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="fdNew">&#8635; New field</button>
+  </div>
+  <div class="readout" id="fdOut"></div>
+</div>
+<div class="take"><b>Same maths, two scales.</b> The kernel that smooths a stellar light curve and the two-point function that describes the cosmic web are the same Gaussian object &mdash; a covariance that says how strongly two points move together. The next four pages take the cosmological uses in turn, each with a live animation.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p28">
+<h2>Model-independent expansion history</h2>
+<p>Instead of assuming a dark-energy model, put a GP prior on H(z) and condition on the data &mdash; supernovae, cosmic chronometers, BAO. The reconstruction comes with error bands, and because a derivative of a GP is a GP, you also get H&prime;(z) and the <b>Om(z)</b> diagnostic, a null test of &Lambda;CDM.</p>
+<div class="eqbox">
+  H(z) &sim; &Gscr;&Pscr;(H<sub>&Lambda;CDM</sub>, k), &nbsp;&nbsp; Om(z) &equiv; [ (H/H<sub>0</sub>)<sup>2</sup> &minus; 1 ] / [ (1+z)<sup>3</sup> &minus; 1 ]
+  <small>Om(z) is constant (=&Omega;<sub>m</sub>) for flat &Lambda;CDM &mdash; any tilt is new physics</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Reconstruct H(z) from data &mdash; add measurements</h3>
+  <p class="hint" style="margin:4px 0 10px">Red points are (noisy) H(z) measurements; blue is the GP reconstruction with its &plusmn;2&sigma; band; the dashed line is the true &Lambda;CDM curve. Add data and the band tightens. The reconstruction never assumed a dark-energy model.</p>
+  <canvas id="hzC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <button class="ibtn" id="hzStep">&#43; Add a measurement</button>
+    <button class="ibtn alt" id="hzMany">&#9654; Add ten</button>
+    <button class="ibtn alt" id="hzReset">&#8635; Reset</button>
+  </div>
+  <div class="readout" id="hzOut"></div>
+</div>
+<div class="take"><b>The point.</b> GP reconstruction turns a handful of noisy distance and chronometer measurements into a smooth expansion history with honest uncertainty &mdash; a data-driven test of dark energy and a fresh angle on the Hubble tension. (The one caveat: results depend on the kernel and its length-scale prior, which must be checked.)</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p29">
+<h2>Redshift from colour, with a calibrated error bar</h2>
+<p>Spectra exist for a sliver of the billions of galaxies imaged, so redshift must be inferred from broadband colours. GP regression maps colour&rarr;redshift and &mdash; crucially &mdash; returns a <em>per-object</em> uncertainty that widens where training galaxies are sparse. That calibrated variance is what downstream lensing and clustering analyses need.</p>
+<div class="eqbox">
+  z(colour) &sim; &Gscr;&Pscr;(m,k), &nbsp;&nbsp; &sigma;<sub>z</sub>(colour) = predictive std &mdash; large where training data are thin
+  <small>the error bar per galaxy, not a single global scatter &mdash; the point of a GP photo-z</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Colour &rarr; redshift &mdash; note the widening band</h3>
+  <p class="hint" style="margin:4px 0 10px">Training galaxies (red) are dense at blue colours and sparse at red ones. The GP mean (blue) predicts redshift; its band is tight where galaxies are plentiful and balloons where they are scarce &mdash; a per-object uncertainty, exactly what a survey needs.</p>
+  <canvas id="pzC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <button class="ibtn alt" id="pzNew">&#8635; New training set</button>
+  </div>
+  <div class="readout" id="pzOut"></div>
+</div>
+<div class="take"><b>The point.</b> A GP photo-z (e.g. GPz) delivers not a point estimate but a redshift <em>distribution</em> per galaxy, and a heteroscedastic version even models colour-dependent noise &mdash; keeping the redshift PDFs that feed cosmology properly calibrated.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p30">
+<h2>A millisecond stand-in for CAMB/CLASS</h2>
+<p>A Boltzmann code takes seconds per evaluation; an MCMC needs millions. Train a GP emulator on a few precomputed spectra and it predicts the matter power spectrum (or CMB spectra) across cosmological parameters in milliseconds, <em>with</em> a controlled error &mdash; accelerating inference by orders of magnitude.</p>
+<div class="eqbox">
+  train on P(k;&theta;<sub>1</sub>),&hellip;,P(k;&theta;<sub>5</sub>) &nbsp;&rArr;&nbsp; predict P(k;&theta;<sub>&lowast;</sub>) &plusmn; &sigma; &nbsp; in milliseconds
+  <small>a GP over the parameter &theta; at every k &mdash; interpolating whole curves, not just numbers</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Emulate the power spectrum &mdash; slide the parameter</h3>
+  <p class="hint" style="margin:4px 0 10px">The faint grey curves are the few training spectra (at fixed parameter values). Move the slider to a new parameter &theta;<sub>&lowast;</sub>: the GP emulator predicts the full curve (blue) with a band, and the true (expensive) spectrum is the red dashed line &mdash; matched almost everywhere, at a fraction of the cost.</p>
+  <canvas id="euC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <label>parameter &theta; &nbsp;<input type="range" id="euT" min="0" max="1" step="0.005" value="0.5"><span class="val" id="euTv">0.50</span></label>
+  </div>
+  <div class="readout" id="euOut"></div>
+</div>
+<div class="take"><b>The point.</b> GP emulators underlie the Coyote, EuclidEmulator and Mira&ndash;Titan predictions; the error bar tells the sampler where the emulator can be trusted and where a new training run is needed.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p31">
+<h2>Searching for features without assuming a power law</h2>
+<p>The standard model says the primordial spectrum &Pscr;<sub>&Rscr;</sub>(k) is a featureless near-power-law. To test that, put a GP prior on it &mdash; its length scale is literally a prior on how much the spectrum may wiggle &mdash; and reconstruct from the data. A localised <b>feature</b> (a step or a burst of oscillations) survives if the data demand it.</p>
+<div class="eqbox">
+  &Pscr;<sub>&Rscr;</sub>(k) &sim; &Gscr;&Pscr;(power-law, k<sub>&ell;</sub>), &nbsp;&nbsp; &ell; = how sharp a feature the prior permits
+  <small>too smooth a prior erases real features; too rough fits noise &mdash; the length scale is the knob</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Reconstruct a spectrum with a hidden feature</h3>
+  <p class="hint" style="margin:4px 0 10px">The true spectrum (red dashed) is scale-invariant with a bump. Noisy band-power data (red points) constrain the GP reconstruction (blue). Tune the smoothness length scale: too large and the bump is washed out; too small and the reconstruction chases noise.</p>
+  <canvas id="ppC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <label>smoothness length scale &nbsp;<input type="range" id="ppL" min="0.06" max="1.2" step="0.01" value="0.28"><span class="val" id="ppLv">0.28</span></label>
+    <button class="ibtn alt" id="ppNew">&#8635; New data</button>
+  </div>
+  <div class="readout" id="ppOut"></div>
+</div>
+<div class="take"><b>The point.</b> A GP prior makes &ldquo;look for features&rdquo; a principled, uncertainty-aware inference rather than a fishing expedition &mdash; the reconstruction shows a feature only where the data insist, with a band that says how confidently.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p32">
+<h2>Where to be careful, and what comes next</h2>
+<div class="two">
+  <div class="mcard"><h3>The O(n<sup>3</sup>) wall</h3><p style="margin:6px 0">Exact GPs do not scale to millions of arbitrary points, and every remedy (inducing points, structured kernels, iterative CG) is an <em>approximation</em> with its own failure modes &mdash; too few inducing points quietly inflate the noise estimate and <b>over-smooth</b>, hiding real signal. The discipline: validate the predictive <em>uncertainty</em> out of sample, not just the mean, before trusting a scaled-up GP.</p></div>
+  <div class="mcard"><h3>Non-Gaussian likelihoods</h3><p style="margin:6px 0">Counts, binary labels, and censored or truncated data break the conjugacy that makes GP regression closed-form. Keep a GP on a <b>latent</b> function f and pass it through a link (logistic, Poisson) to the likelihood; inference is then approximate &mdash; Laplace, expectation propagation, or variational. This is <b>GP classification</b>, and the log-Gaussian <b>Cox process</b> for point patterns (e.g. modelling a galaxy or photon rate that must stay positive).</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Stationarity &amp; heteroscedastic noise</h3><p style="margin:6px 0">Most kernels assume identical behaviour everywhere, but real signals change length scale across the domain and their noise varies with input. Fixes: <b>input warping</b> (learn a monotonic transform of x so the process is stationary in the warped space), explicitly non-stationary kernels, and <b>heteroscedastic</b> models that put a second GP on log-noise(x). The answer is never better than the kernel, so this is where the modelling care goes.</p></div>
+  <div class="mcard"><h3>Deep &amp; multi-output GPs</h3><p style="margin:6px 0"><b>Deep GPs</b> stack GP layers (the output of one is the input of the next), buying non-stationarity and richer priors at the cost of no-longer-Gaussian posteriors (doubly-stochastic variational inference). <b>Multi-output</b> GPs share strength across correlated channels &mdash; the linear model of coregionalisation (LMC/ICM) and convolution processes &mdash; e.g. fitting several photometric bands, or flux and its derivative, jointly.</p></div>
+</div>
+<div class="take"><b>Honest, not magic.</b> A GP gives calibrated uncertainty <em>given</em> its kernel and its Gaussian assumptions. The craft is choosing a covariance that encodes the real physics, handling non-Gaussian data and non-stationarity honestly, and checking that the error bars actually hold up out of sample. The next four pages take each limitation in turn, with a worked example and a live animation.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p33">
+<h2>Beating the O(n<sup>3</sup>) wall</h2>
+<p>The exact GP factorises an n&times;n matrix &mdash; O(n<sup>3</sup>) time, O(n<sup>2</sup>) memory &mdash; hopeless past a few thousand points. The dominant remedy summarises all n data by m&nbsp;&Lscr;&nbsp;n <b>inducing points</b>, dropping the cost to O(nm<sup>2</sup>). The trade-off is visible: too few inducing points and the sparse fit <b>over-smooths</b>, quietly hiding real structure.</p>
+<div class="eqbox">
+  O(n<sup>3</sup>) &nbsp;&rarr;&nbsp; O(nm<sup>2</sup>), &nbsp;&nbsp; m inducing points summarise n data
+  <small>the variational choice (Titsias) places the m points to lose as little information as possible</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Sparse vs full GP &mdash; add inducing points</h3>
+  <p class="hint" style="margin:4px 0 10px">Grey dashed = the full GP on all 60 points. Blue = a sparse GP built from just m inducing points (red). With too few, the blue curve is too stiff; increase m and it converges to the full fit &mdash; at a fraction of the cost.</p>
+  <canvas id="iuC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <label>inducing points m &nbsp;<input type="range" id="iuM" min="2" max="30" step="1" value="4"><span class="val" id="iuMv">4</span></label>
+    <button class="ibtn alt" id="iuNew">&#8635; New data</button>
+  </div>
+  <div class="readout" id="iuOut"></div>
+</div>
+<div class="take"><b>The point.</b> Sparse and iterative GPs scale to millions of points, but every approximation can under-report uncertainty &mdash; so validate the <em>band</em> out of sample, not just the mean.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p34">
+<h2>Non-Gaussian data: a latent GP through a link</h2>
+<p>Binary labels, counts and censored data break the closed-form conjugacy of regression. Keep a GP on a <b>latent</b> function f, and pass it through a link (the logistic &sigma; for classification) so the probability stays in [0,1]. Inference is then approximate &mdash; Laplace, expectation propagation or variational &mdash; but the GP&rsquo;s calibrated uncertainty survives.</p>
+<div class="eqbox">
+  P(class=1 | x) = &sigma;( f(x) ), &nbsp;&nbsp; f &sim; &Gscr;&Pscr;(0,k)
+  <small>the latent GP is squashed to a probability; uncertainty on f becomes uncertainty on the class probability</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Classify by clicking &mdash; class 1 on top, class 0 below</h3>
+  <p class="hint" style="margin:4px 0 10px">Green points are class 1 (plotted at 1), red are class 0 (at 0). The blue curve is P(class=1|x) from the squashed latent GP, and the band is its uncertainty &mdash; wide where the two classes overlap or data are sparse. Click near the top or bottom to add points.</p>
+  <canvas id="clC" width="920" height="320" style="cursor:crosshair"></canvas>
+  <div class="ctrls">
+    <button class="ibtn alt" id="clNew">&#8635; New data</button>
+  </div>
+  <div class="readout" id="clOut"></div>
+</div>
+<div class="take"><b>The point.</b> The same latent-GP-plus-link recipe gives GP classification, Poisson/Cox processes for point patterns (positive rates), and ordinal or survival models &mdash; extending GPs far beyond Gaussian noise.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p35">
+<h2>When the noise depends on where you look</h2>
+<p>Standard kernels assume the <em>same</em> behaviour everywhere, but real data are often <b>heteroscedastic</b> &mdash; the measurement scatter grows across the domain (fainter sources, later times). A stationary GP with one global noise level gets the error bars wrong; giving each observation its own noise variance (or a second GP on log-noise) restores an honest, input-dependent band.</p>
+<div class="eqbox">
+  y(x) = f(x) + &epsilon;(x), &nbsp; &epsilon;(x) &sim; &Nscr;(0, &sigma;<sub>n</sub>(x)<sup>2</sup>)
+  <small>the noise variance is a function of the input &mdash; the diagonal of K is no longer constant</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">Heteroscedastic GP &mdash; a band that grows with the noise</h3>
+  <p class="hint" style="margin:4px 0 10px">The measurement noise increases from left to right. Because each point carries its own variance, the GP predictive band is tight on the quiet (left) side and widens where the data are noisy (right) &mdash; exactly as an honest error bar should.</p>
+  <canvas id="htC" width="920" height="320"></canvas>
+  <div class="ctrls">
+    <label>noise growth &nbsp;<input type="range" id="htG" min="0" max="2.2" step="0.05" value="1.0"><span class="val" id="htGv">1.00</span></label>
+    <button class="ibtn alt" id="htNew">&#8635; New data</button>
+  </div>
+  <div class="readout" id="htOut"></div>
+</div>
+<div class="take"><b>The point.</b> Non-stationarity &mdash; in noise <em>or</em> in length scale &mdash; is handled by input-dependent kernels, input warping, or stacking (next page). Ignoring it gives over-confident error bars exactly where the data are worst.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p36">
+<h2>Stacking GPs for non-stationarity</h2>
+<p>A single stationary GP cannot have a length scale that changes across the domain. A <b>deep GP</b> composes them &mdash; the output of one GP <em>warps the input</em> of the next, f(x)=g<sub>2</sub>(g<sub>1</sub>(x)) &mdash; producing non-stationary functions with sharp transitions in some regions and flat stretches in others, all learned from data. The price is that the posterior is no longer Gaussian (doubly-stochastic variational inference).</p>
+<div class="eqbox">
+  f(x) = g<sub>2</sub>( g<sub>1</sub>(x) ), &nbsp; g<sub>1</sub>,g<sub>2</sub> &sim; &Gscr;&Pscr; &nbsp;&rArr;&nbsp; f is non-stationary
+  <small>the first GP warps the input; the second acts on the warped coordinate &mdash; variable smoothness for free</small>
+</div>
+<div class="iwrap">
+  <h3 style="color:var(--blue2)">A deep-GP sample &mdash; watch the smoothness vary</h3>
+  <p class="hint" style="margin:4px 0 10px">A two-layer composition, animated. Increase the warp strength and the function develops fast-varying regions next to slow ones &mdash; the hallmark of non-stationarity a single stationary kernel cannot produce.</p>
+  <canvas id="dgC" width="920" height="300"></canvas>
+  <div class="ctrls">
+    <label>warp strength &nbsp;<input type="range" id="dgW" min="0" max="2.5" step="0.05" value="1.2"><span class="val" id="dgWv">1.20</span></label>
+    <button class="ibtn" id="dgPlay">&#10073;&#10073; Pause</button>
+    <button class="ibtn alt" id="dgNew">&#8635; New sample</button>
+  </div>
+  <div class="readout" id="dgOut"></div>
+</div>
+<div class="take"><b>The point.</b> Deep GPs buy non-stationarity and richer priors; <b>multi-output</b> GPs (linear coregionalisation, convolution processes) instead share strength across correlated channels &mdash; several photometric bands, or a quantity and its derivative, fit jointly. Both extend the GP beyond a single stationary function while keeping its uncertainty.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p37">
+<h2>Software for Gaussian processes</h2>
+<div class="two">
+  <div class="mcard"><h3>General-purpose</h3><p style="margin:6px 0"><b><a href="https://gpytorch.ai">GPyTorch</a></b> (scalable, GPU, iterative), <b><a href="https://gpflow.github.io">GPflow</a></b> (TensorFlow, variational), <b><a href="https://sheffieldml.github.io/GPy/">GPy</a></b> (the classic), and <b><a href="https://tinygp.readthedocs.io">tinygp</a></b> (JAX-native, differentiable).</p></div>
+  <div class="mcard"><h3>Astronomy time series</h3><p style="margin:6px 0"><b><a href="https://celerite2.readthedocs.io">celerite2</a></b> and <b><a href="https://george.readthedocs.io">george</a></b> for fast 1-D GPs on light curves and RV data; used throughout exoplanet and time-domain work (often via <code>exoplanet</code>/<code>PyMC</code>).</p></div>
+</div>
+<div class="two">
+  <div class="mcard"><h3>Cosmology</h3><p style="margin:6px 0"><b>GaPP</b> for H(z)/w(z) reconstruction; GP-based emulators underlie modern power-spectrum surrogates. JAX-native GPs (<b><a href="https://tinygp.readthedocs.io">tinygp</a></b>) fit naturally into differentiable cosmology pipelines.</p></div>
+  <div class="mcard"><h3>Probabilistic programming</h3><p style="margin:6px 0"><b>Stan</b>, <b>PyMC</b> and <b>NumPyro</b> all provide GP building blocks, so a GP can sit inside a larger hierarchical Bayesian model with everything sampled jointly.</p></div>
+</div>
+<div class="take"><b>Getting started.</b> For a first GP, <code>tinygp</code> or <code>GPy</code> is a dozen lines; for large light curves, <code>celerite2</code>; for scale and GPUs, <code>GPyTorch</code>. All of them run exactly the equations on the &ldquo;Regression&rdquo; and &ldquo;Occam&rdquo; pages.</p></div>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+<section class="page" id="p38">
+<h2>References &amp; further reading</h2>
+<p>The textbook first, then key kernels/methods, then applications in physics and astronomy.</p>
+<div class="refhead">Foundations</div>
+<div class="reflist">
+  <div class="ref">C. E. Rasmussen &amp; C. K. I. Williams, <em>Gaussian Processes for Machine Learning</em> (MIT Press, 2006) &mdash; the standard text, <a href="https://gaussianprocess.org/gpml/">free online</a>.</div>
+  <div class="ref">D. J. C. MacKay, &ldquo;Introduction to Gaussian Processes,&rdquo; in <em>Neural Networks and Machine Learning</em> (1998).</div>
+  <div class="ref">R. M. Neal, <em>Bayesian Learning for Neural Networks</em> (Springer, 1996) &mdash; the infinite-width network &rarr; GP limit.</div>
+  <div class="ref">M. L. Stein, <em>Interpolation of Spatial Data: Some Theory for Kriging</em> (Springer, 1999) &mdash; the geostatistics viewpoint.</div>
+</div>
+<div class="refhead">Methods</div>
+<div class="reflist">
+  <div class="ref">E. Snelson &amp; Z. Ghahramani, &ldquo;Sparse Gaussian Processes using Pseudo-inputs,&rdquo; NIPS (2006).</div>
+  <div class="ref">M. Titsias, &ldquo;Variational Learning of Inducing Variables in Sparse Gaussian Processes,&rdquo; AISTATS (2009).</div>
+  <div class="ref">D. Foreman-Mackey, E. Agol, S. Ambikasaran, R. Angus, &ldquo;Fast and Scalable Gaussian Process Modeling with Applications to Astronomical Time Series,&rdquo; <em>AJ</em> <b>154</b>, 220 (2017) &mdash; <code>celerite</code>.</div>
+  <div class="ref">J. Gardner et al., &ldquo;GPyTorch: Blackbox Matrix-Matrix Gaussian Process Inference on a GPU,&rdquo; NeurIPS (2018).</div>
+</div>
+<div class="refhead">Applications in physics &amp; astronomy</div>
+<div class="reflist">
+  <div class="ref">S. Rasmussen et al. / R. Angus et al., quasi-periodic GP models of stellar rotation and activity in RV and photometry.</div>
+  <div class="ref">B. C. Kelly, J. Bechtold, A. Siemiginowska, &ldquo;Are the Variations in Quasar Optical Flux Driven by Thermal Fluctuations?&rdquo; <em>ApJ</em> <b>698</b>, 895 (2009) &mdash; the damped random walk.</div>
+  <div class="ref">M. Seikel, C. Clarkson, M. Smith, &ldquo;Reconstruction of dark energy and expansion dynamics using Gaussian processes,&rdquo; <em>JCAP</em> <b>06</b> (2012) 036 &mdash; <code>GaPP</code>.</div>
+  <div class="ref">A. P. Bart&oacute;k, M. C. Payne, R. Kondor, G. Cs&aacute;nyi, &ldquo;Gaussian Approximation Potentials,&rdquo; <em>Phys. Rev. Lett.</em> <b>104</b>, 136403 (2010).</div>
+  <div class="ref">J. Lee et al., &ldquo;Deep Neural Networks as Gaussian Processes,&rdquo; ICLR (2018); Jacot et al., &ldquo;Neural Tangent Kernel,&rdquo; NeurIPS (2018).</div>
+</div>
+<div class="eqbox" style="margin-top:22px">
+  choose the kernel &nbsp;&bull;&nbsp; condition on the data &nbsp;&bull;&nbsp; read off mean and honest error bars
+</div>
+<p class="foot">Every figure in this deck is computed live in the browser &mdash; Cholesky factorisations, kernel evaluations, posterior conditioning and a spectral Gaussian random field &mdash; in vanilla JavaScript, no libraries. Styling matches the companion decks on Bayesian evidence, hierarchical models, maximum entropy and anomaly detection.</p>
+<div class="pager"><button onclick="show(cur-1)" id="prev">&larr; Prev</button><button onclick="show(cur+1)" id="next">Next &rarr;</button></div></section>
+
+</div>
+<script>
+function _gr(){ var u=Math.random(),v=Math.random(),r=Math.sqrt(-2*Math.log(u+1e-12)); return r*Math.cos(6.283185*v); }
+var _CB='#3D7EBF',_CB2='#245a95',_CR='#e51d2c',_CINK='#31465c',_CMUT='#5b6b7a',_CAX='#c9d6e3';
+// ---- small dense linear algebra ----
+function chol(A,n){ var L=[],i,j,k; for(i=0;i<n;i++){L.push(new Float64Array(n));}
+  for(i=0;i<n;i++){ for(j=0;j<=i;j++){ var s=A[i][j]; for(k=0;k<j;k++)s-=L[i][k]*L[j][k];
+    if(i===j){ L[i][j]=Math.sqrt(Math.max(s,1e-12)); } else { L[i][j]=s/L[j][j]; } } } return L; }
+function fsolve(L,b,n){ var y=new Float64Array(n),i,k; for(i=0;i<n;i++){ var s=b[i]; for(k=0;k<i;k++)s-=L[i][k]*y[k]; y[i]=s/L[i][i]; } return y; }
+function bsolve(L,y,n){ var x=new Float64Array(n),i,k; for(i=n-1;i>=0;i--){ var s=y[i]; for(k=i+1;k<n;k++)s-=L[k][i]*x[k]; x[i]=s/L[i][i]; } return x; }
+// kernels: type 0 RBF,1 Matern32,2 Exp,3 Periodic
+function kern(r,l,s,type){ r=Math.abs(r);
+  if(type===1){ var a=1.7320508*r/l; return s*s*(1+a)*Math.exp(-a); }
+  if(type===2){ return s*s*Math.exp(-r/l); }
+  if(type===3){ var sp=Math.sin(3.14159265*r/1.1); return s*s*Math.exp(-2*sp*sp/(l*l)); }
+  return s*s*Math.exp(-r*r/(2*l*l));
+}
+
+// ---------- Widget 1: GP prior samples ----------
+(function(){
+  var C=document.getElementById('prC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var N=200, xs=[], i; for(i=0;i<N;i++)xs.push(-5+10*i/(N-1));
+  var l=0.7,s=1.0,type=0, Z=[], nS=5, anim=false;
+  function newZ(){ Z=[]; for(var k=0;k<nS;k++){ var z=new Float64Array(N); for(i=0;i<N;i++)z[i]=_gr(); Z.push(z); } }
+  newZ();
+  function samples(){ // f = L z with L=chol(K)
+    var K=[]; for(i=0;i<N;i++){K.push(new Float64Array(N));}
+    for(i=0;i<N;i++)for(var j=0;j<=i;j++){ var v=kern(xs[i]-xs[j],l,s,type)+(i===j?1e-7:0); K[i][j]=v; K[j][i]=v; }
+    var L=chol(K,N), out=[];
+    for(var k=0;k<nS;k++){ var f=new Float64Array(N); for(i=0;i<N;i++){ var acc=0; for(var m=0;m<=i;m++)acc+=L[i][m]*Z[k][m]; f[i]=acc; } out.push(f); }
+    return out;
+  }
+  function draw(){ g.clearRect(0,0,W,H); var F=samples();
+    var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB;
+    var yr=2.4*s;
+    function X(x){return pL+(x+5)/10*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    // 2 sigma band
+    g.fillStyle='rgba(127,140,152,0.13)'; g.fillRect(pL,Y(2*s),pw,Y(-2*s)-Y(2*s));
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();g.setLineDash([]);
+    var cols=['#3D7EBF','#e51d2c','#2e8b57','#d98c00','#7d5ba6'];
+    for(var k=0;k<nS;k++){ g.strokeStyle=cols[k%5];g.lineWidth=1.8;g.beginPath();
+      for(i=0;i<N;i++){var xx=X(xs[i]),yy=Y(F[k][i]); if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);} g.stroke(); }
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';
+    for(var t=-4;t<=4;t+=2)g.fillText(t,X(t),pT+ph+16); g.fillText('input  x',W/2,H-2);
+    g.textAlign='right';g.fillText('+2σ',pL-4,Y(2*s)+4);g.fillText('−2σ',pL-4,Y(-2*s)+4);
+    document.getElementById('prOut').innerHTML='&ell; = <b>'+l.toFixed(2)+'</b> &nbsp; &sigma; = <b>'+s.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">5 samples from &Nscr;(0,K), RBF kernel &mdash; correlated over a distance &ell;, typical height &sigma;</span>';
+  }
+  document.getElementById('prL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('prLv').textContent=l.toFixed(2);draw();});
+  document.getElementById('prS').addEventListener('input',function(e){s=+e.target.value;document.getElementById('prSv').textContent=s.toFixed(2);draw();});
+  document.getElementById('prNew').addEventListener('click',function(){newZ();draw();});
+  var timer=null;
+  document.getElementById('prAnim').addEventListener('click',function(){ var b=this;
+    if(timer){clearInterval(timer);timer=null;b.classList.remove('on');b.innerHTML='▶ Animate';return;}
+    b.classList.add('on');b.innerHTML='◼ Stop'; var t0=performance.now();
+    // morph Z with a slow random walk for a flowing effect
+    var Zt=Z.map(function(z){return z.slice();}), Zd=Z.map(function(z){var d=new Float64Array(z.length);for(var i=0;i<z.length;i++)d[i]=_gr();return d;});
+    timer=setInterval(function(){ for(var k=0;k<nS;k++)for(var i=0;i<Z[k].length;i++){ Zt[k][i]+=0.05*Zd[k][i]; if(Math.abs(Zt[k][i])>3){Zd[k][i]*=-1;} Z[k][i]=Zt[k][i]; } draw(); },60);
+  });
+  draw();
+})();
+
+// ---------- Widget 2: kernel explorer ----------
+(function(){
+  var C=document.getElementById('kkC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var N=180, xs=[], i; for(i=0;i<N;i++)xs.push(-4+8*i/(N-1));
+  var l=0.6,type=0, Z=[]; function newZ(){ Z=[]; for(var k=0;k<3;k++){var z=new Float64Array(N);for(i=0;i<N;i++)z[i]=_gr();Z.push(z);} } newZ();
+  function samples(){ var K=[];for(i=0;i<N;i++)K.push(new Float64Array(N));
+    for(i=0;i<N;i++)for(var j=0;j<=i;j++){var v=kern(xs[i]-xs[j],l,1,type)+(i===j?1e-7:0);K[i][j]=v;K[j][i]=v;}
+    var L=chol(K,N),out=[]; for(var k=0;k<3;k++){var f=new Float64Array(N);for(i=0;i<N;i++){var a=0;for(var m=0;m<=i;m++)a+=L[i][m]*Z[k][m];f[i]=a;}out.push(f);} return out; }
+  function draw(){ g.clearRect(0,0,W,H); var F=samples();
+    var pL=44,pR=16, topT=14, topH=200, botT=245, botH=95, pw=W-pL-pR;
+    // top: samples
+    function X(x){return pL+(x+4)/8*pw;} function Y(y){return topT+topH/2-(y/3.0)*(topH/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,topT);g.lineTo(pL,topT+topH);g.lineTo(W-pR,topT+topH);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();g.setLineDash([]);
+    var cols=['#3D7EBF','#e51d2c','#2e8b57'];
+    for(var k=0;k<3;k++){g.strokeStyle=cols[k];g.lineWidth=1.8;g.beginPath();for(i=0;i<N;i++){var xx=X(xs[i]),yy=Y(F[k][i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='left';g.fillText('prior samples',pL+6,topT+14);
+    // bottom: kernel shape k(0,r)
+    function Xr(r){return pL+ (r/4)*pw;} function Yk(v){return botT+botH-v*botH*0.92;}
+    g.strokeStyle=_CAX;g.beginPath();g.moveTo(pL,botT);g.lineTo(pL,botT+botH);g.lineTo(W-pR,botT+botH);g.stroke();
+    g.strokeStyle=_CR;g.lineWidth=2.4;g.beginPath();for(var q=0;q<=140;q++){var r=4*q/140,v=kern(r,l,1,type);var xx=Xr(r),yy=Yk(v);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.textAlign='left';g.fillText('kernel k(0,r)',pL+6,botT+14);
+    g.textAlign='center';g.fillText('separation r  →',W/2,botT+botH+16);
+    var names=['RBF — infinitely smooth','Matérn-3/2 — once differentiable','Exponential — rough (Markov)','Periodic — repeats'];
+    document.getElementById('kkOut').innerHTML='<b style="color:'+_CB2+'">'+names[type]+'</b> &nbsp; &ell; = <b>'+l.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">the smoothness of the samples is set by the shape of k near r=0</span>';
+  }
+  function setType(t,id){ type=t; ['kkRBF','kkM32','kkExp','kkPer'].forEach(function(x){var b=document.getElementById(x);b.classList.toggle('on',x===id);b.classList.toggle('alt',x!==id);}); draw(); }
+  document.getElementById('kkRBF').addEventListener('click',function(){setType(0,'kkRBF');});
+  document.getElementById('kkM32').addEventListener('click',function(){setType(1,'kkM32');});
+  document.getElementById('kkExp').addEventListener('click',function(){setType(2,'kkExp');});
+  document.getElementById('kkPer').addEventListener('click',function(){setType(3,'kkPer');});
+  document.getElementById('kkL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('kkLv').textContent=l.toFixed(2);draw();});
+  document.getElementById('kkNew').addEventListener('click',function(){newZ();draw();});
+  draw();
+})();
+
+// ---------- Widget 3: interactive regression ----------
+(function(){
+  var C=document.getElementById('rgC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.9,s=1.2,sn=0.1, data=[]; var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB;
+  var xr=5, yr=3.0;
+  function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+  function invX(px){return (px-pL)/pw*(2*xr)-xr;} function invY(py){return -((py-(pT+ph/2))/(ph/2))*yr;}
+  var Ngrid=120, gx=[]; for(var i=0;i<Ngrid;i++)gx.push(-xr+2*xr*i/(Ngrid-1));
+  var zsamp=[]; function newSamp(){ zsamp=[]; for(var k=0;k<3;k++){var z=new Float64Array(Ngrid);for(var i=0;i<Ngrid;i++)z[i]=_gr();zsamp.push(z);} } newSamp();
+  function predict(){
+    var n=data.length;
+    if(n===0){ var mean=new Float64Array(Ngrid), sd=new Float64Array(Ngrid); for(var i=0;i<Ngrid;i++){mean[i]=0;sd[i]=s;} return {mean:mean,sd:sd,logml:null,L:null}; }
+    var K=[],i,j; for(i=0;i<n;i++)K.push(new Float64Array(n));
+    for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],l,s,0)+(i===j?sn*sn+1e-8:0);K[i][j]=v;K[j][i]=v;}
+    var L=chol(K,n); var yv=new Float64Array(n); for(i=0;i<n;i++)yv[i]=data[i][1];
+    var al=bsolve(L,fsolve(L,yv,n),n);
+    var mean=new Float64Array(Ngrid), sd=new Float64Array(Ngrid), fs=[[],[],[]];
+    // posterior samples via mean + chol of posterior cov on grid (approx: use marginal sd for wiggle)
+    for(var q=0;q<Ngrid;q++){ var ks=new Float64Array(n); for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,s,0);
+      var m=0; for(i=0;i<n;i++)m+=ks[i]*al[i]; mean[q]=m;
+      var v=fsolve(L,ks,n); var vv=0; for(i=0;i<n;i++)vv+=v[i]*v[i]; var varq=Math.max(kern(0,l,s,0)-vv,1e-9); sd[q]=Math.sqrt(varq);
+    }
+    // log marginal likelihood
+    var quad=0; for(i=0;i<n;i++)quad+=yv[i]*al[i]; var ld=0; for(i=0;i<n;i++)ld+=Math.log(L[i][i]);
+    var logml=-0.5*quad-ld-0.5*n*Math.log(6.283185);
+    return {mean:mean,sd:sd,logml:logml};
+  }
+  function draw(){ g.clearRect(0,0,W,H); var P=predict();
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();g.setLineDash([]);
+    // band
+    g.fillStyle='rgba(61,126,191,0.16)'; g.beginPath();
+    for(i=0;i<Ngrid;i++){var xx=X(gx[i]),yy=Y(P.mean[i]+2*P.sd[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}
+    for(i=Ngrid-1;i>=0;i--){g.lineTo(X(gx[i]),Y(P.mean[i]-2*P.sd[i]));} g.closePath();g.fill();
+    // posterior sample functions (mean + sd*z smoothed)
+    if(data.length>0){ g.setLineDash([5,4]);g.lineWidth=1;g.strokeStyle='rgba(37,90,149,0.55)';
+      for(var k=0;k<3;k++){ g.beginPath(); for(i=0;i<Ngrid;i++){ var val=P.mean[i]+P.sd[i]*zsamp[k][i]; var xx=X(gx[i]),yy=Y(val); if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);} g.stroke(); } g.setLineDash([]); }
+    // mean
+    g.strokeStyle=_CB;g.lineWidth=2.6;g.beginPath();for(i=0;i<Ngrid;i++){var xx=X(gx[i]),yy=Y(P.mean[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    // data
+    g.fillStyle=_CR;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';
+    for(var t=-4;t<=4;t+=2)g.fillText(t,X(t),pT+ph+16); g.fillText('input  x',W/2,H-2);
+    var ml=P.logml===null?'&mdash;':('<b>'+P.logml.toFixed(2)+'</b>');
+    document.getElementById('rgOut').innerHTML='points: <b>'+data.length+'</b> &nbsp; &ell;='+l.toFixed(2)+' &nbsp; &sigma;='+s.toFixed(2)+' &nbsp; &sigma;<sub>n</sub>='+sn.toFixed(2)+' &nbsp; log marginal likelihood = '+ml+' &nbsp; <span style="color:'+_CMUT+'">click to add data</span>';
+  }
+  C.addEventListener('click',function(e){ var r=C.getBoundingClientRect(); var px=(e.clientX-r.left)*(W/r.width), py=(e.clientY-r.top)*(H/r.height); data.push([invX(px),invY(py)]); draw(); });
+  document.getElementById('rgL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('rgLv').textContent=l.toFixed(2);draw();});
+  document.getElementById('rgS').addEventListener('input',function(e){s=+e.target.value;document.getElementById('rgSv').textContent=s.toFixed(2);draw();});
+  document.getElementById('rgN').addEventListener('input',function(e){sn=+e.target.value;document.getElementById('rgNv').textContent=sn.toFixed(2);draw();});
+  document.getElementById('rgSamp').addEventListener('click',function(){newSamp();draw();});
+  document.getElementById('rgClr').addEventListener('click',function(){data=[];draw();});
+  document.getElementById('rgDemo').addEventListener('click',function(){ data=[]; var pts=[-4,-2.8,-1.5,-0.5,0.6,1.4,2.6,3.7];
+    for(var i=0;i<pts.length;i++){var x=pts[i];var y=Math.sin(1.3*x)+0.5*Math.sin(0.5*x)+0.12*_gr();data.push([x,y]);} newSamp(); draw(); });
+  draw();
+})();
+
+// ---------- Widget 4: marginal likelihood / Occam ----------
+(function(){
+  var C=document.getElementById('mlC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var s=1.0,sn=0.12,l=0.5, data=[];
+  function gen(){ data=[]; var pts=[-3.4,-2.4,-1.3,-0.2,0.7,1.6,2.5,3.3]; for(var i=0;i<pts.length;i++){var x=pts[i];var y=Math.sin(1.1*x)+0.15*_gr();data.push([x,y]);} } gen();
+  var n; function fit(ll){ n=data.length; var K=[],i,j; for(i=0;i<n;i++)K.push(new Float64Array(n));
+    for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],ll,s,0)+(i===j?sn*sn+1e-8:0);K[i][j]=v;K[j][i]=v;}
+    var L=chol(K,n); var yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=data[i][1];
+    var al=bsolve(L,fsolve(L,yv,n),n); var quad=0;for(i=0;i<n;i++)quad+=yv[i]*al[i]; var ld=0;for(i=0;i<n;i++)ld+=Math.log(L[i][i]);
+    var logml=-0.5*quad-ld-0.5*n*Math.log(6.283185); return {L:L,al:al,logml:logml,quad:quad,ld:ld}; }
+  function meanAt(x,fitres,ll){ var m=0; for(var i=0;i<n;i++)m+=kern(x-data[i][0],ll,s,0)*fitres.al[i]; return m; }
+  function draw(){ g.clearRect(0,0,W,H);
+    var midX=W*0.56;
+    // left: fit
+    var pL=42,pT=16,pB=30,pw=midX-pL-14,ph=H-pT-pB, xr=4.2, yr=1.9;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    var fr=fit(l);
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(midX-14,pT+ph);g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(var q=0;q<=120;q++){var x=-xr+2*xr*q/120,y=meanAt(x,fr,l);var xx=X(x),yy=Y(y);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;for(var i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3.2,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='left';g.fillText('fit at ℓ = '+l.toFixed(2),pL+4,pT+12);
+    // right: logml vs l
+    var qL=midX+34,qT=16,qB=30,qw=W-16-qL,qh=H-qT-qB;
+    var ls=[],mls=[],lmin=0.08,lmax=2.6, best=-1e9,bestl=lmin;
+    for(var t=0;t<=90;t++){var ll=lmin+(lmax-lmin)*t/90;var m=fit(ll).logml;ls.push(ll);mls.push(m);if(m>best){best=m;bestl=ll;}}
+    var mmin=Math.min.apply(null,mls),mmax=Math.max.apply(null,mls);
+    function Xl(v){return qL+(v-lmin)/(lmax-lmin)*qw;} function Yl(v){return qT+qh-(v-mmin)/(mmax-mmin+1e-9)*qh*0.9;}
+    g.strokeStyle=_CAX;g.beginPath();g.moveTo(qL,qT);g.lineTo(qL,qT+qh);g.lineTo(W-16,qT+qh);g.stroke();
+    g.strokeStyle=_CB2;g.lineWidth=2.2;g.beginPath();for(t=0;t<ls.length;t++){var xx=Xl(ls[t]),yy=Yl(mls[t]);if(t===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    // optimum marker
+    g.strokeStyle='#2e8b57';g.setLineDash([4,3]);g.beginPath();g.moveTo(Xl(bestl),qT);g.lineTo(Xl(bestl),qT+qh);g.stroke();g.setLineDash([]);
+    // current position
+    g.fillStyle=_CR;g.beginPath();g.arc(Xl(l),Yl(fr.logml),4.5,0,6.283);g.fill();
+    g.fillStyle=_CMUT;g.textAlign='left';g.fillText('log p(y|ℓ)',qL+4,qT+12); g.textAlign='center';g.fillText('length scale ℓ →',(qL+W-16)/2,qT+qh+16);
+    g.fillStyle='#2e8b57';g.textAlign='center';g.fillText('optimum',Xl(bestl),qT+qh-4);
+    var verdict = l<bestl*0.6?'too wiggly — overfitting, penalised by |K|':(l>bestl*1.7?'too stiff — underfitting the data':'near the evidence optimum');
+    document.getElementById('mlOut').innerHTML='&ell; = <b>'+l.toFixed(2)+'</b> &nbsp; log ML = <b style="color:'+_CR+'">'+fr.logml.toFixed(2)+'</b> &nbsp; (fit '+(-0.5*fr.quad).toFixed(1)+', penalty '+(-fr.ld).toFixed(1)+') &nbsp; optimum &ell;&asymp;<b>'+bestl.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">'+verdict+'</span>';
+    window.__mlBest=bestl;
+  }
+  document.getElementById('mlL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('mlLv').textContent=l.toFixed(2);draw();});
+  document.getElementById('mlOpt').addEventListener('click',function(){ if(window.__mlBest){l=window.__mlBest;document.getElementById('mlL').value=l;document.getElementById('mlLv').textContent=l.toFixed(2);draw();}});
+  document.getElementById('mlNew').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 5: animated 2D Gaussian random field (spectral) ----------
+(function(){
+  var C=document.getElementById('fdC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var M=90, freq=[], phase=[], speed=[], wt=[], corr=0.13, playing=true;
+  function build(){ freq=[];phase=[];speed=[];wt=[];
+    var sigw=1/corr; for(var m=0;m<M;m++){ freq.push([_gr()*sigw,_gr()*sigw]); phase.push(Math.random()*6.283); speed.push((Math.random()-0.5)*0.6); wt.push(_gr()); } }
+  build();
+  var GW=180, GH=Math.round(GW*H/W); var img=g.createImageData(GW,GH);
+  function render(t){
+    var amp=Math.sqrt(2/M);
+    for(var j=0;j<GH;j++){ var yy=j/GH; for(var i=0;i<GW;i++){ var xx=i/GW; var f=0;
+        for(var m=0;m<M;m++){ f+=wt[m]*Math.cos(freq[m][0]*xx*6.283+freq[m][1]*yy*6.283+phase[m]+speed[m]*t); }
+        f*=amp; var v=Math.max(0,Math.min(1,0.5+0.42*f));
+        // blue-white-red diverging
+        var r,gg,b; if(v<0.5){var u=v/0.5; r=Math.round(37+u*218);gg=Math.round(90+u*165);b=Math.round(149+u*106);} else {var u=(v-0.5)/0.5; r=255;gg=Math.round(255-u*230);b=Math.round(255-u*230);}
+        var idx=4*(j*GW+i); img.data[idx]=r;img.data[idx+1]=gg;img.data[idx+2]=b;img.data[idx+3]=255;
+      } }
+    // upscale via temp canvas
+    var tc=render._tc||(render._tc=document.createElement('canvas')); tc.width=GW;tc.height=GH; tc.getContext('2d').putImageData(img,0,0);
+    g.imageSmoothingEnabled=true; g.drawImage(tc,0,0,W,H);
+    document.getElementById('fdOut').innerHTML='correlation length = <b>'+corr.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">a Gaussian random field: '+M+' Fourier modes with a Gaussian (RBF) spectrum &mdash; small length &rarr; small blobs</span>';
+  }
+  var t0=performance.now();
+  function loop(){ if(!playing)return; render((performance.now()-t0)/1000); requestAnimationFrame(loop); }
+  document.getElementById('fdL').addEventListener('input',function(e){corr=+e.target.value;document.getElementById('fdLv').textContent=corr.toFixed(3);build();if(!playing)render((performance.now()-t0)/1000);});
+  var pb=document.getElementById('fdPlay'); pb.addEventListener('click',function(){playing=!playing;pb.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)loop();});
+  document.getElementById('fdNew').addEventListener('click',function(){build();if(!playing)render((performance.now()-t0)/1000);});
+  render(0); loop();
+})();
+
+// ---------- Widget 6: Bayesian linear regression (funnel) ----------
+(function(){
+  var C=document.getElementById('lnC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var sp=1.5,sn=0.2,data=[]; var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,xr=3.2,yr=3.2;
+  function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+  function invX(px){return (px-pL)/pw*(2*xr)-xr;} function invY(py){return -((py-(pT+ph/2))/(ph/2))*yr;}
+  var Z=[]; function newZ(){Z=[];for(var k=0;k<28;k++)Z.push([_gr(),_gr()]);} newZ();
+  function post(){ var A=[[0,0],[0,0]],b=[0,0],n=data.length,i;
+    for(i=0;i<n;i++){var p2=data[i][0];A[0][0]+=1;A[0][1]+=p2;A[1][0]+=p2;A[1][1]+=p2*p2;b[0]+=data[i][1];b[1]+=p2*data[i][1];}
+    var pr=1/(sp*sp),inv=1/(sn*sn);
+    var P=[[A[0][0]*inv+pr,A[0][1]*inv],[A[1][0]*inv,A[1][1]*inv+pr]];
+    var det=P[0][0]*P[1][1]-P[0][1]*P[1][0];
+    var S=[[P[1][1]/det,-P[0][1]/det],[-P[1][0]/det,P[0][0]/det]];
+    var mu=[(S[0][0]*b[0]+S[0][1]*b[1])*inv,(S[1][0]*b[0]+S[1][1]*b[1])*inv];
+    return {mu:mu,S:S};
+  }
+  function draw(){ g.clearRect(0,0,W,H); var pp=post(),mu=pp.mu,S=pp.S;
+    var l11=Math.sqrt(Math.max(S[0][0],1e-9)),l21=S[1][0]/l11,l22=Math.sqrt(Math.max(S[1][1]-l21*l21,1e-9));
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();g.setLineDash([]);
+    var Ng=60,gx=[],q; for(q=0;q<Ng;q++)gx.push(-xr+2*xr*q/(Ng-1));
+    g.fillStyle='rgba(61,126,191,0.15)';g.beginPath();
+    for(q=0;q<Ng;q++){var x=gx[q],m=mu[0]+mu[1]*x,v=S[0][0]+2*S[0][1]*x+S[1][1]*x*x,sd=Math.sqrt(Math.max(v,0));var xx=X(x),yy=Y(m+2*sd);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}
+    for(q=Ng-1;q>=0;q--){var x=gx[q],m=mu[0]+mu[1]*x,v=S[0][0]+2*S[0][1]*x+S[1][1]*x*x,sd=Math.sqrt(Math.max(v,0));g.lineTo(X(x),Y(m-2*sd));}g.closePath();g.fill();
+    g.strokeStyle='rgba(37,90,149,0.38)';g.lineWidth=1;
+    for(var k=0;k<28;k++){var w0=mu[0]+l11*Z[k][0],w1=mu[1]+l21*Z[k][0]+l22*Z[k][1];g.beginPath();g.moveTo(X(-xr),Y(w0+w1*(-xr)));g.lineTo(X(xr),Y(w0+w1*xr));g.stroke();}
+    g.strokeStyle=_CB;g.lineWidth=2.6;g.beginPath();g.moveTo(X(-xr),Y(mu[0]+mu[1]*(-xr)));g.lineTo(X(xr),Y(mu[0]+mu[1]*xr));g.stroke();
+    g.fillStyle=_CR;for(var i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';for(var t=-3;t<=3;t+=1)g.fillText(t,X(t),pT+ph+16);g.fillText('x',W/2,H-2);
+    document.getElementById('lnOut').innerHTML='posterior line: <b>y = '+mu[0].toFixed(2)+' + '+mu[1].toFixed(2)+' x</b> &nbsp;(= the ridge estimate) &nbsp; points: '+data.length+' &nbsp; <span style="color:'+_CMUT+'">click to add data &mdash; the band <b>funnels</b> outward, unlike OLS&rsquo;s flat error bars</span>';
+  }
+  C.addEventListener('click',function(e){var r=C.getBoundingClientRect();var px=(e.clientX-r.left)*(W/r.width),py=(e.clientY-r.top)*(H/r.height);data.push([invX(px),invY(py)]);draw();});
+  document.getElementById('lnSp').addEventListener('input',function(e){sp=+e.target.value;document.getElementById('lnSpv').textContent=sp.toFixed(2);draw();});
+  document.getElementById('lnN').addEventListener('input',function(e){sn=+e.target.value;document.getElementById('lnNv').textContent=sn.toFixed(2);draw();});
+  document.getElementById('lnNew').addEventListener('click',function(){newZ();draw();});
+  document.getElementById('lnDemo').addEventListener('click',function(){data=[[-1,-0.8],[0,0.2],[1,1.1],[2,1.6]];draw();});
+  document.getElementById('lnClr').addEventListener('click',function(){data=[];draw();});
+  draw();
+})();
+
+// ---------- Widget 7: spline / kriging smoothing ----------
+(function(){
+  var C=document.getElementById('spC2'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var lam=0.05,l=0.6,data=[]; function gen(){data=[];var pts=[-3.5,-2.6,-1.8,-0.9,-0.1,0.7,1.5,2.3,3.1];for(var i=0;i<pts.length;i++){var x=pts[i];data.push([x,Math.sin(1.2*x)+0.14*_gr()]);}} gen();
+  var n; function fit(){ n=data.length;var K=[],i,j;for(i=0;i<n;i++)K.push(new Float64Array(n));
+    for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],l,1,0)+(i===j?lam+1e-8:0);K[i][j]=v;K[j][i]=v;}
+    var L=chol(K,n);var yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=data[i][1];var al=bsolve(L,fsolve(L,yv,n),n);return {L:L,al:al}; }
+  function meanAt(x,fr){var m=0;for(var i=0;i<n;i++)m+=kern(x-data[i][0],l,1,0)*fr.al[i];return m;}
+  function draw(){ g.clearRect(0,0,W,H);var fr=fit();
+    var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,xr=4,yr=1.8;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    var Ng=120,gx=[],q,i;for(q=0;q<Ng;q++)gx.push(-xr+2*xr*q/(Ng-1));var Lm=fr.L;
+    g.fillStyle='rgba(61,126,191,0.14)';g.beginPath();
+    for(q=0;q<Ng;q++){var ks=new Float64Array(n);for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,1,0);var v=fsolve(Lm,ks,n);var vv=0;for(i=0;i<n;i++)vv+=v[i]*v[i];var sd=Math.sqrt(Math.max(1-vv,1e-9));var xx=X(gx[q]),yy=Y(meanAt(gx[q],fr)+2*sd);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}
+    for(q=Ng-1;q>=0;q--){var ks=new Float64Array(n);for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,1,0);var v=fsolve(Lm,ks,n);var vv=0;for(i=0;i<n;i++)vv+=v[i]*v[i];var sd=Math.sqrt(Math.max(1-vv,1e-9));g.lineTo(X(gx[q]),Y(meanAt(gx[q],fr)-2*sd));}g.closePath();g.fill();
+    g.strokeStyle=_CB;g.lineWidth=2.6;g.beginPath();for(q=0;q<=140;q++){var x=-xr+2*xr*q/140,y=meanAt(x,fr);var xx=X(x),yy=Y(y);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3.4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';for(var t=-4;t<=4;t+=2)g.fillText(t,X(t),pT+ph+16);g.fillText('x',W/2,H-2);
+    var reg=lam<0.01?'λ→0: interpolating spline (through every point)':(lam>0.5?'λ large: very stiff, approaching the straight-line limit':'balanced smoothing');
+    document.getElementById('spOut2').innerHTML='smoothing λ = <b>'+lam.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">the GP posterior mean here <em>is</em> the smoothing spline; '+reg+'. Shaded = kriging variance.</span>';
+  }
+  document.getElementById('spLam').addEventListener('input',function(e){lam=+e.target.value;document.getElementById('spLamv').textContent=lam.toFixed(3);draw();});
+  document.getElementById('spNew2').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 8: wide neural networks -> GP ----------
+(function(){
+  var C=document.getElementById('nnC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var M=3,nNets=200,N=140,xs=[],i;for(i=0;i<N;i++)xs.push(-4+8*i/(N-1));
+  var nets=[]; function build(){nets=[];for(var s=0;s<nNets;s++){var w=[],b=[],v=[];for(var j=0;j<M;j++){w.push(_gr()*1.2);b.push(_gr()*1.3);v.push(_gr());}nets.push({w:w,b:b,v:v});}}
+  function fval(net,x){var s=0;for(var j=0;j<net.w.length;j++)s+=net.v[j]*Math.tanh(net.w[j]*x+net.b[j]);return s/Math.sqrt(net.w.length);}
+  build();
+  function draw(){ g.clearRect(0,0,W,H);
+    var pL=44,pR=150,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,yr=2.6;
+    function X(x){return pL+(x+4)/8*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    var mean=new Float64Array(N),sdv=new Float64Array(N);
+    for(i=0;i<N;i++){var mu=0,ss=0;for(var s=0;s<nNets;s++){var f=fval(nets[s],xs[i]);mu+=f;ss+=f*f;}mu/=nNets;mean[i]=mu;sdv[i]=Math.sqrt(Math.max(ss/nNets-mu*mu,0));}
+    g.fillStyle='rgba(127,140,152,0.18)';g.beginPath();for(i=0;i<N;i++){var xx=X(xs[i]),yy=Y(mean[i]+2*sdv[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(i=N-1;i>=0;i--)g.lineTo(X(xs[i]),Y(mean[i]-2*sdv[i]));g.closePath();g.fill();
+    for(var s=0;s<Math.min(28,nNets);s++){g.strokeStyle='rgba(61,126,191,0.32)';g.lineWidth=1;g.beginPath();for(i=0;i<N;i++){var xx=X(xs[i]),yy=Y(fval(nets[s],xs[i]));if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(pL+pw,pT+ph);g.stroke();
+    // histogram of f(0)
+    var hL=pL+pw+28,hW=pR-40,nb=20,hist=new Array(nb).fill(0),lo=-yr,hi=yr;
+    for(var s2=0;s2<nNets;s2++){var f0=fval(nets[s2],0);var idx=Math.floor((f0-lo)/(hi-lo)*nb);if(idx>=0&&idx<nb)hist[idx]++;}
+    var hmax=Math.max.apply(null,hist)||1;
+    g.fillStyle='rgba(229,29,44,0.55)';
+    for(var bn=0;bn<nb;bn++){var yb=pT+(nb-1-bn)/nb*ph,hh=ph/nb;g.fillRect(hL,yb,hist[bn]/hmax*hW,hh-1);}
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='center';g.fillText('f(0) distribution',hL+hW/2,pT+ph+16);g.fillText('input x',pL+pw/2,pT+ph+16);
+    var reg=M<=3?'few units — lumpy, non-Gaussian':(M>=35?'wide — a smooth Gaussian band: a GP':'getting Gaussian');
+    document.getElementById('nnOut').innerHTML='width M = <b>'+M+'</b> &nbsp; <span style="color:'+_CMUT+'">'+reg+' &mdash; as M grows the f(0) histogram becomes a bell and the band converges to a Gaussian process</span>';
+  }
+  document.getElementById('nnM').addEventListener('input',function(e){M=+e.target.value;document.getElementById('nnMv').textContent=M;build();draw();});
+  document.getElementById('nnNew').addEventListener('click',function(){build();draw();});
+  var timer=null;
+  document.getElementById('nnAnim').addEventListener('click',function(){var b=this;if(timer){clearInterval(timer);timer=null;b.classList.remove('on');b.innerHTML='▶ Animate';return;}b.classList.add('on');b.innerHTML='◼ Stop';timer=setInterval(function(){build();draw();},550);});
+  draw();
+})();
+
+// ---------- Widget 9: random field + power spectrum ----------
+(function(){
+  var C=document.getElementById('fd2C'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var M=90,freq=[],phase=[],speed=[],wt=[],corr=0.13,playing=true;
+  function build(){freq=[];phase=[];speed=[];wt=[];var sw=1/corr;for(var m=0;m<M;m++){freq.push([_gr()*sw,_gr()*sw]);phase.push(Math.random()*6.283);speed.push((Math.random()-0.5)*0.6);wt.push(_gr());}} build();
+  var fieldW=Math.round(W*0.60),GW=150,GH=Math.round(GW*H/fieldW),img=g.createImageData(GW,GH);
+  function render(t){
+    var amp=Math.sqrt(2/M);
+    for(var j=0;j<GH;j++){var yy=j/GH;for(var i=0;i<GW;i++){var xx=i/GW;var f=0;for(var m=0;m<M;m++){f+=wt[m]*Math.cos(freq[m][0]*xx*6.283+freq[m][1]*yy*6.283+phase[m]+speed[m]*t);}f*=amp;var v=Math.max(0,Math.min(1,0.5+0.42*f));var r,gg,b;if(v<0.5){var u=v/0.5;r=Math.round(37+u*218);gg=Math.round(90+u*165);b=Math.round(149+u*106);}else{var u2=(v-0.5)/0.5;r=255;gg=Math.round(255-u2*230);b=Math.round(255-u2*230);}var idx=4*(j*GW+i);img.data[idx]=r;img.data[idx+1]=gg;img.data[idx+2]=b;img.data[idx+3]=255;}}
+    var tc=render._tc||(render._tc=document.createElement('canvas'));tc.width=GW;tc.height=GH;tc.getContext('2d').putImageData(img,0,0);
+    g.clearRect(0,0,W,H);g.imageSmoothingEnabled=true;g.drawImage(tc,0,0,fieldW,H);
+    var pL=fieldW+42,pR=14,pT=30,pB=34,pw=W-pR-pL,ph=H-pT-pB;
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    var kw=1/corr,kmax=Math.max(3*kw,10);
+    g.strokeStyle=_CR;g.lineWidth=2.4;g.beginPath();for(var q=0;q<=120;q++){var k=kmax*q/120;var P=Math.exp(-k*k/(2*kw*kw));var xx=pL+k/kmax*pw,yy=pT+ph-P*ph*0.92;if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CB2;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('power spectrum P(k)',(pL+W-pR)/2,pT-10);g.fillText('wavenumber k →',(pL+W-pR)/2,pT+ph+18);
+    document.getElementById('fd2Out').innerHTML='correlation length = <b>'+corr.toFixed(3)+'</b> &nbsp;&rArr;&nbsp; spectral width &asymp; <b>'+(1/corr).toFixed(1)+'</b> &nbsp; <span style="color:'+_CMUT+'">RBF kernel &harr; Gaussian P(k): short correlation &rarr; broad spectrum &rarr; small blobs</span>';
+  }
+  var t0=performance.now();function loop(){if(!playing)return;render((performance.now()-t0)/1000);requestAnimationFrame(loop);}
+  document.getElementById('fd2L').addEventListener('input',function(e){corr=+e.target.value;document.getElementById('fd2Lv').textContent=corr.toFixed(3);build();if(!playing)render((performance.now()-t0)/1000);});
+  var pb2=document.getElementById('fd2Play');pb2.addEventListener('click',function(){playing=!playing;pb2.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)loop();});
+  document.getElementById('fd2New').addEventListener('click',function(){build();if(!playing)render((performance.now()-t0)/1000);});
+  render(0);loop();
+})();
+
+// ---------- Widget 10: emulator active learning ----------
+(function(){
+  var C=document.getElementById('emC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.8,sn=0.03,xr=5; function truef(x){return Math.sin(1.6*x)+0.25*x;}
+  var data=[]; function reset(){data=[[-4,truef(-4)],[4,truef(4)]];} reset();
+  var N=160,gx=[],i;for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function pred(){var n=data.length,K=[],j;for(i=0;i<n;i++)K.push(new Float64Array(n));for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],l,1,0)+(i===j?sn*sn+1e-8:0);K[i][j]=v;K[j][i]=v;}var L=chol(K,n),yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=data[i][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,1,0);var m=0;for(i=0;i<n;i++)m+=ks[i]*al[i];mean[q]=m;var vv=fsolve(L,ks,n);var s=0;for(i=0;i<n;i++)s+=vv[i]*vv[i];sd[q]=Math.sqrt(Math.max(1-s,1e-9));}return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var P=pred();var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,yr=2.2;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.15)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]+2*P.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(P.mean[q]-2*P.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(truef(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3.6,0,6.283);g.fill();}
+    var mi=0;for(q=1;q<N;q++)if(P.sd[q]>P.sd[mi])mi=q;
+    g.strokeStyle='#2e8b57';g.setLineDash([3,3]);g.beginPath();g.moveTo(X(gx[mi]),pT);g.lineTo(X(gx[mi]),pT+ph);g.stroke();g.setLineDash([]);
+    g.fillStyle='#2e8b57';g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('next run',X(gx[mi]),pT+11);
+    var er=0;for(q=0;q<N;q++)er+=(P.mean[q]-truef(gx[q]))*(P.mean[q]-truef(gx[q]));er=Math.sqrt(er/N);
+    document.getElementById('emOut').innerHTML='design points: <b>'+data.length+'</b> &nbsp; emulator RMS error = <b style="color:'+_CR+'">'+er.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">green = where to run the next expensive simulation (largest &sigma;)</span>';
+    window.__emMi=gx[mi];
+  }
+  document.getElementById('emStep').addEventListener('click',function(){data.push([window.__emMi,truef(window.__emMi)]);draw();});
+  document.getElementById('emReset').addEventListener('click',function(){reset();draw();});
+  document.getElementById('emAuto').addEventListener('click',function(){var k=0;var iv=setInterval(function(){data.push([window.__emMi,truef(window.__emMi)]);draw();k++;if(k>=8)clearInterval(iv);},450);});
+  draw();
+})();
+
+// ---------- Widget 11: Bayesian optimisation ----------
+(function(){
+  var C=document.getElementById('boC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.7,sn=0.02,xr=5,kappa=2.0; function truef(x){return -((x-1.5)*(x-1.5))*0.15+0.6*Math.sin(2.2*x);}
+  var data=[],i;function reset(){data=[[-3.5,truef(-3.5)],[0.5,truef(0.5)]];} reset();
+  var N=160,gx=[];for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function pred(){var n=data.length,K=[],j;for(i=0;i<n;i++)K.push(new Float64Array(n));for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],l,1,0)+(i===j?sn*sn+1e-8:0);K[i][j]=v;K[j][i]=v;}var L=chol(K,n),yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=data[i][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,1,0);var m=0;for(i=0;i<n;i++)m+=ks[i]*al[i];mean[q]=m;var vv=fsolve(L,ks,n);var s=0;for(i=0;i<n;i++)s+=vv[i]*vv[i];sd[q]=Math.sqrt(Math.max(1-s,1e-9));}return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var P=pred();var pL=44,pR=16,pT=14,topH=196,acqT=250,acqH=78,pw=W-pL-pR,yr=1.8;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+topH/2-(y/yr)*(topH/2);}
+    g.fillStyle='rgba(61,126,191,0.15)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]+2*P.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(P.mean[q]-2*P.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.5;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(truef(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.2;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3.4,0,6.283);g.fill();}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.strokeRect(pL,pT,pw,topH);
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillText('surrogate (blue) vs true objective (red dashed)',pL+4,pT+12);
+    var acq=new Float64Array(N),amax=-1e9,ai=0;for(q=0;q<N;q++){acq[q]=P.mean[q]+kappa*P.sd[q];if(acq[q]>amax){amax=acq[q];ai=q;}}var amin=Math.min.apply(null,acq);
+    function Ya(v){return acqT+acqH-(v-amin)/(amax-amin+1e-9)*acqH*0.85;}
+    g.strokeStyle=_CAX;g.strokeRect(pL,acqT,pw,acqH);
+    g.strokeStyle='#2e8b57';g.lineWidth=2;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Ya(acq[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle=_CR;g.setLineDash([3,3]);g.beginPath();g.moveTo(X(gx[ai]),pT);g.lineTo(X(gx[ai]),acqT+acqH);g.stroke();g.setLineDash([]);
+    g.fillStyle=_CMUT;g.textAlign='left';g.fillText('acquisition α(x)=μ+κσ — sample at its peak',pL+4,acqT+12);
+    var best=-1e9;for(i=0;i<data.length;i++)best=Math.max(best,data[i][1]);
+    document.getElementById('boOut').innerHTML='evaluations: <b>'+data.length+'</b> &nbsp; best so far = <b style="color:'+_CR+'">'+best.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">red line = argmax &alpha;, where BO samples next</span>';
+    window.__boAi=gx[ai];
+  }
+  document.getElementById('boStep').addEventListener('click',function(){data.push([window.__boAi,truef(window.__boAi)]);draw();});
+  document.getElementById('boReset').addEventListener('click',function(){reset();draw();});
+  document.getElementById('boAuto').addEventListener('click',function(){var k=0;var iv=setInterval(function(){data.push([window.__boAi,truef(window.__boAi)]);draw();k++;if(k>=9)clearInterval(iv);},480);});
+  draw();
+})();
+
+// ---------- Widget 12: latent force model ----------
+(function(){
+  var C=document.getElementById('lfC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var N=220,l=0.5,tau=0.6,playing=true,i;var xs=[];for(i=0;i<N;i++)xs.push(i/(N-1)*10);
+  var Zt=[],Zd=[];function build(){Zt=[];Zd=[];for(i=0;i<N;i++){Zt.push(_gr());Zd.push(_gr());}} build();
+  function forcing(){var u=new Float64Array(N),win=Math.max(1,Math.round(l/(10/N)));for(var q=0;q<N;q++){var s=0,c=0;for(var k=-win;k<=win;k++){var idx=q+k;if(idx>=0&&idx<N){s+=Zt[idx];c++;}}u[q]=s/Math.sqrt(c);}return u;}
+  function response(u){var x=new Float64Array(N),dt=10/(N-1),xx=0;for(var q=0;q<N;q++){xx+=dt*(-xx/tau+u[q]);x[q]=xx;}return x;}
+  function draw(){g.clearRect(0,0,W,H);var u=forcing(),x=response(u);var pL=40,pR=16,pT=16,pB=26,pw=W-pL-pR,ph=H-pT-pB;
+    function X(t){return pL+t/10*pw;} var um=1e-9,xm=1e-9,q;for(q=0;q<N;q++){um=Math.max(um,Math.abs(u[q]));xm=Math.max(xm,Math.abs(x[q]));}
+    function Yu(v){return pT+ph*0.28-v/um*ph*0.2;} function Yx(v){return pT+ph*0.74-v/xm*ph*0.2;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT+ph*0.28);g.lineTo(W-pR,pT+ph*0.28);g.moveTo(pL,pT+ph*0.74);g.lineTo(W-pR,pT+ph*0.74);g.stroke();
+    g.strokeStyle=_CR;g.lineWidth=1.8;g.beginPath();for(q=0;q<N;q++){var xx=X(xs[q]),yy=Yu(u[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(xs[q]),yy=Yx(x[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.font='12px -apple-system,sans-serif';g.textAlign='left';g.fillStyle=_CR;g.fillText('latent forcing u(t) — GP prior',pL+4,pT+10);g.fillStyle=_CB2;g.fillText('observed response x(t) — also a GP',pL+4,pT+ph*0.5+8);
+    document.getElementById('lfOut').innerHTML='response time &tau; = <b>'+tau.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">the ODE x&prime;=&minus;x/&tau;+u smooths and lags the forcing; a GP on u &rArr; a GP on x</span>';
+  }
+  function step(){if(!playing)return;for(var k=0;k<N;k++){Zt[k]+=0.04*Zd[k];if(Math.abs(Zt[k])>3)Zd[k]*=-1;}draw();requestAnimationFrame(step);}
+  document.getElementById('lfTau').addEventListener('input',function(e){tau=+e.target.value;document.getElementById('lfTauv').textContent=tau.toFixed(2);draw();});
+  document.getElementById('lfNew').addEventListener('click',function(){build();draw();});
+  var pb=document.getElementById('lfPlay');pb.addEventListener('click',function(){playing=!playing;pb.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)step();});
+  draw();step();
+})();
+
+// ---------- Widget 13: ML potential (PES) ----------
+(function(){
+  var C=document.getElementById('peC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.7,sn=0.0008,xr=2.2,i;function trueE(x){return (x*x-1)*(x*x-1);}
+  var data=[];function reset(){data=[[-1.6,trueE(-1.6)],[0,trueE(0)],[1.6,trueE(1.6)]];} reset();
+  var N=160,gx=[];for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function pred(){var n=data.length,K=[],j;for(i=0;i<n;i++)K.push(new Float64Array(n));for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(data[i][0]-data[j][0],l,1.5,0)+(i===j?sn+1e-8:0);K[i][j]=v;K[j][i]=v;}var L=chol(K,n),yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=data[i][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(i=0;i<n;i++)ks[i]=kern(gx[q]-data[i][0],l,1.5,0);var m=0;for(i=0;i<n;i++)m+=ks[i]*al[i];mean[q]=m;var vv=fsolve(L,ks,n);var s=0;for(i=0;i<n;i++)s+=vv[i]*vv[i];sd[q]=Math.sqrt(Math.max(2.25-s,1e-9));}return {mean:mean,sd:sd};}
+  function invX(px){var pL=44,pw=W-60;return (px-pL)/pw*(2*xr)-xr;}
+  function draw(){g.clearRect(0,0,W,H);var P=pred();var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,ymax=1.3;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph-(y/ymax)*ph*0.9;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.14)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]+2*P.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(P.mean[q]-2*P.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(trueE(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(P.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle='#2e8b57';g.lineWidth=1.8;g.beginPath();for(q=1;q<N-1;q++){var F=-(P.mean[q+1]-P.mean[q-1])/(gx[q+1]-gx[q-1]);var xx=X(gx[q]),yy=Y(0.45)-F*0.09*ph;if(q===1)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3.6,0,6.283);g.fill();}
+    g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillStyle=_CB2;g.fillText('energy E(x): GP mean & band (red dashed = true)',pL+4,pT+12);g.fillStyle='#2e8b57';g.fillText('force −dE/dx (derivative of the GP)',pL+4,pT+26);
+    document.getElementById('peOut').innerHTML='DFT points: <b>'+data.length+'</b> &nbsp; <span style="color:'+_CMUT+'">click to add a quantum-chemistry point; the force (green) is the analytic derivative of the GP; the band flags where more data are needed</span>';
+  }
+  C.addEventListener('click',function(e){var r=C.getBoundingClientRect();var px=(e.clientX-r.left)*(W/r.width);var x=invX(px);data.push([x,trueE(x)]);draw();});
+  document.getElementById('peReset').addEventListener('click',function(){reset();draw();});
+  draw();
+})();
+
+// ---------- Widget 14: uncertainty propagation ----------
+(function(){
+  var C=document.getElementById('uqC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var mu0=0.2,sig0=0.6,xr=4;function m(x){return Math.sin(1.3*x)+0.3*x;}
+  function draw(){g.clearRect(0,0,W,H);var pL=48,pR=150,pT=16,pB=40,pw=W-pL-pR,ph=H-pT-pB,yr=2.4,q;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(pL+pw,pT+ph);g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<=160;q++){var x=-xr+2*xr*q/160;var xx=X(x),yy=Y(m(x));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle=_CR;g.lineWidth=1.6;g.beginPath();for(q=0;q<=160;q++){var x=-xr+2*xr*q/160;var p=Math.exp(-0.5*(x-mu0)*(x-mu0)/(sig0*sig0));var xx=X(x),yy=pT+ph-p*40;if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;g.font='11px -apple-system,sans-serif';g.textAlign='center';g.fillText('input p(θ)',X(mu0),pT+ph-44);
+    var nb=24,hist=new Array(nb).fill(0),lo=-yr,hi=yr,ns=4000,sy=0,sy2=0,s;
+    for(s=0;s<ns;s++){var th=mu0+sig0*_gr();var y=m(th);sy+=y;sy2+=y*y;var idx=Math.floor((y-lo)/(hi-lo)*nb);if(idx>=0&&idx<nb)hist[idx]++;}
+    var hmax=Math.max.apply(null,hist)||1,hL=pL+pw+28,hW=pR-40,bn;
+    g.fillStyle='rgba(61,126,191,0.5)';for(bn=0;bn<nb;bn++){var yb=pT+(nb-1-bn)/nb*ph,hh=ph/nb;g.fillRect(hL,yb,hist[bn]/hmax*hW,hh-1);}
+    g.fillStyle=_CMUT;g.textAlign='center';g.fillText('output p(y)',hL+hW/2,pT+ph+16);g.fillText('input θ',pL+pw/2,pT+ph+30);
+    var vy=sy2/ns-(sy/ns)*(sy/ns);
+    document.getElementById('uqOut').innerHTML='input σ<sub>θ</sub> = <b>'+sig0.toFixed(2)+'</b> &nbsp;&rarr;&nbsp; output σ<sub>y</sub> = <b style="color:'+_CB2+'">'+Math.sqrt(vy).toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">where the curve is steep, input uncertainty is amplified</span>';
+  }
+  document.getElementById('uqMu').addEventListener('input',function(e){mu0=+e.target.value;document.getElementById('uqMuv').textContent=mu0.toFixed(2);draw();});
+  document.getElementById('uqSig').addEventListener('input',function(e){sig0=+e.target.value;document.getElementById('uqSigv').textContent=sig0.toFixed(2);draw();});
+  draw();
+})();
+
+// ---------- Widget 15: GP solves an ODE (collocation) ----------
+(function(){
+  var C=document.getElementById('pdC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=1.1,nc=4,L0=6,i;
+  function gfun(x){return Math.cos(x);} function truef(x){return Math.sin(x);}
+  function k00(a,b){var d=a-b;return Math.exp(-d*d/(2*l*l));}
+  function k01(a,b){var d=a-b;return (d/(l*l))*Math.exp(-d*d/(2*l*l));}
+  function k10(a,b){var d=a-b;return (-d/(l*l))*Math.exp(-d*d/(2*l*l));}
+  function k11(a,b){var d=a-b;return (1/(l*l)-d*d/(l*l*l*l))*Math.exp(-d*d/(2*l*l));}
+  function solveSys(){var cj=[];for(i=0;i<nc;i++)cj.push(0.3+(L0-0.3)*i/(nc-1));var obsX=[0].concat(cj),typ=[0];for(i=0;i<nc;i++)typ.push(1);var m=obsX.length,A=[],j;for(i=0;i<m;i++)A.push(new Float64Array(m));
+    for(i=0;i<m;i++)for(j=0;j<m;j++){var a=obsX[i],b=obsX[j],v;if(typ[i]===0&&typ[j]===0)v=k00(a,b);else if(typ[i]===0&&typ[j]===1)v=k01(a,b);else if(typ[i]===1&&typ[j]===0)v=k10(a,b);else v=k11(a,b);A[i][j]=v+(i===j?1e-7:0);}
+    var yv=new Float64Array(m);yv[0]=0;for(i=0;i<nc;i++)yv[i+1]=gfun(cj[i]);var Lc=chol(A,m),al=bsolve(Lc,fsolve(Lc,yv,m),m);return {obsX:obsX,typ:typ,al:al,Lc:Lc,m:m,cj:cj};}
+  function draw(){g.clearRect(0,0,W,H);var S=solveSys();var N=160,gx=[];for(i=0;i<N;i++)gx.push(L0*i/(N-1));
+    var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,xr=L0,yr=1.5,q;
+    function X(x){return pL+x/xr*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    var mean=new Float64Array(N),sd=new Float64Array(N);
+    for(q=0;q<N;q++){var ks=new Float64Array(S.m);for(i=0;i<S.m;i++){ks[i]=(S.typ[i]===0)?k00(gx[q],S.obsX[i]):k01(gx[q],S.obsX[i]);}var mm=0;for(i=0;i<S.m;i++)mm+=ks[i]*S.al[i];mean[q]=mm;var vv=fsolve(S.Lc,ks,S.m);var s=0;for(i=0;i<S.m;i++)s+=vv[i]*vv[i];sd[q]=Math.sqrt(Math.max(1-s,1e-9));}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();g.setLineDash([]);
+    g.fillStyle='rgba(61,126,191,0.15)';g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(mean[q]+2*sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(mean[q]-2*sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(truef(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle='#2e8b57';for(i=0;i<S.cj.length;i++){g.beginPath();g.arc(X(S.cj[i]),pT+ph-6,3,0,6.283);g.fill();}
+    g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillStyle=_CB2;g.fillText('GP solution (blue) vs true sin x (red dashed)',pL+4,pT+12);g.fillStyle='#2e8b57';g.fillText('green = collocation points where f′=cos x is imposed',pL+4,pT+26);
+    var er=0;for(q=0;q<N;q++)er+=(mean[q]-truef(gx[q]))*(mean[q]-truef(gx[q]));er=Math.sqrt(er/N);
+    document.getElementById('pdOut').innerHTML='collocation points: <b>'+nc+'</b> &nbsp; solution RMS error = <b style="color:'+_CR+'">'+er.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">conditioning on f&prime;=cos x and f(0)=0 reconstructs sin x</span>';
+  }
+  document.getElementById('pdN').addEventListener('input',function(e){nc=+e.target.value;document.getElementById('pdNv').textContent=nc;draw();});
+  draw();
+})();
+
+// ---------- Widget 16: quasi-periodic stellar activity ----------
+(function(){
+  var C=document.getElementById('acC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var N=200,xs=[],i;for(i=0;i<N;i++)xs.push(i/(N-1)*12);
+  var P=2.5,l=5,G=2.0,playing=true,Z=[],Zd=[],L=null;
+  function newZ(){Z=[];Zd=[];for(i=0;i<N;i++){Z.push(_gr());Zd.push(_gr());}}
+  function qpk(t){return Math.exp(-t*t/(2*l*l)-G*Math.pow(Math.sin(3.14159265*t/P),2));}
+  function rebuild(){var K=[],j;for(i=0;i<N;i++)K.push(new Float64Array(N));for(i=0;i<N;i++)for(j=0;j<=i;j++){var v=qpk(xs[i]-xs[j])+(i===j?1e-6:0);K[i][j]=v;K[j][i]=v;}L=chol(K,N);}
+  newZ();rebuild();
+  function sample(){var f=new Float64Array(N);for(i=0;i<N;i++){var a=0;for(var m=0;m<=i;m++)a+=L[i][m]*Z[m];f[i]=a;}return f;}
+  function draw(){g.clearRect(0,0,W,H);var f=sample();var pL=40,pR=16,pT=16,pB=26,pw=W-pL-pR,ph=H-pT-pB;
+    function X(t){return pL+t/12*pw;} function Y(y){return pT+ph/2-y*ph*0.34;}
+    g.strokeStyle='rgba(229,29,44,0.22)';g.setLineDash([3,3]);for(var t=P;t<12;t+=P){g.beginPath();g.moveTo(X(t),pT);g.lineTo(X(t),pT+ph);g.stroke();}g.setLineDash([]);
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(i=0;i<N;i++){var xx=X(xs[i]),yy=Y(f[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('time  (dashed red = one rotation period)',W/2,H-4);
+    document.getElementById('acOut').innerHTML='P<sub>rot</sub> = <b>'+P.toFixed(2)+'</b> &nbsp; spot lifetime &ell; = <b>'+l.toFixed(1)+'</b> &nbsp; <span style="color:'+_CMUT+'">repeats every P<sub>rot</sub> but drifts over ~&ell; &mdash; the quasi-periodic activity a planet hides beneath</span>';
+  }
+  function step(){if(!playing)return;for(i=0;i<N;i++){Z[i]+=0.04*Zd[i];if(Math.abs(Z[i])>3)Zd[i]*=-1;}draw();setTimeout(function(){requestAnimationFrame(step);},55);}
+  document.getElementById('acP').addEventListener('input',function(e){P=+e.target.value;document.getElementById('acPv').textContent=P.toFixed(2);rebuild();draw();});
+  document.getElementById('acL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('acLv').textContent=l.toFixed(1);rebuild();draw();});
+  document.getElementById('acNew').addEventListener('click',function(){newZ();draw();});
+  var pb=document.getElementById('acPlay');pb.addEventListener('click',function(){playing=!playing;pb.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)step();});
+  draw();step();
+})();
+
+// ---------- Widget 17: transit detrending ----------
+(function(){
+  var C=document.getElementById('trC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var Nd=70,amp=1.4,i,t=[],sysZ=[];for(i=0;i<Nd;i++)t.push(i/(Nd-1)*10);
+  function transit(x){var c=5,w=0.7,d=0.35;return (Math.abs(x-c)<w)?-d*(1-Math.pow((x-c)/w,2)):0;}
+  function newData(){sysZ=[];for(i=0;i<Nd;i++)sysZ.push(_gr());} newData();
+  function systematic(){var s=new Float64Array(Nd),win=6;for(i=0;i<Nd;i++){var a=0,c=0;for(var k=-win;k<=win;k++){var idx=i+k;if(idx>=0&&idx<Nd){a+=sysZ[idx];c++;}}s[i]=a/Math.sqrt(c);}return s;}
+  function draw(){g.clearRect(0,0,W,H);var sys=systematic(),flux=new Float64Array(Nd);
+    for(i=0;i<Nd;i++)flux[i]=amp*sys[i]*0.28+transit(t[i])+0.02*_gr();
+    var idxs=[];for(i=0;i<Nd;i++)if(Math.abs(t[i]-5)>0.9)idxs.push(i);var n=idxs.length,K=[],j;for(i=0;i<n;i++)K.push(new Float64Array(n));
+    for(i=0;i<n;i++)for(j=0;j<=i;j++){var v=kern(t[idxs[i]]-t[idxs[j]],1.3,0.5,0)+(i===j?0.0004+1e-7:0);K[i][j]=v;K[j][i]=v;}
+    var L=chol(K,n),yv=new Float64Array(n);for(i=0;i<n;i++)yv[i]=flux[idxs[i]];var al=bsolve(L,fsolve(L,yv,n),n);
+    function model(x){var m=0;for(var k=0;k<n;k++)m+=kern(x-t[idxs[k]],1.3,0.5,0)*al[k];return m;}
+    var pL=44,pR=16,pT=14,topH=130,botT=178,botH=120,pw=W-pL-pR;
+    function X(x){return pL+x/10*pw;} var yr=Math.max(0.7,amp*0.42+0.4);
+    function Yt(y){return pT+topH/2-(y/yr)*(topH/2);} function Yb(y){return botT+botH*0.62-(y/0.55)*(botH*0.5);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.strokeRect(pL,pT,pw,topH);
+    g.strokeStyle=_CR;g.lineWidth=1.6;g.beginPath();for(var q=0;q<=160;q++){var x=10*q/160;var xx=X(x),yy=Yt(model(x));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<Nd;i++){g.beginPath();g.arc(X(t[i]),Yt(flux[i]),2.4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillText('raw flux (dots) with GP drift model (red)',pL+4,pT+12);
+    g.strokeStyle=_CAX;g.strokeRect(pL,botT,pw,botH);
+    g.strokeStyle=_CB;g.lineWidth=2;g.beginPath();for(q=0;q<=160;q++){var x=10*q/160;var xx=X(x),yy=Yb(transit(x));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<Nd;i++){g.beginPath();g.arc(X(t[i]),Yb(flux[i]-model(t[i])),2.4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.fillText('detrended = flux − GP drift; clean transit (blue = truth) emerges',pL+4,botT+12);
+    document.getElementById('trOut').innerHTML='systematics amplitude = <b>'+amp.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">the GP absorbs the correlated drift, so the transit depth comes out unbiased</span>';
+  }
+  document.getElementById('trA').addEventListener('input',function(e){amp=+e.target.value;document.getElementById('trAv').textContent=amp.toFixed(2);draw();});
+  document.getElementById('trNew').addEventListener('click',function(){newData();draw();});
+  draw();
+})();
+
+// ---------- Widget 18: damped random walk ----------
+(function(){
+  var C=document.getElementById('drC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var M=260,buf=new Float64Array(M),tau=2.5,sig=1.0,playing=true,x=0,dt=0.06;
+  function reset(){for(var i=0;i<M;i++)buf[i]=0;x=0;} reset();
+  function stepOU(){var a=Math.exp(-dt/tau),s=sig*Math.sqrt(1-a*a);x=a*x+s*_gr();for(var i=0;i<M-1;i++)buf[i]=buf[i+1];buf[M-1]=x;}
+  function draw(){g.clearRect(0,0,W,H);var pL=40,pR=16,pT=16,pB=26,pw=W-pL-pR,ph=H-pT-pB;
+    function X(i){return pL+i/(M-1)*pw;} function Y(y){return pT+ph/2-(y/3.4)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2;g.beginPath();for(var i=0;i<M;i++){var xx=X(i),yy=Y(buf[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('time →   (quasar brightness — a damped random walk)',W/2,H-4);
+    document.getElementById('drOut').innerHTML='timescale &tau;<sub>d</sub> = <b>'+tau.toFixed(1)+'</b> &nbsp; amplitude &sigma; = <b>'+sig.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">k(&Delta;t)=&sigma;&sup2;e<sup>&minus;|&Delta;t|/&tau;</sup> &mdash; short &tau; flickers, long &tau; swings slowly</span>';
+  }
+  function loop(){if(!playing)return;stepOU();draw();setTimeout(function(){requestAnimationFrame(loop);},45);}
+  document.getElementById('drT').addEventListener('input',function(e){tau=+e.target.value;document.getElementById('drTv').textContent=tau.toFixed(1);});
+  document.getElementById('drS').addEventListener('input',function(e){sig=+e.target.value;document.getElementById('drSv').textContent=sig.toFixed(2);});
+  document.getElementById('drNew').addEventListener('click',function(){reset();draw();});
+  var pb=document.getElementById('drPlay');pb.addEventListener('click',function(){playing=!playing;pb.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)loop();});
+  draw();loop();
+})();
+
+// ---------- Widget 19: SHO (celerite) time series + PSD ----------
+(function(){
+  var C=document.getElementById('shoC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var w0=3,Q=10,N=420,i,xarr=new Float64Array(N);
+  function gen(){var dt=0.05,x=0,v=0;for(i=0;i<N;i++){var a=-w0*w0*x-(w0/Q)*v+8*_gr();v+=dt*a;x+=dt*v;xarr[i]=x;}var mx=1e-9;for(i=0;i<N;i++)mx=Math.max(mx,Math.abs(xarr[i]));for(i=0;i<N;i++)xarr[i]/=mx;} gen();
+  function draw(){g.clearRect(0,0,W,H);var fieldW=W*0.58,pL=40,pT=16,pB=26,pw=fieldW-pL-10,ph=H-pT-pB;
+    function X(k){return pL+k/(N-1)*pw;} function Y(y){return pT+ph/2-y*ph*0.42;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,Y(0));g.lineTo(fieldW-10,Y(0));g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=1.7;g.beginPath();for(i=0;i<N;i++){var xx=X(i),yy=Y(xarr[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillText('time series (a stellar oscillation)',pL+2,pT+10);
+    var qL=fieldW+30,qR=14,qT=22,qB=30,qw=W-qR-qL,qh=H-qT-qB,wmax=8,Smax=0,Sarr=[],q;
+    for(q=0;q<=150;q++){var w=wmax*q/150;var S=Math.pow(w0,4)/(Math.pow(w*w-w0*w0,2)+w0*w0*w*w/(Q*Q));Sarr.push(S);Smax=Math.max(Smax,S);}
+    g.strokeStyle=_CAX;g.beginPath();g.moveTo(qL,qT);g.lineTo(qL,qT+qh);g.lineTo(W-qR,qT+qh);g.stroke();
+    g.strokeStyle=_CR;g.lineWidth=2.2;g.beginPath();for(q=0;q<=150;q++){var w=wmax*q/150;var xx=qL+w/wmax*qw,yy=qT+qh-(Sarr[q]/Smax)*qh*0.9;if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle='#2e8b57';g.setLineDash([3,3]);g.beginPath();g.moveTo(qL+w0/wmax*qw,qT);g.lineTo(qL+w0/wmax*qw,qT+qh);g.stroke();g.setLineDash([]);
+    g.fillStyle=_CB2;g.textAlign='center';g.fillText('power spectrum S(ω)',(qL+W-qR)/2,qT-8);g.fillText('ω →',(qL+W-qR)/2,qT+qh+16);
+    document.getElementById('shoOut').innerHTML='&omega;<sub>0</sub> = <b>'+w0.toFixed(1)+'</b> &nbsp; Q = <b>'+Q.toFixed(0)+'</b> &nbsp; <span style="color:'+_CMUT+'">high Q &rarr; sharp long-lived mode; low Q &rarr; broad granulation-like noise</span>';
+  }
+  document.getElementById('shoW').addEventListener('input',function(e){w0=+e.target.value;document.getElementById('shoWv').textContent=w0.toFixed(1);gen();draw();});
+  document.getElementById('shoQ').addEventListener('input',function(e){Q=+e.target.value;document.getElementById('shoQv').textContent=Q.toFixed(0);gen();draw();});
+  document.getElementById('shoNew').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 20: H(z) reconstruction ----------
+(function(){
+  var C=document.getElementById('hzC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var H0=70,Om=0.3,l=0.55,zmax=2.0,A=22,i;
+  function Hl(z){return H0*Math.sqrt(Om*Math.pow(1+z,3)+(1-Om));}
+  var data=[];function addOne(){var z=Math.random()*zmax;var err=4+z*5;data.push([z,Hl(z)+err*_gr(),err]);}
+  function reset(){data=[];for(i=0;i<4;i++)addOne();} reset();
+  var N=120,gz=[];for(i=0;i<N;i++)gz.push(zmax*i/(N-1));
+  function pred(){var n=data.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));
+    for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=A*A*kern(data[a][0]-data[b][0],l,1,0)+(a===b?data[a][2]*data[a][2]:0);K[a][b]=v;K[b][a]=v;}
+    var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=data[a][1]-Hl(data[a][0]);var al=bsolve(L,fsolve(L,yv,n),n);
+    var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=A*A*kern(gz[q]-data[a][0],l,1,0);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[q]=Hl(gz[q])+m;var vv=fsolve(L,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];sd[q]=Math.sqrt(Math.max(A*A-s,1));}
+    return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var Pn=pred();var pL=48,pR=16,pT=16,pB=32,pw=W-pL-pR,ph=H-pT-pB,ylo=55,yhi=180;
+    function X(z){return pL+z/zmax*pw;} function Y(h){return pT+ph-(h-ylo)/(yhi-ylo)*ph;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.15)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gz[q]),yy=Y(Pn.mean[q]+2*Pn.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gz[q]),Y(Pn.mean[q]-2*Pn.sd[q]));g.closePath();g.fill();
+    g.strokeStyle='#9aa7b4';g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(q=0;q<N;q++){var xx=X(gz[q]),yy=Y(Hl(gz[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gz[q]),yy=Y(Pn.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.strokeStyle=_CR;g.lineWidth=1;for(i=0;i<data.length;i++){g.beginPath();g.moveTo(X(data[i][0]),Y(data[i][1]-data[i][2]));g.lineTo(X(data[i][0]),Y(data[i][1]+data[i][2]));g.stroke();g.fillStyle=_CR;g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),3,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';for(var zt=0;zt<=2;zt+=0.5)g.fillText(zt.toFixed(1),X(zt),pT+ph+16);g.fillText('redshift z',W/2,H-2);
+    g.save();g.translate(13,pT+ph/2);g.rotate(-1.5708);g.fillText('H(z)  [km/s/Mpc]',0,0);g.restore();
+    document.getElementById('hzOut').innerHTML='measurements: <b>'+data.length+'</b> &nbsp; <span style="color:'+_CMUT+'">grey dashed = true &Lambda;CDM; blue = GP reconstruction (no dark-energy model assumed); band tightens as data grow</span>';
+  }
+  document.getElementById('hzStep').addEventListener('click',function(){addOne();draw();});
+  document.getElementById('hzMany').addEventListener('click',function(){for(i=0;i<10;i++)addOne();draw();});
+  document.getElementById('hzReset').addEventListener('click',function(){reset();draw();});
+  draw();
+})();
+
+// ---------- Widget 21: photometric redshifts ----------
+(function(){
+  var C=document.getElementById('pzC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.16,sn=0.06,data=[],i;
+  function zof(c){return 0.2+1.5*c+0.4*Math.sin(3.2*c);}
+  function newData(){data=[];for(i=0;i<26;i++){var c=Math.random()*0.55;data.push([c,zof(c)+0.05*_gr()]);}for(i=0;i<6;i++){var c=0.55+Math.random()*0.45;data.push([c,zof(c)+0.09*_gr()]);}} newData();
+  var N=140,gx=[];for(i=0;i<N;i++)gx.push(i/(N-1));
+  function pred(){var n=data.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(data[a][0]-data[b][0],l,1.3,0)+(a===b?sn*sn+1e-7:0);K[a][b]=v;K[b][a]=v;}var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=data[a][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=kern(gx[q]-data[a][0],l,1.3,0);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[q]=m;var vv=fsolve(L,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];sd[q]=Math.sqrt(Math.max(1.69-s,1e-6));}return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var Pn=pred();var pL=44,pR=16,pT=16,pB=32,pw=W-pL-pR,ph=H-pT-pB,ylo=-0.1,yhi=2.6;
+    function X(c){return pL+c*pw;} function Y(z){return pT+ph-(z-ylo)/(yhi-ylo)*ph;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.16)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]+2*Pn.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(Pn.mean[q]-2*Pn.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),2.6,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('galaxy colour  (dense &rarr; sparse)',W/2,H-2);
+    g.save();g.translate(12,pT+ph/2);g.rotate(-1.5708);g.fillText('redshift z',0,0);g.restore();
+    document.getElementById('pzOut').innerHTML='training galaxies: <b>'+data.length+'</b> &nbsp; <span style="color:'+_CMUT+'">the band is tight where galaxies are plentiful and balloons where they are scarce &mdash; a per-object &sigma;<sub>z</sub></span>';
+  }
+  document.getElementById('pzNew').addEventListener('click',function(){newData();draw();});
+  draw();
+})();
+
+// ---------- Widget 22: emulating a power spectrum ----------
+(function(){
+  var C=document.getElementById('euC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var theta=0.5,nk=46,kk=[],i;for(i=0;i<nk;i++)kk.push(-2+3*i/(nk-1));
+  var thTr=[0.05,0.28,0.5,0.72,0.95],lg=0.32;
+  function curve(logk,th){var peak=-0.7+1.0*th,amp=1.1+0.6*th;return amp*Math.exp(-Math.pow((logk-peak)/0.7,2))+0.35-0.18*logk;}
+  var Lc=null;function buildL(){var n=thTr.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(thTr[a]-thTr[b],lg,1,0)+(a===b?1e-6:0);K[a][b]=v;K[b][a]=v;}Lc=chol(K,n);} buildL();
+  function emulate(th){var n=thTr.length,ks=new Float64Array(n),a;for(a=0;a<n;a++)ks[a]=kern(th-thTr[a],lg,1,0);var vv=fsolve(Lc,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];var sdv=Math.sqrt(Math.max(1-s,1e-6));var mean=new Float64Array(nk);for(i=0;i<nk;i++){var yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=curve(kk[i],thTr[a]);var al=bsolve(Lc,fsolve(Lc,yv,n),n);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[i]=m;}return {mean:mean,sd:sdv};}
+  function draw(){g.clearRect(0,0,W,H);var em=emulate(theta);var pL=48,pR=16,pT=16,pB=32,pw=W-pL-pR,ph=H-pT-pB,ylo=0,yhi=2.2;
+    function X(lk){return pL+(lk+2)/3*pw;} function Y(y){return pT+ph-(y-ylo)/(yhi-ylo)*ph;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    // training curves faint
+    for(var s=0;s<thTr.length;s++){g.strokeStyle='rgba(150,160,170,0.55)';g.lineWidth=1;g.beginPath();for(i=0;i<nk;i++){var xx=X(kk[i]),yy=Y(curve(kk[i],thTr[s]));if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();}
+    // band
+    g.fillStyle='rgba(61,126,191,0.16)';g.beginPath();for(i=0;i<nk;i++){var xx=X(kk[i]),yy=Y(em.mean[i]+2*em.sd);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(i=nk-1;i>=0;i--)g.lineTo(X(kk[i]),Y(em.mean[i]-2*em.sd));g.closePath();g.fill();
+    // true
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(i=0;i<nk;i++){var xx=X(kk[i]),yy=Y(curve(kk[i],theta));if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(i=0;i<nk;i++){var xx=X(kk[i]),yy=Y(em.mean[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('log k',W/2,H-2);g.textAlign='left';g.fillText('grey = 5 training spectra',pL+6,pT+12);
+    g.save();g.translate(13,pT+ph/2);g.rotate(-1.5708);g.fillText('log P(k)',0,0);g.restore();
+    document.getElementById('euOut').innerHTML='parameter &theta; = <b>'+theta.toFixed(2)+'</b> &nbsp; emulator 1&sigma; = <b>'+em.sd.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">blue = emulated curve, red dashed = true (expensive) &mdash; smallest error near a training value</span>';
+  }
+  document.getElementById('euT').addEventListener('input',function(e){theta=+e.target.value;document.getElementById('euTv').textContent=theta.toFixed(2);draw();});
+  draw();
+})();
+
+// ---------- Widget 23: primordial power spectrum ----------
+(function(){
+  var C=document.getElementById('ppC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.28,sn=0.09,data=[],i;
+  function trueP(x){return 1.0+0.5*Math.exp(-Math.pow((x-0.55)/0.06,2));}
+  function newData(){data=[];for(i=0;i<27;i++){var x=Math.random();data.push([x,trueP(x)+sn*_gr()]);}} newData();
+  var N=150,gx=[];for(i=0;i<N;i++)gx.push(i/(N-1));
+  function pred(){var n=data.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(data[a][0]-data[b][0],l,0.5,0)+(a===b?sn*sn+1e-7:0);K[a][b]=v;K[b][a]=v;}var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=data[a][1]-1.0;var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=kern(gx[q]-data[a][0],l,0.5,0);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[q]=1.0+m;var vv=fsolve(L,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];sd[q]=Math.sqrt(Math.max(0.25-s,1e-6));}return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var Pn=pred();var pL=44,pR=16,pT=16,pB=32,pw=W-pL-pR,ph=H-pT-pB,ylo=0.4,yhi=1.9;
+    function X(x){return pL+x*pw;} function Y(y){return pT+ph-(y-ylo)/(yhi-ylo)*ph;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.16)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]+2*Pn.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(Pn.mean[q]-2*Pn.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(trueP(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),2.3,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('log k',W/2,H-2);
+    g.save();g.translate(13,pT+ph/2);g.rotate(-1.5708);g.fillText('P(k)',0,0);g.restore();
+    var reg=l>0.6?'too smooth — the feature is washed out':(l<0.12?'too rough — chasing noise':'the feature is resolved');
+    document.getElementById('ppOut').innerHTML='length scale = <b>'+l.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">'+reg+' (true bump at log k &asymp; 0.55, red dashed)</span>';
+  }
+  document.getElementById('ppL').addEventListener('input',function(e){l=+e.target.value;document.getElementById('ppLv').textContent=l.toFixed(2);draw();});
+  document.getElementById('ppNew').addEventListener('click',function(){newData();draw();});
+  draw();
+})();
+
+// ---------- Widget 24: inducing points ----------
+(function(){
+  var C=document.getElementById('iuC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.6,sn=0.08,xr=5,M=4,i; function truef(x){return Math.sin(1.7*x)+0.3*Math.cos(0.8*x);}
+  var data=[];function gen(){data=[];for(i=0;i<60;i++){var x=-xr+2*xr*i/59;data.push([x,truef(x)+sn*_gr()]);}} gen();
+  var N=140,gx=[];for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function fitOn(pts){var n=pts.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(pts[a][0]-pts[b][0],l,1,0)+(a===b?sn*sn+1e-7:0);K[a][b]=v;K[b][a]=v;}var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=pts[a][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=kern(gx[q]-pts[a][0],l,1,0);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[q]=m;}return mean;}
+  function draw(){g.clearRect(0,0,W,H);var ind=[];for(var j=0;j<M;j++){var idx=Math.round(j*(data.length-1)/(M-1));ind.push(data[idx]);}
+    var full=fitOn(data),sparse=fitOn(ind);var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,yr=1.8;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(150,160,170,0.5)';for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),1.8,0,6.283);g.fill();}
+    g.strokeStyle='#9aa7b4';g.setLineDash([5,4]);g.lineWidth=1.6;g.beginPath();for(i=0;i<N;i++){var xx=X(gx[i]),yy=Y(full[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(i=0;i<N;i++){var xx=X(gx[i]),yy=Y(sparse[i]);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CR;for(j=0;j<ind.length;j++){g.beginPath();g.arc(X(ind[j][0]),Y(ind[j][1]),3.8,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillText('grey dashed = full GP on all 60 points; blue = sparse GP on m inducing points (red)',pL+4,pT+12);
+    var er=0;for(i=0;i<N;i++)er+=(sparse[i]-full[i])*(sparse[i]-full[i]);er=Math.sqrt(er/N);
+    document.getElementById('iuOut').innerHTML='inducing points m = <b>'+M+'</b> of 60 &nbsp; error vs full GP = <b style="color:'+_CR+'">'+er.toFixed(3)+'</b> &nbsp; <span style="color:'+_CMUT+'">cost O(n&sup3;)&rarr;O(nm&sup2;); too few &rarr; over-smoothed</span>';
+  }
+  document.getElementById('iuM').addEventListener('input',function(e){M=+e.target.value;document.getElementById('iuMv').textContent=M;draw();});
+  document.getElementById('iuNew').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 25: GP classification ----------
+(function(){
+  var C=document.getElementById('clC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.8,sn=0.35,xr=5,i; var data=[];
+  function gen(){data=[];for(i=0;i<18;i++){var x=-xr+2*xr*Math.random();var c=(x+0.6*_gr()>0)?1:0;data.push([x,c]);}} gen();
+  var N=140,gx=[];for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function sig(z){return 1/(1+Math.exp(-z));}
+  function draw(){g.clearRect(0,0,W,H);var n=data.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(data[a][0]-data[b][0],l,2.5,0)+(a===b?sn*sn+1e-6:0);K[a][b]=v;K[b][a]=v;}
+    var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=(data[a][1]*2-1)*2.5;var al=bsolve(L,fsolve(L,yv,n),n);
+    var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Yp(p){return pT+ph-p*ph;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.strokeStyle='#9aa7b4';g.setLineDash([4,4]);g.beginPath();g.moveTo(pL,Yp(0.5));g.lineTo(W-pR,Yp(0.5));g.stroke();g.setLineDash([]);
+    var pm=[],pu=[],pl=[],q;for(q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=kern(gx[q]-data[a][0],l,2.5,0);var f=0;for(a=0;a<n;a++)f+=ks[a]*al[a];var vv=fsolve(L,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];var sd=Math.sqrt(Math.max(6.25-s,1e-6));pm.push(sig(f));pu.push(sig(f+2*sd));pl.push(sig(f-2*sd));}
+    g.fillStyle='rgba(61,126,191,0.16)';g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Yp(pu[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Yp(pl[q]));g.closePath();g.fill();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Yp(pm[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    for(i=0;i<data.length;i++){g.fillStyle=data[i][1]?'#2e8b57':_CR;g.beginPath();g.arc(X(data[i][0]),Yp(data[i][1]),4,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='left';g.fillText('P(class=1 | x) = σ(latent GP); green = class 1 (top), red = class 0 (bottom)',pL+4,pT+12);
+    document.getElementById('clOut').innerHTML='points: <b>'+data.length+'</b> &nbsp; <span style="color:'+_CMUT+'">click near the top for a class-1 point, near the bottom for class-0; the band is wide where classes overlap</span>';
+  }
+  C.addEventListener('click',function(e){var r=C.getBoundingClientRect();var px=(e.clientX-r.left)*(W/r.width),py=(e.clientY-r.top)*(H/r.height);var pL=44,pw=W-60;var x=(px-pL)/pw*(2*xr)-xr;var c=(py<H/2)?1:0;data.push([x,c]);draw();});
+  document.getElementById('clNew').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 26: heteroscedastic GP ----------
+(function(){
+  var C=document.getElementById('htC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var l=0.7,grow=1.0,xr=5,i; function truef(x){return Math.sin(1.3*x);}
+  function noiseAt(x){return 0.05+grow*0.13*(x+xr)/(2*xr);}
+  var data=[];function gen(){data=[];for(i=0;i<50;i++){var x=-xr+2*xr*i/49;data.push([x,truef(x)+noiseAt(x)*3*_gr(),noiseAt(x)]);}} gen();
+  var N=140,gx=[];for(i=0;i<N;i++)gx.push(-xr+2*xr*i/(N-1));
+  function pred(){var n=data.length,K=[],a,b;for(a=0;a<n;a++)K.push(new Float64Array(n));for(a=0;a<n;a++)for(b=0;b<=a;b++){var v=kern(data[a][0]-data[b][0],l,1,0)+(a===b?data[a][2]*data[a][2]*9+1e-6:0);K[a][b]=v;K[b][a]=v;}var L=chol(K,n),yv=new Float64Array(n);for(a=0;a<n;a++)yv[a]=data[a][1];var al=bsolve(L,fsolve(L,yv,n),n);var mean=new Float64Array(N),sd=new Float64Array(N);for(var q=0;q<N;q++){var ks=new Float64Array(n);for(a=0;a<n;a++)ks[a]=kern(gx[q]-data[a][0],l,1,0);var m=0;for(a=0;a<n;a++)m+=ks[a]*al[a];mean[q]=m;var vv=fsolve(L,ks,n);var s=0;for(a=0;a<n;a++)s+=vv[a]*vv[a];sd[q]=Math.sqrt(Math.max(1-s,1e-6)+Math.pow(noiseAt(gx[q])*3,2));}return {mean:mean,sd:sd};}
+  function draw(){g.clearRect(0,0,W,H);var Pn=pred();var pL=44,pR=16,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,yr=2.2;
+    function X(x){return pL+(x+xr)/(2*xr)*pw;} function Y(y){return pT+ph/2-(y/yr)*(ph/2);}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(W-pR,pT+ph);g.stroke();
+    g.fillStyle='rgba(61,126,191,0.16)';g.beginPath();for(var q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]+2*Pn.sd[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}for(q=N-1;q>=0;q--)g.lineTo(X(gx[q]),Y(Pn.mean[q]-2*Pn.sd[q]));g.closePath();g.fill();
+    g.strokeStyle=_CR;g.setLineDash([5,4]);g.lineWidth=1.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(truef(gx[q]));if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();g.setLineDash([]);
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(q=0;q<N;q++){var xx=X(gx[q]),yy=Y(Pn.mean[q]);if(q===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CINK;for(i=0;i<data.length;i++){g.beginPath();g.arc(X(data[i][0]),Y(data[i][1]),2.2,0,6.283);g.fill();}
+    g.fillStyle=_CMUT;g.font='11px -apple-system,sans-serif';g.textAlign='center';g.fillText('input x   (measurement noise grows left → right)',W/2,H-4);
+    document.getElementById('htOut').innerHTML='noise growth = <b>'+grow.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">each point carries its own variance, so the band is tight where data are clean and widens where they are noisy</span>';
+  }
+  document.getElementById('htG').addEventListener('input',function(e){grow=+e.target.value;document.getElementById('htGv').textContent=grow.toFixed(2);gen();draw();});
+  document.getElementById('htNew').addEventListener('click',function(){gen();draw();});
+  draw();
+})();
+
+// ---------- Widget 27: deep GP (composition) ----------
+(function(){
+  var C=document.getElementById('dgC'); if(!C)return; var g=C.getContext('2d'),W=C.width,H=C.height;
+  var N=240,xs=[],i;for(i=0;i<N;i++)xs.push(-4+8*i/(N-1));
+  var warp=1.2,playing=true,Mr=40;
+  var w1=[],p1=[],f1=[],w2=[],p2=[],f2=[],ph1=[],ph2=[];
+  function build(){w1=[];p1=[];f1=[];w2=[];p2=[];f2=[];ph1=[];ph2=[];for(var m=0;m<Mr;m++){w1.push(_gr());f1.push(_gr()*0.9);p1.push(Math.random()*6.283);ph1.push((Math.random()-0.5)*0.5);w2.push(_gr());f2.push(_gr()*1.4);p2.push(Math.random()*6.283);ph2.push((Math.random()-0.5)*0.5);}}
+  build();
+  function g1(x,t){var s=0;for(var m=0;m<Mr;m++)s+=w1[m]*Math.cos(f1[m]*x+p1[m]+ph1[m]*t);return Math.sqrt(2/Mr)*s;}
+  function g2(u,t){var s=0;for(var m=0;m<Mr;m++)s+=w2[m]*Math.cos(f2[m]*u+p2[m]+ph2[m]*t);return Math.sqrt(2/Mr)*s;}
+  function draw(t){g.clearRect(0,0,W,H);var pL=40,pR=16,pT=16,pB=26,pw=W-pL-pR,ph=H-pT-pB;
+    function X(x){return pL+(x+4)/8*pw;} function Y(y){return pT+ph/2-y*ph*0.28;}
+    g.strokeStyle=_CAX;g.lineWidth=1;g.beginPath();g.moveTo(pL,Y(0));g.lineTo(W-pR,Y(0));g.stroke();
+    g.strokeStyle=_CB;g.lineWidth=2.4;g.beginPath();for(i=0;i<N;i++){var x=xs[i];var u=x+warp*g1(x,t);var f=g2(u,t);var xx=X(x),yy=Y(f);if(i===0)g.moveTo(xx,yy);else g.lineTo(xx,yy);}g.stroke();
+    g.fillStyle=_CMUT;g.font='12px -apple-system,sans-serif';g.textAlign='center';g.fillText('input x   (a two-layer deep-GP sample — note the varying smoothness)',W/2,H-4);
+    document.getElementById('dgOut').innerHTML='warp strength = <b>'+warp.toFixed(2)+'</b> &nbsp; <span style="color:'+_CMUT+'">f(x)=g&#8322;(x + warp&middot;g&#8321;(x)); large warp &rarr; fast-varying regions next to flat ones &mdash; non-stationary</span>';
+  }
+  var t0=performance.now();function loop(){if(!playing)return;draw((performance.now()-t0)/1000);requestAnimationFrame(loop);}
+  document.getElementById('dgW').addEventListener('input',function(e){warp=+e.target.value;document.getElementById('dgWv').textContent=warp.toFixed(2);if(!playing)draw((performance.now()-t0)/1000);});
+  document.getElementById('dgNew').addEventListener('click',function(){build();if(!playing)draw((performance.now()-t0)/1000);});
+  var pb=document.getElementById('dgPlay');pb.addEventListener('click',function(){playing=!playing;pb.innerHTML=playing?'❚❚ Pause':'▶ Play';if(playing)loop();});
+  draw(0);loop();
+})();
+</script>
+<script>
+var cur=0, N=39;
+function toggleTOC(){var t=document.getElementById('toc'),b=document.getElementById('tocback');var open=t.classList.toggle('open');b.classList.toggle('open',open);}
+function closeTOC(){document.getElementById('toc').classList.remove('open');document.getElementById('tocback').classList.remove('open');}
+function show(k){
+  if(k<0)k=0; if(k>=N)k=N-1; cur=k;
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('on',i===k));
+  document.querySelectorAll('.toc .navbtn').forEach((b,i)=>b.classList.toggle('on',i===k));
+  document.querySelectorAll('#prev').forEach(b=>b.disabled=(k===0));
+  document.querySelectorAll('#next').forEach(b=>b.disabled=(k===N-1));
+  var pn=document.getElementById('pagenum'); if(pn)pn.textContent=(k+1)+' / '+N;
+  closeTOC();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.addEventListener('keydown',e=>{if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1);if(e.key==='Escape')closeTOC();});
+show(0);
+</script>
+</body></html>

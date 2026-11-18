@@ -1,0 +1,45 @@
+<h2><span class="n">20</span>Backtesting and the multiple-testing trap</h2>
+<p class="lead">A backtest is a hypothesis test with one history. Try enough hypotheses and one will pass by chance; present only the one that passed and the statistics are a lie. Most published trading strategies are exactly this, and the mathematics of why is simple.</p>
+
+<h3>20.1 The best of $N$ random strategies</h3>
+<p>
+Take $N$ strategies with no skill at all, each with $T$ years of daily returns. Each sample Sharpe ratio is approximately $\mathcal N(0, 1/T)$ (Chapter&nbsp;3). The maximum of $N$ independent such draws has expectation close to $\sqrt{2\ln N}/\sqrt T$ for large $N$ &mdash; the extreme-value scaling of the Gaussian, growing without bound in $N$ but only logarithmically. Over five years, the expected best Sharpe is {{v:c20_maxsr_10}} for 10 trials, {{v:c20_maxsr_100}} for 100, {{v:c20_maxsr_1000}} for 1,000 and {{v:c20_maxsr_10000}} for 10,000 (simulated means; the $\sqrt{2\ln N}/\sqrt T$ approximation gives {{v:c20_exp_maxsr_10}}, {{v:c20_exp_maxsr_100}}, {{v:c20_exp_maxsr_1000}}, {{v:c20_exp_maxsr_10000}}, an upper-ish bound that overshoots at these $N$). A researcher who tries a thousand variations of parameters, universes and signal definitions &mdash; which is an afternoon's work with a modern backtester &mdash; will find a five-year Sharpe of about 1.4 ($\pm{{v:c20_maxsr_1000_sd}}$ across repetitions) in pure noise. Sharpe 1.4 over five years is the kind of result that gets funded.
+</p>
+{{fig:c20_maxsharpe|The expected best five-year Sharpe ratio among N strategies that all have zero true skill, from simulation, with the √(2 ln N)/√T approximation. Searching over a thousand variants manufactures a Sharpe of 1.4 from nothing.}}
+<div class="box g">
+<h4>Worked example: selecting the best, then watching it</h4>
+<p>Of 1,000 zero-skill strategies simulated for ten years, the one with the best first-five-year Sharpe ({{v:c20_best_is}}) earns {{v:c20_best_oos}} in the second five years. Now give 10% of the 1,000 strategies a true Sharpe of 0.5. The ten best in-sample average {{v:c20_top10_is}} in-sample and {{v:c20_top10_oos}} out-of-sample, and only {{v:c20_top10_skilled}} of the ten are among the skilled strategies: selection on a noisy criterion picks up skill, but it picks up luck with it, and the out-of-sample performance of a selected strategy is always below its in-sample performance &mdash; the <em>regression to the mean</em> that every allocator who has hired a hot manager has experienced. The shrinkage between in-sample and out-of-sample is the "haircut", and it is larger the more trials were run and the shorter the sample.</p>
+</div>
+
+<h3>20.2 Corrections: Bonferroni, false discovery and the deflated Sharpe ratio</h3>
+<p>
+The classical remedy is to demand a stricter threshold. With $N$ tests, the Bonferroni correction replaces the 5% level by $5\%/N$: for 1,000 trials the required $t$-statistic rises from 1.96 to {{v:c20_bonf_t}}, which over five years (where the standard error of a Sharpe ratio is $1/\sqrt5 = {{v:c20_sr_se_5y}}$) means a Sharpe of {{v:c20_t_needed_sr}}. Bonferroni is conservative when the tests are correlated (variations of one idea are not 1,000 independent trials); the Benjamini&ndash;Hochberg procedure controls the <em>false discovery rate</em> instead and is less severe. Harvey, Liu and Zhu (2016) applied this reasoning to the published literature on return predictors and concluded that a new factor should clear $t \approx 3$ at a minimum, and that most of the several hundred published factors would not.
+</p>
+<p>
+Bailey and L&oacute;pez de Prado (2014) turned the argument into a test on the Sharpe ratio itself. Given the number of trials $N$ and the variance of the Sharpe ratios across trials, the expected maximum under the null is computed as above (with the Euler&ndash;Mascheroni refinement of the extreme-value formula); the <em>deflated Sharpe ratio</em> is then the probability that the observed Sharpe exceeds that benchmark, allowing also for the sample length, skewness and kurtosis of the returns. A strategy with Sharpe 1.4 over five years selected from 1,000 trials has a deflated Sharpe near 50%: a coin toss. The same authors' <em>probability of backtest overfitting</em> uses combinatorial splits of the data to estimate how often the in-sample best is below median out-of-sample. Both require the researcher to record the number of trials &mdash; which is why the single most important piece of infrastructure in a quantitative research group is the log of everything that was tried.
+</p>
+
+<h3>20.3 The other ways a backtest lies</h3>
+<p>
+<em>Look-ahead bias</em>: using information not available at the time &mdash; restated fundamentals, index constituents as of today, prices that were not yet printed, a signal computed with a centred moving average. The test is to rebuild every input as a point-in-time series and see the Sharpe fall. <em>Survivorship bias</em>: backtesting on today's universe of listed companies omits every company that failed, which flatters any strategy that buys distressed or small stocks; a proper database includes delisted names and their final, often total, losses. <em>Transaction costs and capacity</em>: a daily-rebalanced strategy with 200% annual turnover pays perhaps 2&ndash;4% a year in spreads and impact, which exceeds the gross alpha of most signals; costs must be modelled with the square-root impact law of Chapter&nbsp;17 at the intended capital, and a strategy that only works at small size is a hobby. <em>Data snooping of the universe</em>: the choice of asset class, period and frequency is itself a trial. <em>Regime dependence</em>: a backtest spanning one bull market has one observation of the thing that matters. And the mundane: errors in corporate-action adjustments, time-zone misalignment between markets, using closing prices for trades that could not have been executed at the close.
+</p>
+
+<h3>20.4 A protocol</h3>
+<p>
+State the hypothesis before looking at the data, in economic terms: who is on the other side of the trade, and why are they willing to lose. Hold out a final period that is never touched until the research is complete, and touch it once. Count the trials, including the ones that were abandoned, and compute the deflated Sharpe. Test on point-in-time, survivorship-free data with realistic costs and a capacity estimate. Check robustness across neighbouring parameter values, universes and sub-periods &mdash; a strategy that works at a 20-day lookback and fails at 15 and 25 has not found a signal. Simulate the strategy on synthetic data with the signal removed (shuffled returns, block bootstraps, or a fitted null model) to obtain the distribution of the test statistic under no skill, and compare. Then run the strategy live, at small size, for long enough to accumulate a track record of its own: a year of live trading is worth more than a decade of backtest because it is the one experiment in which nothing could have been tuned. The expected Sharpe of a strategy that passes all of this is still below its backtest; the haircut is a fact of life, and the only question is its size.
+</p>
+
+<h3>20.5 Why the market tolerates this</h3>
+<p>
+If the mathematics is this clear, why does the industry keep producing overfitted strategies? Because the incentives run the other way: a researcher is rewarded for a backtest that looks good, the cost of a bad strategy is borne later and by someone else, and a client who is shown a Sharpe of 1.4 does not ask how many were tried. The groups that survive are the ones that have built the counter-incentives into their process &mdash; trial logs, holdouts, paper-trading periods, a research culture in which "it didn't work" is a publishable result. In that sense the multiple-testing problem is not a statistical problem with a statistical solution; it is an institutional one with a statistical diagnosis.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Max of $N$</dt><dd>Best zero-skill Sharpe $\approx\sqrt{2\ln N}/\sqrt T$; a thousand trials give 1.4 over five years.</dd>
+<dt>Haircut</dt><dd>Selected strategies regress to the mean; out-of-sample is always below in-sample.</dd>
+<dt>Deflated Sharpe</dt><dd>Compare the observed Sharpe with the expected maximum under the null, given the trial count.</dd>
+<dt>Protocol</dt><dd>Hypothesis first, holdout, trial log, point-in-time data, costs, robustness, live paper trading.</dd>
+</dl>
+</div>

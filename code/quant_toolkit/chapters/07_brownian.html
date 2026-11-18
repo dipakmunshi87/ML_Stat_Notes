@@ -1,0 +1,53 @@
+<!-- PART: Part II — Stochastic calculus and derivatives -->
+<div class="part">Part II <span>Stochastic calculus and derivatives</span></div>
+<h2><span class="n">7</span>Random walks and Brownian motion</h2>
+<p class="lead">Bachelier modelled prices as a random walk in 1900, five years before Einstein used the same mathematics for pollen grains. The continuum limit of the random walk &mdash; Brownian motion &mdash; is the noise in every model that follows, and its one strange property drives all of stochastic calculus.</p>
+
+<h3>7.1 The random walk and the $\sqrt n$ law</h3>
+<p>
+Let $X_n = \sum_{i=1}^n \xi_i$ with $\xi_i = \pm1$ independently with equal probability. Then $\mathbb E[X_n] = 0$ and, because the cross terms vanish, $\mathbb E[X_n^2] = \sum_i\mathbb E[\xi_i^2] = n$. The typical displacement after $n$ steps is $\sqrt n$, not $n$: the walker's variance is additive, not its position. In 2,000 simulated walks the standard deviation of $X_n$ is {{v:c7_rw_sd_10}}, {{v:c7_rw_sd_100}}, {{v:c7_rw_sd_1000}} and {{v:c7_rw_sd_10000}} for $n = 10, 10^2, 10^3, 10^4$ &mdash; the $\sqrt n$ law, with sampling noise. By the central limit theorem $X_n/\sqrt n \to \mathcal N(0,1)$. For prices the step is a return rather than $\pm1$, and the walk is in $\ln S$, but the conclusion is the same as in Chapter&nbsp;2: volatility scales as $\sqrt{t}$, and a model's job is to describe the increments.
+</p>
+
+<h3>7.2 Brownian motion: the continuum limit</h3>
+<p>
+Take steps of size $\sqrt{\Delta t}$ every $\Delta t$ and let $\Delta t \to 0$. The limit $W_t$ is <em>Brownian motion</em> (or the Wiener process), defined by four properties: $W_0 = 0$; increments over disjoint intervals are independent; $W_t - W_s \sim \mathcal N(0, t-s)$; and paths are continuous. Everything about $W$ follows from the third property, which says that the variance of an increment over $\mathrm dt$ is $\mathrm dt$ &mdash; so the increment itself is of size $\sqrt{\mathrm dt}$, and that is the whole reason the calculus is different. Brownian motion is <em>self-similar</em>: $W_{ct}$ has the same distribution as $\sqrt c\,W_t$, so a path magnified by 16 in time and 4 in space looks statistically identical to the original. There is no scale at which it becomes smooth. The paths are continuous but nowhere differentiable: the "velocity" $\Delta W/\Delta t \sim 1/\sqrt{\Delta t}$ diverges.
+</p>
+{{fig:c7_selfsimilar|One Brownian path shown on [0, 1], then the first 1/16 of it, then the first 1/256, with the vertical axis rescaled by √16 and √256. The three panels are statistically indistinguishable: Brownian motion has no characteristic scale.}}
+
+<h3>7.3 Quadratic variation: the identity $(\mathrm dW)^2 = \mathrm dt$</h3>
+<p>
+For a smooth function $f$ on $[0,1]$, partition the interval into $n$ pieces and sum the squared increments: $\sum (\Delta f)^2 \approx \sum (f'\Delta t)^2 = O(1/n) \to 0$. For Brownian motion, $\sum (\Delta W)^2$ has expectation $\sum \Delta t = 1$ and, since each $(\Delta W)^2$ has variance $2\Delta t^2$, a standard deviation of $\sqrt{2/n} \to 0$. So the sum of squared increments converges not to zero but to $t$: the <em>quadratic variation</em> of Brownian motion is $[W]_t = t$. In differential form this is the identity $(\mathrm dW_t)^2 = \mathrm dt$ &mdash; not "approximately" or "on average", but as a statement about the limit. The simulated quadratic variation of a Brownian path on $[0,1]$ with $n = 10^2, 10^3, 10^4$ steps is {{v:c7_qv_100}}, {{v:c7_qv_1000}}, {{v:c7_qv_10000}} (the theoretical spread at $n=1000$ is $\pm{{v:c7_qv_theory_sd}}$); for the smooth function $\sin 2\pi t$ on the same grids it is {{v:c7_qv_smooth_100}}, {{v:c7_qv_smooth_1000}}, {{v:c7_qv_smooth_10000}}, vanishing as $1/n$. Cross terms behave as one would expect: $\mathrm dW\,\mathrm dt = O(\mathrm dt^{3/2}) \to 0$ and $(\mathrm dt)^2 \to 0$. The multiplication table of stochastic calculus is therefore
+$$ (\mathrm dt)^2 = 0,\qquad \mathrm dt\,\mathrm dW = 0,\qquad (\mathrm dW)^2 = \mathrm dt , $$
+and Chapter&nbsp;8 is nothing but Taylor's theorem with this table.
+</p>
+<p>
+Financially, quadratic variation is <em>realised variance</em>: the sum of squared log-returns over a period estimates $\int_0^T \sigma_t^2\,\mathrm dt$, and does so with precision improving as the sampling interval shrinks (until microstructure noise takes over at intervals of a few minutes). This is why volatility is measurable from a single path and drift is not: drift enters the increments at order $\mathrm dt$ and is swamped by the $\sqrt{\mathrm dt}$ noise, whereas $\sigma^2$ enters the <em>squared</em> increments at order $\mathrm dt$ and is exactly what quadratic variation picks out. Variance swaps (Chapter&nbsp;11) are contracts on this quantity.
+</p>
+
+<h3>7.4 Einstein's argument and the diffusion constant</h3>
+<p>
+Einstein (1905) derived the $\sqrt t$ law from physics: a particle buffeted by many independent molecular collisions has a density $p(x,t)$ obeying $\partial_t p = D\,\partial_x^2 p$ (Chapter&nbsp;5), whose solution has $\langle x^2\rangle = 2Dt$. Comparing with $\mathrm{Var}(\sigma W_t) = \sigma^2 t$ identifies $D = \sigma^2/2$: the diffusion constant of a price is half its variance rate. The same argument gives the density of $W_t$ as the heat kernel $G(x,t) = e^{-x^2/2t}/\sqrt{2\pi t}$, and it is the first appearance of a correspondence that organises the whole subject &mdash; a stochastic process for an individual path on one side, a PDE for the probability density on the other. Chapter&nbsp;8 gives the general version (the Fokker&ndash;Planck and Kolmogorov equations) and Chapter&nbsp;9 uses it to price options.
+</p>
+
+<h3>7.5 Two results that only Brownian motion makes easy</h3>
+<p>
+<em>The reflection principle.</em> By symmetry, a Brownian path that hits level $a > 0$ before time $t$ is equally likely to end above or below $a$, so $\mathbb P(\max_{s\le t} W_s \ge a) = 2\,\mathbb P(W_t \ge a) = 2\big(1 - \Phi(a/\sqrt t)\big)$. For $a = 1$, $t = 1$ this is {{v:c7_pmax}}; simulation gives {{v:c7_pmax_sim}}. This single trick prices barrier options and lookbacks in closed form.
+</p>
+<p>
+<em>Scaling of first passage.</em> The time for Brownian motion to first reach distance $a$ scales as $a^2$ (dimensional analysis: the only combination of $a$ and $D$ with units of time is $a^2/D$), and its distribution has a $t^{-3/2}$ tail &mdash; so heavy that the <em>mean</em> first-passage time is infinite. A strategy that waits for a price to "come back" has, in the simplest model, an infinite expected waiting time.
+</p>
+
+<h3>7.6 Martingales and the efficient-market hypothesis</h3>
+<p>
+A process is a <em>martingale</em> if its expected future value, given everything known now, is its current value: $\mathbb E[M_T\,|\,\mathcal F_t] = M_t$. Brownian motion is a martingale; so is $W_t^2 - t$ (which is another way of saying the quadratic variation is $t$); so is the discounted price of any traded asset under the risk-neutral measure (Chapter&nbsp;9). The efficient-market hypothesis in its weak form says that <em>properly discounted</em> prices are martingales under the real-world measure up to a risk premium: past prices contain no information about future returns beyond compensation for risk. It is a statement about the conditional mean only, not about the variance (which is predictable, Chapter&nbsp;15), not about higher moments, and not about the cross-section (where factor premia live). Samuelson's 1965 proof that "properly anticipated prices fluctuate randomly" is the mathematical content: if expected returns were predictable from the past, traders would act on the prediction until it vanished, and what remains is a martingale plus noise. The optional stopping theorem &mdash; you cannot beat a martingale by choosing when to stop &mdash; is why no timing rule on a fair game has positive expectation, and why a strategy's edge must come from the drift term, from information, or from bearing a risk others will pay to shed. Every signal in Part&nbsp;III is a claimed departure from the martingale property; the efficient-market argument is the prior that such departures are small, short-lived, and costly to trade, which is exactly what the evidence shows.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Brownian motion</dt><dd>Independent Gaussian increments with $\mathrm{Var}(\mathrm dW) = \mathrm dt$; continuous, nowhere differentiable, self-similar.</dd>
+<dt>$(\mathrm dW)^2 = \mathrm dt$</dt><dd>Quadratic variation is finite and deterministic; realised variance is measurable from one path, drift is not.</dd>
+<dt>$D = \sigma^2/2$</dt><dd>The link between the SDE for a path and the heat equation for its density.</dd>
+<dt>Reflection</dt><dd>$\mathbb P(\max W \ge a) = 2\mathbb P(W_t \ge a)$: the tool behind barrier options.</dd>
+</dl>
+</div>

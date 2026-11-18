@@ -1,0 +1,62 @@
+<h2><span class="n">10</span>The Greeks, hedging in practice and implied volatility</h2>
+<p class="lead">A desk does not use Black&ndash;Scholes to find prices &mdash; the market supplies those. It uses the formula as a coordinate system: to convert prices into implied volatilities, and to measure and hedge the sensitivities, which is where the money is actually made and lost.</p>
+
+<h3>10.1 The sensitivities</h3>
+<p>
+The Greeks are the Taylor coefficients of $V(S, t, \sigma, r)$:
+</p>
+<table>
+<tr><th>Greek</th><th>Definition</th><th>Call formula</th><th>ATM example</th></tr>
+<tr><td>Delta $\Delta$</td><td>$\partial V/\partial S$</td><td>$\Phi(d_1)$</td><td class="num">{{v:c10_delta}}</td></tr>
+<tr><td>Gamma $\Gamma$</td><td>$\partial^2 V/\partial S^2$</td><td>$\varphi(d_1)/(S\sigma\sqrt T)$</td><td class="num">{{v:c10_gamma}}</td></tr>
+<tr><td>Vega $\mathcal V$</td><td>$\partial V/\partial\sigma$</td><td>$S\varphi(d_1)\sqrt T$</td><td class="num">{{v:c10_vega}} ({{v:c10_vega_1pct}} per vol point)</td></tr>
+<tr><td>Theta $\Theta$</td><td>$\partial V/\partial t$</td><td>$-\dfrac{S\varphi(d_1)\sigma}{2\sqrt T} - rKe^{-rT}\Phi(d_2)$</td><td class="num">{{v:c10_theta}} per year ({{v:c10_theta_day}} per day)</td></tr>
+<tr><td>Rho $\rho$</td><td>$\partial V/\partial r$</td><td>$KTe^{-rT}\Phi(d_2)$</td><td class="num">{{v:c10_rho}}</td></tr>
+</table>
+<p>
+(The example column is the at-the-money option of Chapter&nbsp;9.) Delta is the hedge ratio and also, roughly, the probability of exercise. Gamma is the convexity: how fast the hedge ratio changes, and therefore how often one must rebalance. Vega is the exposure to the one parameter that is not observable. Theta is time decay: the price an option holder pays, per day, for the convexity. These are not independent. Rearranging the Black&ndash;Scholes equation,
+$$\Theta + rS\Delta + \tfrac12\sigma^2S^2\Gamma = rV ,$$
+so for a delta-hedged position ($rS\Delta$ and $rV$ small or financed away) the identity is $\Theta \approx -\tfrac12\sigma^2S^2\Gamma$: <em>the time decay of an option exactly pays for its gamma</em> at the volatility $\sigma$ used to price it. For the example, $-\Theta/(\tfrac12\sigma^2S^2\Gamma)$ (with the $rK$ term removed) is {{v:c10_theta_gamma_check}}, as it must be.
+</p>
+
+<h3>10.2 What gamma earns</h3>
+<p>
+A delta-hedged long option position has, over a day in which the stock moves by $\delta S$, a profit of $\tfrac12\Gamma(\delta S)^2$ from convexity (the hedge is linear, the option is curved) minus the theta paid. For the example, a 1-point move earns {{v:c10_gamma_pnl_1}} and a 5-point move earns {{v:c10_gamma_pnl_5}}, while a day's theta costs {{v:c10_theta_day}}. Since $\mathbb E[(\delta S)^2] = \sigma_{\rm real}^2S^2\,\delta t$, the expected daily P&amp;L is
+$$\tfrac12\Gamma S^2\big(\sigma_{\rm real}^2 - \sigma_{\rm imp}^2\big)\,\delta t ,$$
+which is the whole business of volatility trading in one line: a long option position, continuously delta-hedged, makes money if the realised volatility exceeds the implied volatility at which it was bought, and loses otherwise, with the gamma as the gearing. Integrated over the life of the trade, the P&amp;L is $\tfrac12\int\Gamma S^2(\sigma_{\rm real}^2 - \sigma_{\rm imp}^2)\,\mathrm dt$ &mdash; path-dependent through $\Gamma$, which is largest near the strike and near expiry.
+</p>
+
+<h3>10.3 Discrete hedging: the error and its size</h3>
+<p>
+Continuous rebalancing is impossible; a hedger rebalances $n$ times over the option's life. Between rebalances the position is exposed to $\tfrac12\Gamma(\delta S)^2$ minus its expectation, a random quantity with standard deviation proportional to $\Gamma S^2\sigma^2\,\delta t$; summing $n$ independent such errors gives a total hedging error whose standard deviation scales as $1/\sqrt n$. We simulate writing the example call, hedging it with the Black&ndash;Scholes delta $n$ times at the correct volatility, and holding to expiry.
+</p>
+<div class="box g">
+<h4>Worked example: 20,000 hedged paths</h4>
+<p>Hedging 10 times (every 25 trading days) gives a P&amp;L at expiry with mean {{v:c10_hedge_mean_10}} and standard deviation {{v:c10_hedge_sd_10}}; hedging 50 times, {{v:c10_hedge_mean_50}} and {{v:c10_hedge_sd_50}}; hedging daily (250 times), {{v:c10_hedge_mean_250}} and {{v:c10_hedge_sd_250}}. The mean is zero in every case &mdash; the price is fair regardless of hedging frequency &mdash; and the standard deviation falls by a factor {{v:c10_hedge_sd_ratio}} between 10 and 250 rebalances, as $\sqrt{25}$ predicts. Even daily hedging leaves a residual of about 4% of the premium ({{v:c10_hedge_sd_250}} on a price of {{v:c9_call}}). That residual, plus transaction costs that grow with rebalancing frequency, is why option market-makers run books of thousands of positions whose gammas partly offset, rather than hedging each option individually.</p>
+<p>Now hedge at the wrong volatility. Pricing and hedging at $\sigma_{\rm imp} = 20\%$ when the realised volatility is 25% gives a mean P&amp;L for the writer of {{v:c10_mis_mean}} (standard deviation {{v:c10_mis_sd}}). The vega estimate, $-\mathcal V\times0.05 = {{v:c10_mis_vega_est}}$, is close; the exact answer is the difference in prices, ${{v:c9_call}} - {{v:c10_price_25}}$, blurred by the path dependence of the gamma integral.</p>
+</div>
+{{fig:c10_hedging|The distribution of the writer's P&L at expiry for a delta-hedged at-the-money call, hedged 10 times and 250 times over the year. Both are centred on zero; the width shrinks as 1/√n.}}
+
+<h3>10.4 Implied volatility</h3>
+<p>
+Given a market price $C_{\rm mkt}$, the <em>implied volatility</em> $\sigma_{\rm imp}$ is the $\sigma$ that makes the Black&ndash;Scholes formula reproduce it. Since $\partial C/\partial\sigma = \mathcal V > 0$, the map is monotone and inverts uniquely (by Newton's method or bisection). Implied volatility is the market's price for an option expressed in natural units: it is comparable across strikes, maturities and underlyings in a way that premia are not, and it is the number traders quote. If Black&ndash;Scholes were right, $\sigma_{\rm imp}$ would be the same for every strike and maturity on the same underlying. It is not. Plotted against strike it forms a <em>smile</em> (currencies) or a <em>skew</em> (equities, where low strikes carry higher implied volatility); plotted against maturity it forms a <em>term structure</em>; together, the <em>implied volatility surface</em>. The surface is the market's statement of how far reality departs from lognormality &mdash; fat tails raise the wings, negative skewness tilts the surface &mdash; and Chapter&nbsp;11 is about models that generate it.
+</p>
+
+<h3>10.5 Higher-order Greeks and the vol surface's own Greeks</h3>
+<p>
+Once volatility moves, its sensitivities matter too. <em>Vanna</em> $\partial\Delta/\partial\sigma = \partial\mathcal V/\partial S$ measures how the hedge ratio changes when volatility moves (important for skewed markets, where spot and vol are correlated); <em>volga</em> $\partial^2V/\partial\sigma^2$ is the convexity in volatility, the gamma of a vega position. A book's risk report lists delta, gamma, vega, theta by strike and maturity bucket, plus vanna and volga, plus the exposure to parallel shifts, tilts and curvature of the surface. The bookkeeping is Taylor's theorem in several variables, and the "P&amp;L explain" that reconciles a day's realised profit against these sensitivities is the daily discipline that keeps a desk honest: the unexplained residual is where model error shows up first.
+</p>
+
+<h3>10.6 Static arbitrage constraints on the surface</h3>
+<p>
+Not every smile is a possible one. Because a call price is a discounted expectation of a payoff that is decreasing and convex in the strike, the call price must itself be decreasing and convex in $K$: $-e^{-rT}\le\partial C/\partial K\le0$ and $\partial^2C/\partial K^2\ge0$. The first is the statement that a call spread (long $K_1$, short $K_2 > K_1$) cannot be worth more than its maximum payoff $K_2 - K_1$ discounted; the second is the <em>butterfly</em> condition, and it is exactly the requirement that the Breeden&ndash;Litzenberger density of Chapter&nbsp;11 be non-negative. Across maturities, the total implied variance $\sigma_{\rm imp}^2(K,T)\,T$ must be non-decreasing in $T$ at fixed forward moneyness (<em>calendar-spread</em> arbitrage otherwise), and in the far wings the implied variance can grow at most linearly in $|\ln K|$ (Lee's moment formula, 2004: the slope of the wings is bounded by the number of finite moments of the distribution, which links the shape of the surface directly to the tail index of Chapter&nbsp;2). A desk's surface-fitting code enforces these constraints explicitly, both because a violating surface would be arbitraged by the first trader to notice and because an interpolated price that violates convexity produces a negative probability density and hence nonsensical prices for anything exotic priced off it. The conditions are weak &mdash; they say which surfaces are <em>possible</em>, not which are <em>right</em> &mdash; but they are the first check on any quoted set of option prices, and the parametrisations in daily use (SVI and its variants) are designed to satisfy them by construction.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>$\Theta \approx -\tfrac12\sigma^2S^2\Gamma$</dt><dd>Time decay pays for convexity; the P&amp;L of a hedged option is $\tfrac12\Gamma S^2(\sigma_{\rm real}^2 - \sigma_{\rm imp}^2)\,\mathrm dt$.</dd>
+<dt>Hedging error</dt><dd>Zero mean, standard deviation $\propto 1/\sqrt n$; a few per cent of premium at daily frequency.</dd>
+<dt>Implied vol</dt><dd>The market's price in natural units; its variation across strike and maturity is the model's error, made visible.</dd>
+</dl>
+</div>

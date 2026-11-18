@@ -1,0 +1,4 @@
+build/
+output/
+run_*/
+scaling_*

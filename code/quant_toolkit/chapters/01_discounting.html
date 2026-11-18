@@ -1,0 +1,74 @@
+<!-- PART: Part I — Mathematical foundations -->
+<div class="part">Part I <span>Mathematical foundations</span></div>
+<h2><span class="n">1</span>Money and time: compounding, discounting and bonds</h2>
+<p class="lead">The first idea in finance is that a pound today and a pound next year are different things. Everything about rates &mdash; bonds, yield curves, duration, the discount factors inside every option formula &mdash; follows from making that precise.</p>
+
+<h3>1.1 Compounding and the exponential</h3>
+<p>
+Lend 100 at an annual rate $r$ and after one year you have $100(1+r)$. Compound $m$ times a year and after $T$ years you have $100(1+r/m)^{mT}$. As $m\to\infty$ this converges to $100\,e^{rT}$, because
+$$\lim_{m\to\infty}\Big(1+\frac{r}{m}\Big)^{m} = e^{r},$$
+which is one of the definitions of $e$. The continuous limit is what physicists already know as exponential growth: the ODE $\mathrm dP/\mathrm dt = rP$ has solution $P(t) = P_0 e^{rt}$. Continuous compounding is the convention in almost all derivative-pricing mathematics because it turns products into sums (growth over $T_1$ then $T_2$ is $e^{r(T_1+T_2)}$) and because it makes the calculus clean.
+</p>
+<div class="box g">
+<h4>Worked example: how much does the compounding convention matter?</h4>
+<p>At $r = 5\%$ for $T = 10$ years, 100 grows to {{v:c1_annual}} with annual compounding, {{v:c1_monthly}} with monthly, {{v:c1_daily}} with daily and {{v:c1_cont}} in the continuous limit. The convention matters at the level of a per cent or so over ten years; what matters far more is being consistent, and quoting which convention a rate is in. A quoted "5%" is a number plus a convention.</p>
+</div>
+
+<h3>1.2 Discounting: the present value of a future cash flow</h3>
+<p>
+Run the argument backwards. If money grows at $r$, then a cash flow $C$ received at time $T$ is worth $C\,e^{-rT}$ today (continuous) or $C/(1+y)^T$ (annual). The number multiplying $C$ is the <em>discount factor</em> $D(T)$, and a set of discount factors for all maturities &mdash; equivalently a set of <em>zero-coupon rates</em> $z(T)$ with $D(T) = e^{-z(T)T}$ &mdash; is the <em>yield curve</em>. The present value of any deterministic stream of cash flows is then
+$$\mathrm{PV} = \sum_i C_i\,D(T_i),$$
+and this one line prices every bond, swap and annuity in existence. It is also the first appearance of the deepest principle in the subject, <em>no arbitrage</em>: two streams of cash flows that are identical in every state of the world must have the same price, otherwise one could buy the cheap one, sell the dear one and pocket the difference risk-free.
+</p>
+
+<h3>1.3 Bonds, yield and the price&ndash;yield curve</h3>
+<p>
+A coupon bond pays a coupon $cF$ each year for $n$ years and returns the face value $F$ at maturity. Its price, given a single <em>yield to maturity</em> $y$ that discounts every cash flow, is
+$$P(y) = \sum_{t=1}^{n} \frac{cF}{(1+y)^t} + \frac{F}{(1+y)^n}.$$
+The yield is simply the internal rate of return &mdash; the one flat rate that reproduces the market price. Price and yield move in opposite directions, and the relationship is convex.
+</p>
+<div class="box g">
+<h4>Worked example: a 5-year, 4% bond at a 5% yield</h4>
+<p>With $F = 100$, $c = 4\%$, $n = 5$ and $y = 5\%$, the present values of the five cash flows (4, 4, 4, 4, 104) are {{v:c1_pv_cf}}, so $P = {{v:c1_P}}$. The bond trades below par because its coupon (4%) is below the yield the market demands (5%). If instead $c = y$, the price is exactly 100 &mdash; a "par bond" &mdash; which is a useful sanity check on any bond calculator.</p>
+</div>
+
+<h3>1.4 Duration and convexity: a Taylor expansion</h3>
+<p>
+How much does the price change if the yield moves? Expand $P(y)$ to second order:
+$$\Delta P \approx \frac{\mathrm dP}{\mathrm dy}\,\Delta y + \tfrac12 \frac{\mathrm d^2P}{\mathrm dy^2}\,(\Delta y)^2 .$$
+Differentiating the price formula term by term,
+$$\frac{\mathrm dP}{\mathrm dy} = -\frac{1}{1+y}\sum_t \frac{t\,C_t}{(1+y)^t} \equiv -D_{\rm mod}\,P,
+\qquad
+\frac{\mathrm d^2P}{\mathrm dy^2} = \frac{1}{(1+y)^2}\sum_t \frac{t(t+1)\,C_t}{(1+y)^t} \equiv C\,P .$$
+The quantity $D_{\rm mac} = \frac{1}{P}\sum_t t\,C_t/(1+y)^t$ is the <em>Macaulay duration</em>: the present-value-weighted average time at which the bond pays, in years. $D_{\rm mod} = D_{\rm mac}/(1+y)$ is the <em>modified duration</em>, the percentage price sensitivity to a unit change in yield. $C$ is the <em>convexity</em>. A trader thinks of a bond position as "$D_{\rm mod}$ years of duration", because
+$$\frac{\Delta P}{P} \approx -D_{\rm mod}\,\Delta y + \tfrac12 C\,(\Delta y)^2 .$$
+Duration is the first-order (delta-like) risk, convexity the second-order (gamma-like) one; exactly the same structure returns for options in Chapter&nbsp;10.
+</p>
+<div class="box g">
+<h4>Worked example: a 100 bp rise in yield</h4>
+<p>For the bond above, $D_{\rm mac} = {{v:c1_Dmac}}$ years, $D_{\rm mod} = {{v:c1_Dmod}}$ and $C = {{v:c1_C}}$. If the yield rises from 5% to 6%, the exact new price is {{v:c1_P2}}, a change of {{v:c1_dP_exact}}. The duration approximation gives {{v:c1_dP_dur}}; adding the convexity term gives {{v:c1_dP_durconv}}, which matches the exact answer to within 0.002 (the remainder is the third-order term). Convexity is a <em>good</em> thing for the holder: the price falls less than duration predicts when yields rise, and rises more when they fall. Investors pay for it, and the price of convexity is one of the recurring themes of fixed-income trading.</p>
+</div>
+{{fig:c1_priceyield|The exact price–yield curve of the 5-year 4% bond, with its first-order (duration) tangent and the second-order (duration + convexity) approximation at y = 5%. The curve lies above its tangent everywhere: that is convexity.}}
+
+<h3>1.5 The yield curve and forward rates</h3>
+<p>
+In reality there is not one rate but a whole curve $z(T)$ of zero-coupon rates. Embedded in it are <em>forward rates</em>: the rate, agreed today, for borrowing between two future dates. If the one-year zero rate is $z_1$ and the two-year rate is $z_2$, then no arbitrage forces the forward rate $f_{1,2}$ for the second year to satisfy $(1+z_2)^2 = (1+z_1)(1+f_{1,2})$. With $z_1 = 3\%$ and $z_2 = 3.5\%$ this gives $f_{1,2} = {{v:c1_f12}}\%$. In continuous time the <em>instantaneous forward rate</em> is
+$$f(T) = -\frac{\partial \ln D(T)}{\partial T} = \frac{\partial}{\partial T}\big[z(T)\,T\big] = z(T) + T\,z'(T),$$
+so the forward curve lies above the zero curve where the zero curve is rising and below it where it is falling &mdash; the forward is the marginal rate, the zero the average. Practitioners often summarise a curve with a small parametric family; the Nelson&ndash;Siegel form $z(T) = \beta_0 + \beta_1 \frac{1-e^{-T/\tau}}{T/\tau} + \beta_2\big(\frac{1-e^{-T/\tau}}{T/\tau} - e^{-T/\tau}\big)$ has a level, a slope and a hump, and fits most curves well.
+</p>
+{{fig:c1_curve|A Nelson–Siegel zero curve (level 4.5%, slope −2%, hump +1%, τ = 2 years) and the instantaneous forward curve it implies. At T = 2 the zero rate is {{v:c1_z2}}%; at T = 10 the zero rate is {{v:c1_z10}}% while the forward is {{v:c1_f10}}%.}}
+
+<h3>1.6 Real rates, inflation and currencies: the same argument three more times</h3>
+<p>
+The no-arbitrage logic that produced forward rates produces every other "parity" relation in finance. <em>Fisher:</em> a nominal rate $i$, a real rate $\rho$ and expected inflation $\pi$ satisfy $(1+i) = (1+\rho)(1+\pi)$, approximately $i \approx \rho + \pi$; inflation-linked bonds trade on $\rho$, nominal bonds on $i$, and the gap between their yields (the "breakeven") is the market's inflation forecast plus a risk premium. <em>Covered interest parity:</em> borrowing in one currency, converting at spot $S$, lending in the other and converting back at a forward rate $F$ agreed today must earn exactly the domestic rate, so $F = S\,(1+r_d)/(1+r_f)$, or in continuous time $F = Se^{(r_d - r_f)T}$. The forward exchange rate is <em>not</em> a forecast of the future spot rate; it is the rate at which the carry trade breaks even, and its violation (which happened persistently after 2008 because of bank balance-sheet constraints, the "cross-currency basis") is one of the cleanest examples of a limit to arbitrage. <em>Commodity forwards:</em> $F = Se^{(r + u - y)T}$ with $u$ the storage cost and $y$ the convenience yield of holding the physical commodity; when the forward curve is below spot (backwardation) the convenience yield exceeds the financing cost. In each case the formula is a statement that a riskless round trip earns the riskless rate, and in each case the interesting economics lives in the deviations &mdash; which are small, persistent, and only exploitable by those with the balance sheet to carry them.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>Discount factor</dt><dd>$D(T) = e^{-z(T)T}$; prices are sums of discounted cash flows.</dd>
+<dt>No arbitrage</dt><dd>Identical cash flows have identical prices. This single principle will generate Black&ndash;Scholes.</dd>
+<dt>Duration, convexity</dt><dd>First and second derivatives of price with respect to yield: a Taylor expansion.</dd>
+<dt>Forward rate</dt><dd>$f = \partial(zT)/\partial T$: the marginal rate implied by the curve.</dd>
+</dl>
+</div>

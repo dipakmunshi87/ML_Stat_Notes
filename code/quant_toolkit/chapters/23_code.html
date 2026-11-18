@@ -1,0 +1,137 @@
+<h2><span class="n">23</span>Appendix &mdash; the computations, in code</h2>
+<p class="lead">Every number and figure in the note comes from short NumPy/SciPy scripts with fixed seeds. The six kernels below are the ones worth owning; the rest is plotting and bookkeeping.</p>
+<div class="box g">
+<h4>The complete source</h4>
+<p>The full build &mdash; the three computation scripts that produce every value and figure, the chapter sources, the assembler and the MathJax renderer &mdash; is in the repository at
+<a href="https://github.com/dipakmunshi87/ML_Stat_Notes/tree/main/code/quant_toolkit">github.com/dipakmunshi87/ML_Stat_Notes/code/quant_toolkit</a>. Running <code>python compute_part1.py &amp;&amp; python compute_part2.py &amp;&amp; python compute_part3.py &amp;&amp; python build.py</code> regenerates this page from scratch.</p>
+</div>
+
+<h3>A.1 Black&ndash;Scholes, Greeks and implied volatility</h3>
+<pre><code><span class="c"># Black-Scholes price, Greeks and implied volatility (Chapters 9-10)</span>
+<span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> scipy.stats <span class="k">import</span> norm
+<span class="k">from</span> scipy.optimize <span class="k">import</span> brentq
+
+<span class="k">def</span> <span class="f">bs</span>(S, K, r, sig, T, kind=<span class="s">"call"</span>):
+    d1 = (np.log(S/K) + (r + 0.5*sig**2)*T) / (sig*np.sqrt(T)); d2 = d1 - sig*np.sqrt(T)
+    <span class="k">if</span> kind == <span class="s">"call"</span>: <span class="k">return</span> S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
+    <span class="k">return</span> K*np.exp(-r*T)*norm.cdf(-d2) - S*norm.cdf(-d1)
+
+<span class="k">def</span> <span class="f">greeks</span>(S, K, r, sig, T):
+    d1 = (np.log(S/K) + (r + 0.5*sig**2)*T) / (sig*np.sqrt(T)); d2 = d1 - sig*np.sqrt(T)
+    <span class="k">return</span> dict(delta=norm.cdf(d1), gamma=norm.pdf(d1)/(S*sig*np.sqrt(T)),
+                vega=S*norm.pdf(d1)*np.sqrt(T),
+                theta=-S*norm.pdf(d1)*sig/(2*np.sqrt(T)) - r*K*np.exp(-r*T)*norm.cdf(d2))
+
+<span class="k">def</span> <span class="f">implied_vol</span>(price, S, K, r, T, kind=<span class="s">"call"</span>):
+    <span class="k">return</span> brentq(<span class="k">lambda</span> s: bs(S, K, r, s, T, kind) - price, 1e-4, 5.0)
+
+print(bs(100, 100, 0.05, 0.20, 1.0))            <span class="c"># 10.4506</span>
+print(implied_vol(10.4506, 100, 100, 0.05, 1.0)) <span class="c"># 0.2000</span>
+</code></pre>
+
+<h3>A.2 Monte Carlo with antithetic and control variates; Heston by full-truncation Euler</h3>
+<pre><code><span class="c"># Risk-neutral Monte Carlo for a call (Chapters 9, 11, 13)</span>
+rng = np.random.default_rng(0)
+S0, K, r, sig, T, M = 100., 100., 0.05, 0.20, 1.0, 100_000
+Z  = rng.normal(size=M)
+ST = S0*np.exp((r - 0.5*sig**2)*T + sig*np.sqrt(T)*Z)        <span class="c"># exact GBM, drift r not mu</span>
+pay = np.exp(-r*T)*np.maximum(ST - K, 0)
+print(pay.mean(), pay.std()/np.sqrt(M))                        <span class="c"># plain: price +- se</span>
+
+STa = S0*np.exp((r - 0.5*sig**2)*T - sig*np.sqrt(T)*Z)       <span class="c"># antithetic pair</span>
+pay_a = 0.5*(pay + np.exp(-r*T)*np.maximum(STa - K, 0))
+
+cv = np.exp(-r*T)*ST                                           <span class="c"># control variate, E[cv] = S0</span>
+beta = np.cov(pay, cv)[0, 1]/np.var(cv)
+pay_c = pay - beta*(cv - S0)
+print(pay_c.mean(), pay_c.std()/np.sqrt(M))                    <span class="c"># ~7x smaller variance</span>
+
+<span class="c"># Heston: dv = kappa(theta - v)dt + xi sqrt(v) dW2, corr(dW1, dW2) = rho</span>
+v0, kappa, theta, xi, rho, n = 0.04, 2.0, 0.04, 0.39, -0.7, 500
+dt = T/n; S = np.full(M, S0); v = np.full(M, v0)
+<span class="k">for</span> _ <span class="k">in</span> range(n):
+    z1 = rng.normal(size=M); z2 = rho*z1 + np.sqrt(1 - rho**2)*rng.normal(size=M)
+    vp = np.maximum(v, 0)                                      <span class="c"># full truncation keeps v >= 0</span>
+    S = S*np.exp((r - 0.5*vp)*dt + np.sqrt(vp*dt)*z1)
+    v = v + kappa*(theta - vp)*dt + xi*np.sqrt(vp*dt)*z2
+print(np.exp(-r*T)*np.maximum(S - K, 0).mean())                <span class="c"># ~10.29</span>
+</code></pre>
+
+<h3>A.3 Crank&ndash;Nicolson for the Black&ndash;Scholes PDE</h3>
+<pre><code><span class="c"># Crank-Nicolson on a uniform S grid, European call (Chapters 5, 13)</span>
+<span class="k">from</span> scipy.linalg <span class="k">import</span> solve_banded
+
+<span class="k">def</span> <span class="f">cn_call</span>(S0, K, r, sig, T, nS=400, nT=400, Smax=300.0):
+    S = np.linspace(0, Smax, nS + 1); dt = T/nT
+    V = np.maximum(S - K, 0)                                  <span class="c"># payoff = initial condition in tau</span>
+    i = np.arange(1, nS)
+    a = 0.25*dt*(sig**2*i**2 - r*i); b = -0.5*dt*(sig**2*i**2 + r); c = 0.25*dt*(sig**2*i**2 + r*i)
+    ab = np.zeros((3, nS - 1)); ab[0, 1:] = -c[:-1]; ab[1] = 1 - b; ab[2, :-1] = -a[1:]
+    <span class="k">for</span> k <span class="k">in</span> range(nT):
+        tau = (k + 1)*dt
+        rhs = a*V[:-2] + (1 + b)*V[1:-1] + c*V[2:]
+        rhs[-1] += c[-1]*(Smax - K*np.exp(-r*tau))            <span class="c"># upper boundary: V ~ S - K e^{-r tau}</span>
+        Vn = np.zeros_like(V); Vn[-1] = Smax - K*np.exp(-r*tau)
+        Vn[1:-1] = solve_banded((1, 1), ab, rhs); V = Vn
+    <span class="k">return</span> np.interp(S0, S, V)
+
+print(cn_call(100, 100, 0.05, 0.20, 1.0))                     <span class="c"># 10.4515</span>
+</code></pre>
+
+<h3>A.4 GARCH(1,1) by maximum likelihood</h3>
+<pre><code><span class="c"># GARCH(1,1): simulate, then fit by MLE (Chapter 15)</span>
+<span class="k">from</span> scipy.optimize <span class="k">import</span> minimize
+
+<span class="k">def</span> <span class="f">garch_nll</span>(p, x):
+    om, al, be = p
+    <span class="k">if</span> om &lt;= 0 <span class="k">or</span> al &lt; 0 <span class="k">or</span> be &lt; 0 <span class="k">or</span> al + be &gt;= 1: <span class="k">return</span> 1e10
+    h = np.empty(len(x)); h[0] = x.var()
+    <span class="k">for</span> t <span class="k">in</span> range(1, len(x)): h[t] = om + al*x[t-1]**2 + be*h[t-1]
+    <span class="k">return</span> 0.5*np.sum(np.log(h) + x**2/h)                <span class="c"># -log L up to a constant</span>
+
+om, al, be, n = 2e-6, 0.08, 0.90, 3000
+x = np.zeros(n); h = np.zeros(n); h[0] = om/(1 - al - be)
+<span class="k">for</span> t <span class="k">in</span> range(1, n):
+    h[t] = om + al*x[t-1]**2 + be*h[t-1]; x[t] = np.sqrt(h[t])*rng.normal()
+fit = minimize(garch_nll, [1e-6, 0.05, 0.9], args=(x,), method=<span class="s">"Nelder-Mead"</span>)
+print(fit.x, fit.x[1] + fit.x[2])                              <span class="c"># omega, alpha, beta, persistence</span>
+</code></pre>
+
+<h3>A.5 Marchenko&ndash;Pastur eigenvalue clipping</h3>
+<pre><code><span class="c"># Clean a sample correlation matrix by clipping the noise bulk (Chapter 16)</span>
+<span class="k">def</span> <span class="f">clip_correlation</span>(R):
+    <span class="s">"""R: T x N matrix of returns. Returns the cleaned covariance."""</span>
+    T, N = R.shape; q = N/T; lam_plus = (1 + np.sqrt(q))**2
+    S = np.cov(R.T); sd = np.sqrt(np.diag(S)); C = S/np.outer(sd, sd)
+    ev, EV = np.linalg.eigh(C)
+    noise = ev &lt; lam_plus
+    ev[noise] = ev[noise].mean()                               <span class="c"># keep the trace, flatten the bulk</span>
+    Cc = EV @ np.diag(ev) @ EV.T
+    d = np.sqrt(np.diag(Cc)); Cc = Cc/np.outer(d, d)           <span class="c"># restore unit diagonal</span>
+    <span class="k">return</span> Cc*np.outer(sd, sd)
+
+<span class="k">def</span> <span class="f">min_variance</span>(Sigma):
+    w = np.linalg.solve(Sigma, np.ones(len(Sigma))); <span class="k">return</span> w/w.sum()
+</code></pre>
+
+<h3>A.6 Longstaff&ndash;Schwartz for an American put</h3>
+<pre><code><span class="c"># LSMC: regression-based continuation values (Chapter 13)</span>
+M, n = 100_000, 50; dt = T/n
+S = np.empty((M, n + 1)); S[:, 0] = S0
+<span class="k">for</span> k <span class="k">in</span> range(n):
+    S[:, k+1] = S[:, k]*np.exp((r - 0.5*sig**2)*dt + sig*np.sqrt(dt)*rng.normal(size=M))
+cash = np.maximum(K - S[:, -1], 0)
+<span class="k">for</span> k <span class="k">in</span> range(n - 1, 0, -1):
+    cash *= np.exp(-r*dt)
+    itm = K - S[:, k] &gt; 0                                      <span class="c"># regress only in-the-money paths</span>
+    X = S[itm, k]; A = np.column_stack([np.ones_like(X), X, X**2, X**3])
+    coef = np.linalg.lstsq(A, cash[itm], rcond=<span class="k">None</span>)[0]
+    cont = A @ coef; ex = K - X
+    idx = np.where(itm)[0][ex &gt; cont]; cash[idx] = ex[ex &gt; cont]
+print(np.exp(-r*dt)*cash.mean())                               <span class="c"># ~6.08 (tree: 6.09; European: 5.57)</span>
+</code></pre>
+
+<p>
+The full scripts (figures, the Heston Fourier integral, the Vasicek Monte Carlo, the Kalman filter, the pairs backtest, the walk-forward machine-learning experiment and the multiple-testing simulations) are a few hundred lines in total and run in under a minute. Every number in the text is produced by them with the seeds fixed to 1, 2 and 3 for Parts I, II and III; change a seed and the numbers move by their quoted standard errors, which is the point.
+</p>

@@ -1,0 +1,53 @@
+<h2><span class="n">18</span>Risk measures: VaR, expected shortfall, extreme values and drawdowns</h2>
+<p class="lead">Risk management asks a different question from pricing: not "what is this worth" but "how much can we lose, how often, and what happens on the day the model is wrong". The answers are quantiles, tail expectations and the statistics of extremes.</p>
+
+<h3>18.1 Value at risk</h3>
+<p>
+The value at risk at confidence $\alpha$ over horizon $h$ is the loss $L$ such that $\mathbb P(\text{loss} > \mathrm{VaR}_\alpha) = 1 - \alpha$: the quantile of the loss distribution. For Gaussian returns with daily volatility $\sigma$, $\mathrm{VaR}_\alpha = -\Phi^{-1}(1-\alpha)\,\sigma = z_\alpha\sigma$ (ignoring the mean, which is negligible over a day). With $\sigma = 1\%$: {{v:c18_varg_950}}% at 95%, {{v:c18_varg_990}}% at 99%, {{v:c18_varg_999}}% at 99.9%. For the Student-$t$ with $\nu = 4$ scaled to the same volatility (Chapter&nbsp;2) the figures are {{v:c18_vart_950}}%, {{v:c18_vart_990}}% and {{v:c18_vart_999}}%. The 95% VaR is actually <em>lower</em> under the fat-tailed model &mdash; a $t$ distribution with the same variance is more peaked, so its moderate quantiles are closer to zero &mdash; while the 99.9% VaR is two-thirds larger. The regulatory 99% point sits near the crossover, which is one reason the Basel framework moved to expected shortfall at 97.5%. The three ways to compute VaR in practice are <em>parametric</em> (a distribution and a covariance matrix, usually with EWMA or GARCH volatility), <em>historical</em> (the empirical quantile of the portfolio's P&amp;L recomputed over the last one or two years of market moves), and <em>Monte Carlo</em> (simulate risk factors, reprice the book). Historical simulation is the most common, needs no distributional assumption, and has an obvious flaw: it cannot produce a loss larger than any in its window.
+</p>
+
+<h3>18.2 Expected shortfall and coherence</h3>
+<p>
+VaR says nothing about what happens <em>beyond</em> the quantile. The <em>expected shortfall</em> (conditional VaR) is the mean loss given that the loss exceeds VaR, $\mathrm{ES}_\alpha = \mathbb E[L\,|\,L > \mathrm{VaR}_\alpha]$. For the Gaussian, $\mathrm{ES}_\alpha = \sigma\,\varphi(z_\alpha)/(1-\alpha)$; for the $t$ it is $\mathrm{ES}_\alpha = \frac{\sigma_t\,f_\nu(t_\alpha)}{1-\alpha}\cdot\frac{\nu + t_\alpha^2}{\nu - 1}$ with $f_\nu$ the $t$ density and $t_\alpha$ its quantile. At 99%: {{v:c18_esg_990}}% Gaussian versus {{v:c18_est_990}}% for the $t$; at 99.9%: {{v:c18_esg_999}}% versus {{v:c18_est_999}}%. The gap between VaR and ES is itself a measure of tail heaviness &mdash; for the Gaussian ES exceeds VaR by a factor that tends to 1 deep in the tail; for a power-law tail with index $\nu$ it tends to $\nu/(\nu-1)$, which is $4/3$ here, and infinite as $\nu\to1$.
+</p>
+<p>
+Artzner, Delbaen, Eber and Heath (1999) asked what properties a risk measure should have and found four: monotonicity, translation invariance, positive homogeneity and <em>subadditivity</em>, $\rho(X + Y) \le \rho(X) + \rho(Y)$ &mdash; diversification should not increase measured risk. A measure with all four is <em>coherent</em>. Expected shortfall is coherent; VaR is not.
+</p>
+<div class="box g">
+<h4>Worked example: VaR punishes diversification</h4>
+<p>A bond that defaults with probability 4% and otherwise returns par has a 95% VaR of zero: the 5% quantile of the loss distribution lies in the "no default" mass. Hold two such bonds, independent. The probability that at least one defaults is $1 - 0.96^2 = {{v:c18_bond_var_joint_p}}$%, which exceeds 5%, so the 95% VaR of the two-bond portfolio is a full bond's loss. Each position has zero VaR; the diversified portfolio has positive VaR. Expected shortfall, which averages over the whole tail, has no such pathology, and the same example is why VaR-based limits can push desks towards concentrated positions in instruments whose losses are rare but total.</p>
+</div>
+
+<h3>18.3 Extreme value theory</h3>
+<p>
+Beyond the 99th percentile the empirical distribution has a handful of points and the parametric models are guesses. Extreme value theory gives a principled extrapolation. The Pickands&ndash;Balkema&ndash;de Haan theorem states that for essentially any distribution, the excesses $L - u$ over a high threshold $u$ are asymptotically distributed as a <em>generalised Pareto</em>,
+$$G_{\xi,\beta}(y) = 1 - \Big(1 + \frac{\xi y}{\beta}\Big)^{-1/\xi},$$
+with shape $\xi$ and scale $\beta$. The shape is the tail index: $\xi = 0$ is exponential (Gaussian-like), $\xi > 0$ is a power law with $1/\xi$ finite moments (so $\xi = 1/\nu$ for a Student-$t$), $\xi \ge \tfrac12$ means infinite variance. Fit the GPD to the exceedances by maximum likelihood, and the quantile beyond the threshold is
+$$\mathrm{VaR}_\alpha = u + \frac{\beta}{\xi}\Big[\Big(\frac{1-\alpha}{N_u/N}\Big)^{-\xi} - 1\Big],$$
+where $N_u/N$ is the fraction of observations above $u$. The method uses the shape of the tail that <em>is</em> observed to extrapolate the part that is not.
+</p>
+<div class="box g">
+<h4>Worked example: ten years of fat-tailed losses</h4>
+<p>From 2,500 daily $t_4$ losses with 1% volatility we take the 95% quantile $u = {{v:c18_u}}$% as the threshold, leaving {{v:c18_nexc}} exceedances, and fit the GPD: $\hat\xi = {{v:c18_gpd_xi}}$ (the true value is $1/\nu = 0.25$), $\hat\beta = {{v:c18_gpd_beta}}$%. The 99.9% VaR is {{v:c18_evt_var999}}% from the GPD, {{v:c18_emp_var999}}% from the empirical quantile (two or three observations) and {{v:c18_true_var999}}% in truth. At 99.99% &mdash; a once-in-forty-years day, which no empirical quantile from ten years can estimate at all &mdash; the GPD gives {{v:c18_evt_var9999}}% against the true {{v:c18_true_var9999}}%, while the Gaussian fitted to the same data says {{v:c18_gauss_var9999}}%. EVT is not precise, but it is not wrong by a factor of two and a half.</p>
+</div>
+{{fig:c18_tails|Left: the empirical exceedance probability of daily losses over ten years, the fitted generalised Pareto tail above the 95% threshold, and the Gaussian with the same volatility; the Gaussian falls away by orders of magnitude where the data are. Right: the distribution of the maximum drawdown over five years for a strategy with Sharpe ratio 0.4 and 20% volatility.}}
+
+<h3>18.4 Drawdowns</h3>
+<p>
+Investors do not experience quantiles; they experience <em>drawdowns</em>, the decline from the running peak of wealth, and the maximum drawdown over a period is the number that closes funds. It is a path-dependent statistic with no simple formula, but it is easy to simulate and the results are sobering. A strategy with annual Sharpe ratio 0.4 and 20% volatility &mdash; a respectable long-only equity record &mdash; has, over five years, a median maximum drawdown of {{v:c18_dd_med}}% of capital, a 90th-percentile of {{v:c18_dd_90}}% and a 99th-percentile of {{v:c18_dd_99}}% (in arithmetic, uncompounded units). A drawdown of a third is not a sign that something is wrong; it is the expected experience. For a Brownian motion with drift the expected maximum drawdown grows as $\sigma^2/\mu$ for long horizons (the drift eventually wins) but as $\sigma\sqrt T$ for horizons short compared with $\sigma^2/\mu^2$ &mdash; which for Sharpe ratio 0.4 is $1/0.16 \approx 6$ years, so in practice drawdowns scale like volatility times the square root of time and the Sharpe ratio barely helps. Volatility targeting (Chapter&nbsp;15) and the fractional Kelly sizing of Chapter&nbsp;17 are the two tools that reduce them.
+</p>
+
+<h3>18.5 Stress tests and model risk</h3>
+<p>
+Every quantity above is computed inside a model, and the losses that matter most are the ones the model cannot generate: correlations going to one, liquidity vanishing so that the "hedge" cannot be traded, a counterparty failing, a currency peg breaking. Stress testing replays historical episodes (October 1987, 1998, 2008, March 2020) and hypothetical scenarios through the current book without any probability attached, and reverse stress testing asks what scenario would produce a given loss. The discipline has two parts: the scenario library, which is judgement, and the full revaluation of every position under each scenario, which is engineering. The last line of defence is the recognition that the most dangerous number on a risk report is a small one, because it tells the desk to take more of a risk the model has not understood. A VaR that is exceeded on 1% of days is working as designed; a VaR that has never been exceeded is measuring the wrong thing.
+</p>
+
+<div class="box">
+<h4>What to carry forward</h4>
+<dl class="key">
+<dt>VaR</dt><dd>A quantile; $z_\alpha\sigma$ for Gaussians; says nothing beyond itself; not subadditive.</dd>
+<dt>Expected shortfall</dt><dd>Mean of the tail; coherent; the Basel standard at 97.5%.</dd>
+<dt>EVT</dt><dd>Generalised Pareto for threshold exceedances; $\xi = 1/\nu$ is the tail index; extrapolate from the observed tail.</dd>
+<dt>Drawdowns</dt><dd>$\sim\sigma\sqrt T$ for realistic horizons; a one-third drawdown is normal for SR 0.4.</dd>
+</dl>
+</div>

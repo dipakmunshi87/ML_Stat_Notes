@@ -1,0 +1,29 @@
+name: pipeline-smoke-test
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"                    # also every Monday: catches breakage from new dependency releases
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install exactly as a new collaborator would
+        run: pip install -e ".[test]"
+      - name: Pre-flight check (fails on missing packages or hard-coded paths)
+        run: make preflight
+      - name: Small end-to-end run
+        run: make sim SPEC=spec/smoke_small.yaml
+      - name: Check the outputs exist and are sane
+        run: pytest -q tests/test_smoke_outputs.py
+      - uses: actions/upload-artifact@v4
+        if: always()                       # keep logs and figures even when a step fails
+        with:
+          name: smoke-outputs
+          path: results/
