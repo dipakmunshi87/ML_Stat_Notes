@@ -1,0 +1,7 @@
+# worked examples
+numpy>=2.0
+scipy>=1.11
+
+# only for code/curve_fit_sbi (the trained-network tables of chapter 18)
+# torch
+# sbi

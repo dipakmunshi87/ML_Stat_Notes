@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reconstruction and Generative Scores: PCA, Autoencoders and the Likelihood Trap</title>
+<meta name="description" content="PCA residuals, robust PCA, one-class SVM and Deep SVDD, mixtures and normalising flows, and autoencoders - including the autoencoder that reconstructs the anomalies too, trained live in the browser, and the result that says likelihood is not a reliable anomaly score.">
+<link rel="stylesheet" href="assets/deck.css">
+</head>
+<body>
+<script>document.body.className="js";</script>
+<nav class="topdeck"><a class="brand" href="../index.html" title="Back to all topics">&#8962; All topics</a><a href="index.html">Introduction</a><a href="statistical.html">1 &middot; Robust statistics</a><a href="geometry.html">2 &middot; Distance and isolation</a><a href="learned.html" class="here">3 &middot; Reconstruction</a><a href="timeseries.html">4 &middot; Time series</a><a href="evaluation.html">5 &middot; Evaluation</a></nav>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<section class="slide s-purple" id="s1">
+<div class="inner" style="padding-top:5vh">
+  <p class="kicker">Part 3 of 5 &middot; reconstruction and generative scores</p>
+  <h1>Learn what normal<br><span class="hl">looks like, then fail to copy</span></h1>
+  <p class="lead" style="max-width:68ch">Fit something that can reproduce normal data and nothing else,
+  then score each point by how badly it survives the round trip. It is the most natural idea in the
+  subject, it is what makes deep anomaly detection possible at all, and it has a failure mode that
+  destroys it silently: a model with enough capacity reproduces the anomalies too.</p>
+  <div class="grid g3" style="margin-top:30px">
+    <a class="card c-purple jump" href="#s2"><h3 class="purple">1 &middot; Residual scores &rarr;</h3>
+      <p>PCA, robust PCA, and why a curved manifold breaks the linear version.</p></a>
+    <a class="card c-orange jump" href="#s3"><h3 class="orange">2 &middot; Trained live &rarr;</h3>
+      <p>An autoencoder built in front of you, with the bottleneck as a dial.</p></a>
+    <a class="card c-pink jump" href="#s5"><h3 class="pink">3 &middot; The likelihood trap &rarr;</h3>
+      <p>Why a well-fitted generative model can prefer data it has never seen.</p></a>
+  </div>
+  <div class="notes"><p>The headline from the demonstration: on a curved one-dimensional manifold,
+  linear PCA with one component scores an average precision of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.42</mn></mrow><annotation encoding="application/x-tex">0.42</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0.42</span></span></span></span> with an error ratio of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn></mrow><annotation encoding="application/x-tex">2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>; a
+  <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mtext> ⁣</mtext><mo>→</mo><mtext> ⁣</mtext><mn>16</mn><mtext> ⁣</mtext><mo>→</mo><mtext> ⁣</mtext><mn>1</mn><mtext> ⁣</mtext><mo>→</mo><mtext> ⁣</mtext><mn>16</mn><mtext> ⁣</mtext><mo>→</mo><mtext> ⁣</mtext><mn>2</mn></mrow><annotation encoding="application/x-tex">2\!\to\!16\!\to\!1\!\to\!16\!\to\!2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">16</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">16</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span> autoencoder gets <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.87</mn></mrow><annotation encoding="application/x-tex">0.87</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0.87</span></span></span></span> with a ratio of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>16</mn></mrow><annotation encoding="application/x-tex">16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">16</span></span></span></span>. Widening the
+  bottleneck to two &mdash; the dimension of the input itself &mdash; turns the decoder's image from a
+  curve into a sheet covering the whole plane, cuts the ratio to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn></mrow><annotation encoding="application/x-tex">10</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">10</span></span></span></span> and then to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>6</mn></mrow><annotation encoding="application/x-tex">6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">6</span></span></span></span> on contaminated
+  training data, and shrinks the errors themselves by an order of magnitude.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s2">
+<div class="inner">
+  <p class="kicker">Residual scores</p>
+  <h2>Project, reconstruct, <span class="hl">measure what is left</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>Take the leading <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span></span></span></span> principal components, with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>q</mi></msub></mrow><annotation encoding="application/x-tex">V_q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span> their matrix, and reconstruct each
+      centred point by projecting onto them and back:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>x</mi><mo>^</mo></mover><mo>=</mo><mi>μ</mi><mo>+</mo><msub><mi>V</mi><mi>q</mi></msub><msubsup><mi>V</mi><mi>q</mi><mi mathvariant="normal">⊤</mi></msubsup><mo stretchy="false">(</mo><mi>x</mi><mo>−</mo><mi>μ</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="2em"/><mi>s</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mrow><mo fence="true">∥</mo><mi>x</mi><mo>−</mo><mover accent="true"><mi>x</mi><mo>^</mo></mover><mo fence="true">∥</mo></mrow><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\hat x=\mu+V_qV_q^{\top}(x-\mu),\qquad s(x)=\left\|x-\hat x\right\|.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord katex-accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.2822em;vertical-align:-0.3831em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8991em;"><span style="top:-2.453em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">q</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">⊤</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3831em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">μ</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">s</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">∥</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord katex-accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">^</span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">∥</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">.</span></span></span></span></span></div>
+      <p>The score is the part of the point that the subspace cannot represent. The assumption is
+      explicit and unusually easy to state: normal data lies close to a <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span></span></span></span>-dimensional <em>linear</em>
+      subspace.</p>
+      <p>Two things follow. First, this is Mahalanobis distance's cousin &mdash; both are quadratic forms
+      in the whitened coordinates, and PCA residual error is what you get by keeping only the smallest
+      eigen-directions. Second, when the data lies on a <em>curved</em> manifold the residual is large
+      for perfectly normal points at the ends of the curve, and the score stops working. That is the
+      entire motivation for autoencoders, and the next slide measures it.</p>
+      <p><b>Robust PCA</b> solves a different and rather beautiful version of the problem. Decompose the
+      data matrix into a low-rank part and a sparse part,</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>X</mi><mo>=</mo><mi>L</mi><mo>+</mo><mi>S</mi><mo separator="true">,</mo><mspace width="2em"/><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mi>L</mi><mo separator="true">,</mo><mi>S</mi></mrow></munder><mtext>  </mtext><mi mathvariant="normal">∥</mi><mi>L</mi><msub><mi mathvariant="normal">∥</mi><mo lspace="0em" rspace="0em">∗</mo></msub><mo>+</mo><mi>λ</mi><mi mathvariant="normal">∥</mi><mi>S</mi><msub><mi mathvariant="normal">∥</mi><mn>1</mn></msub><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">X=L+S,\qquad \min_{L,S}\;\|L\|_{*}+\lambda\|S\|_1,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.6304em;vertical-align:-0.8804em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-2.3557em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">L</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.0576em;">S</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∥</span><span class="mord mathnormal">L</span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1757em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">∗</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">λ</span><span class="mord">∥</span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><mo>⋅</mo><msub><mi mathvariant="normal">∥</mi><mo lspace="0em" rspace="0em">∗</mo></msub></mrow><annotation encoding="application/x-tex">\|\cdot\|_{*}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∥</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1757em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">∗</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> the nuclear norm. The sparse component <em>is</em> the anomalies &mdash;
+      they are not scored and thresholded, they are separated out as part of the fit. It is convex, it
+      has recovery guarantees, and where it applies it is hard to beat.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The autoencoder, in one line</div>
+        <p>Replace the linear encoder and decoder with networks. Where PCA finds the best
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span></span></span></span>-dimensional plane, an autoencoder with a <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span></span></span></span>-dimensional code finds the best
+        <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">q</span></span></span></span>-dimensional <em>surface</em>. With linear activations and a squared loss it recovers the PCA
+        subspace exactly, which is the right way to remember what it is doing.</p></div>
+      <div class="box warn"><div class="t">The failure that matters</div>
+        <p>Nothing in the training objective asks the network to reconstruct anomalies <em>badly</em>.
+        It asks it to reconstruct the training data well. If the architecture is capable enough &mdash;
+        in particular if the code is not genuinely narrower than the data's intrinsic dimension &mdash;
+        the map it learns approaches the identity, and the identity reconstructs everything perfectly.</p>
+        <p>Mitigations: size the bottleneck deliberately, use a denoising objective so the network must
+        learn the data manifold rather than a copy, add memory-augmented or sparsity constraints, and
+        &mdash; always &mdash; check the ratio of anomalous to normal error rather than the loss.</p></div>
+      <div class="box stats"><div class="t">And the quieter failure</div>
+        <p>Training data is assumed clean. If the anomalies are in the training set, the network learns
+        to reconstruct them as part of the job. This is the semi-supervised assumption of page 1 in a
+        new costume, and it is the more common of the two failures in practice.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The linear-activation result is worth being able to state: a linear autoencoder
+  trained with squared error spans the same subspace as PCA, though not with orthonormal axes unless you
+  constrain it.</p></div>
+</div>
+</section>
+
+<section class="slide s-orange" id="s3">
+<div class="inner">
+  <p class="kicker">Interactive</p>
+  <h2>An autoencoder, <span class="hl">trained in front of you</span></h2>
+  <p style="max-width:88ch">The normal data lies on a curved one-dimensional arc; six anomalies sit off
+  it. Press train and watch the decoder learn the curve. Then widen the bottleneck to two and watch the
+  score stop working.</p>
+  <div class="ctl">
+    <button id="l1run">Train</button>
+    <button id="l1reset" class="ghost">Reset</button>
+    <label>bottleneck
+      <select id="l1k"><option value="1" selected>1 (narrower than the data)</option><option value="2">2 (same as the data)</option></select></label>
+    <label>hidden width <span class="val" id="l1hv">16</span><input id="l1h" type="range" min="3" max="28" step="1" value="16"></label>
+    <label>training set
+      <select id="l1c"><option value="clean" selected>clean normal data</option><option value="dirty">contaminated</option></select></label>
+    <span class="stat" id="l1stat">0 epochs</span>
+  </div>
+  <canvas id="l1" width="1160" height="380"></canvas>
+  <p class="vidcap">Left: the data, the learned decoder curve in purple, PCA's single component as the
+  dashed grey line, and a segment from each point to its own reconstruction. Right: the reconstruction
+  errors, sorted, split by whether the point is really an anomaly.</p>
+  <div class="notes"><p>Three things to try. Train at bottleneck <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and watch the purple curve settle
+  onto the arc while the anomaly segments stay long. Switch the bottleneck to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn></mrow><annotation encoding="application/x-tex">2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>: the curve becomes a
+  sheet through the whole plane, every segment shrinks, and the two error distributions on the right
+  slide together. Then set the bottleneck back to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and switch the training set to contaminated: the
+  curve bends towards the anomalies, which is the failure you will actually meet.</p></div>
+</div>
+</section>
+
+<section class="slide s-blue" id="s4">
+<div class="inner">
+  <p class="kicker">Boundaries instead of residuals</p>
+  <h2>Enclose the normal data, <span class="hl">and call the outside anomalous</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>The one-class support vector machine of Sch&ouml;lkopf and colleagues separates the data from
+      the origin in a feature space with the largest possible margin, solving</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mi>w</mi><mo separator="true">,</mo><mi>ρ</mi><mo separator="true">,</mo><mi>ξ</mi></mrow></munder><mtext>  </mtext><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mi mathvariant="normal">∥</mi><mi>w</mi><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mo>+</mo><mfrac><mn>1</mn><mrow><mi>ν</mi><mi>n</mi></mrow></mfrac><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>ξ</mi><mi>i</mi></msub><mo>−</mo><mi>ρ</mi><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><mo stretchy="false">⟨</mo><mi>w</mi><mo separator="true">,</mo><mi>ϕ</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">⟩</mo><mo>≥</mo><mi>ρ</mi><mo>−</mo><msub><mi>ξ</mi><mi>i</mi></msub><mo separator="true">,</mo><mtext>  </mtext><mtext>  </mtext><msub><mi>ξ</mi><mi>i</mi></msub><mo>≥</mo><mn>0</mn><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">\min_{w,\rho,\xi}\;\tfrac12\|w\|^2+\frac{1}{\nu n}\sum_i\xi_i-\rho
+        \quad\text{s.t.}\quad \langle w,\phi(x_i)\rangle\ge\rho-\xi_i,\;\;\xi_i\ge0,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.7523em;vertical-align:-0.8882em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-2.3479em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.0269em;">w</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight">ρ</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.046em;">ξ</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8882em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">∥</span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:2.5991em;vertical-align:-1.2777em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0637em;">ν</span><span class="mord mathnormal">n</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.046em;">ξ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.046em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right:1em;"></span><span class="mord text"><span class="mord">s.t.</span></span><span class="mspace" style="margin-right:1em;"></span><span class="mopen">⟨</span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">ϕ</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)⟩</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">ρ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.046em;">ξ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.046em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.046em;">ξ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.046em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span></span></span></span></span></div>
+      <p>and scoring by <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">⟨</mo><mi>w</mi><mo separator="true">,</mo><mi>ϕ</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo stretchy="false">⟩</mo><mo>−</mo><mi>ρ</mi></mrow><annotation encoding="application/x-tex">\langle w,\phi(x)\rangle-\rho</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">⟨</span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">ϕ</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)⟩</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">ρ</span></span></span></span>. Support vector data description, from Tax and
+      Duin, states the same idea as a minimal enclosing sphere, which is the easier picture to hold. The
+      parameter <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi></mrow><annotation encoding="application/x-tex">\nu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0637em;">ν</span></span></span></span> has a genuinely useful interpretation: it upper-bounds the fraction of training
+      points allowed outside the boundary, so it is the contamination assumption made explicit.</p>
+      <p>What these assume is clean training data, and they are not gracefully robust to violation
+      &mdash; a contaminated training set drags the boundary outwards and there is no median anywhere in
+      the formulation to stop it. They also scale poorly, roughly between <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n^3)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>, and
+      they are sensitive to both <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi></mrow><annotation encoding="application/x-tex">\nu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0637em;">ν</span></span></span></span> and the kernel width.</p>
+      <p><b>Deep SVDD</b> learns the representation and the sphere together: minimise the mean squared
+      distance of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϕ</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\phi_\theta(x_i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">ϕ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> from a fixed centre <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>,</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi>θ</mi></munder><mtext>  </mtext><mfrac><mn>1</mn><mi>n</mi></mfrac><munder><mo>∑</mo><mi>i</mi></munder><msup><mrow><mo fence="true">∥</mo><msub><mi>ϕ</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo>−</mo><mi>c</mi><mo fence="true">∥</mo></mrow><mn>2</mn></msup><mo>+</mo><mfrac><mi>λ</mi><mn>2</mn></mfrac><munder><mo>∑</mo><mi mathvariant="normal">ℓ</mi></munder><mi mathvariant="normal">∥</mi><msub><mi>W</mi><mi mathvariant="normal">ℓ</mi></msub><msubsup><mi mathvariant="normal">∥</mi><mi>F</mi><mn>2</mn></msubsup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\min_\theta\;\frac1n\sum_i\left\|\phi_\theta(x_i)-c\right\|^2
+        +\frac{\lambda}{2}\sum_\ell\|W_\ell\|_F^2.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:2.5991em;vertical-align:-1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-2.3479em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7521em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="minner"><span class="mopen delimcenter" style="top:0em;">∥</span><span class="mord"><span class="mord mathnormal">ϕ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">c</span><span class="mclose delimcenter" style="top:0em;">∥</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.954em;"><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:2.6736em;vertical-align:-1.3021em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">λ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8479em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">ℓ</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3021em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∥</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">ℓ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord">∥</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-2.453em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.1389em;">F</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></div>
+      <p>The obvious objection is the right one: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϕ</mi><mi>θ</mi></msub><mo>≡</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">\phi_\theta\equiv c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">ϕ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≡</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span> achieves zero loss. Preventing
+      that collapse is the whole engineering problem &mdash; no bias terms in the hidden layers, no
+      bounded activations, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span> fixed rather than learned.</p>
+    </div>
+    <div>
+      <div class="box key"><div class="t">Boundary or residual?</div>
+        <p>A residual score says <em>how far off the manifold</em> a point is. A boundary score says
+        <em>inside or outside</em>, with a margin. If you need a ranked list of the hundred most
+        suspicious records, the residual is more directly useful; if you need a decision with a stated
+        training-time false-positive rate, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi></mrow><annotation encoding="application/x-tex">\nu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0637em;">ν</span></span></span></span> gives you one.</p></div>
+      <div class="box warn"><div class="t">The trivial-solution family</div>
+        <p>Deep SVDD's collapse is one instance of a pattern worth recognising. Any method that learns
+        a representation <em>and</em> scores in it can make the score easy by destroying the
+        representation. Contrastive and self-supervised anomaly methods all have a version of this, and
+        the architectural restrictions in their papers are usually there to prevent it rather than to
+        improve accuracy.</p></div>
+      <div class="box physics"><div class="t">A familiar shape</div>
+        <p>The one-class SVM is a level set of a kernel density estimate in disguise: with a Gaussian
+        kernel the decision function is a weighted sum of kernels centred on the support vectors. It is
+        page 2's kernel density estimate with most of the data thrown away, which is why it scales
+        better at prediction time and no better at fitting time.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi></mrow><annotation encoding="application/x-tex">\nu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0637em;">ν</span></span></span></span>-property is the thing to remember about one-class SVMs: it bounds both
+  the fraction of outliers and the fraction of support vectors. It is the closest thing in the method
+  family to a calibrated knob.</p></div>
+</div>
+</section>
+
+<section class="slide s-pink" id="s5">
+<div class="inner">
+  <p class="kicker">Probabilistic scores</p>
+  <h2>Score by likelihood &mdash; and <span class="hl">why that can fail</span></h2>
+  <div class="grid g23">
+    <div>
+      <p>If you have a model of the density, the score writes itself:</p>
+      <div class="eq"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>s</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mo>−</mo><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">s(x)=-\log p_\theta(x).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">s</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></div>
+      <p>Gaussian mixtures give it cheaply and interpretably, and break in high dimension or when a
+      mixture component gets captured <em>by</em> the anomalies. Normalising flows and autoregressive
+      models give exact likelihoods; energy-based models give them up to a constant. Variational
+      autoencoders give a bound, and the reconstruction probability is a perfectly reasonable score.</p>
+      <p>The trouble is that in high dimension the likelihood of a deep generative model is not measuring
+      what you want. Nalisnick and colleagues showed in 2019 that a model trained on CIFAR-10 assigns
+      <em>higher</em> likelihood to SVHN images than to its own training data. The density is dominated
+      by low-level statistics &mdash; smoothness, complexity, how compressible the image is &mdash;
+      rather than by anything semantic. A flat grey image is enormously likely under almost any image
+      model, and it is not a plausible photograph.</p>
+      <p>There is also a purely geometric reason, worth knowing separately. In <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span> dimensions a Gaussian
+      puts almost none of its mass near its own mode; the mass sits in a shell at radius
+      <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≈</mo><msqrt><mi>p</mi></msqrt></mrow><annotation encoding="application/x-tex">\approx\sqrt{p}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4831em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.04em;vertical-align:-0.3369em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7031em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">p</span></span></span><span style="top:-2.6631em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3369em;"><span></span></span></span></span></span></span></span></span>. So the <em>most likely</em> point is not a <em>typical</em> point, and testing
+      whether a sample is typical is not the same as asking whether its density is high.</p>
+    </div>
+    <div>
+      <div class="box warn"><div class="t">The result to be able to cite</div>
+        <p>Nalisnick et al., <i>Do Deep Generative Models Know What They Don't Know?</i>, ICLR 2019.
+        Higher likelihood for out-of-distribution data than for in-distribution data, in a
+        well-trained model. It is the single most useful thing to know in this corner of the subject,
+        because it separates people who have read the literature from people who have read a
+        tutorial.</p></div>
+      <div class="box key"><div class="t">What to do instead</div>
+        <p><b>Likelihood ratios.</b> Score <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>−</mo><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mn>0</mn></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\log p_\theta(x)-\log p_0(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span> against a background model
+        that captures the nuisance statistics. The complexity term cancels.</p>
+        <p><b>Typicality tests.</b> Ask whether <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mi>log</mi><mo>⁡</mo><msub><mi>p</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">-\log p_\theta(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0278em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span> is close to the model's expected
+        entropy, rather than whether it is large. Two-sided rather than one-sided.</p>
+        <p><b>Input complexity corrections.</b> Divide out a generic compressor's estimate of the
+        input's complexity &mdash; crude, and effective.</p></div>
+      <div class="box stats"><div class="t">The low-dimensional caveat on the caveat</div>
+        <p>None of this is a reason to distrust likelihood scores in five dimensions with a fitted
+        mixture. The failure is specific to high-dimensional deep models where the density is dominated
+        by structure you do not care about. Know the boundary of the result as well as the result.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>The typicality framing is due to Nalisnick's follow-up work and to the
+  information-theoretic literature on typical sets; the shell fact is the same one from page 2 and is
+  worth linking explicitly when explaining this.</p></div>
+</div>
+</section>
+
+<section class="slide s-green" id="s6">
+<div class="inner">
+  <p class="kicker">Deep methods, honestly</p>
+  <h2>When the network <span class="hl">earns its place</span></h2>
+  <div class="grid g2">
+    <div>
+      <p>The case for deep anomaly detection is not that networks are better estimators. It is that when
+      the input is high-dimensional and unstructured &mdash; images, audio, spectrograms, raw sensor
+      traces &mdash; there are no hand-crafted features to give a classical method, and representation
+      learning supplies them. That is a real and important argument, and it is narrower than it is
+      usually stated.</p>
+      <ul>
+        <li><b>Self-supervised approaches</b> are currently the strongest family for images. Train on a
+        pretext task &mdash; predicting an applied rotation, contrastive matching &mdash; and use the
+        model's confidence as the score. They work because the pretext task forces semantic structure
+        into the representation in a way reconstruction does not.</li>
+        <li><b>GAN-based methods</b> (AnoGAN, GANomaly) score by how hard a point is to generate.
+        Conceptually appealing; training instability makes them a poor first choice and they have
+        largely been overtaken.</li>
+        <li><b>Pretrained-feature methods</b> are the unglamorous winner in practice: take a frozen
+        network trained on something else, embed your data, and run <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span>-NN distance in the embedding.
+        Frequently beats purpose-built deep detectors, and it is three lines of code.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box key"><div class="t">The summary worth saying out loud</div>
+        <p>On <em>tabular</em> data of moderate dimension, the evidence that deep methods beat an
+        isolation forest or <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span>-NN is weak. Several independent benchmarking studies have found
+        well-tuned classical methods competitive with or better than deep ones, and the deep methods
+        cost more to train, more to operate and more to explain. Saying this shows judgement. Claiming
+        deep learning is always better shows the opposite.</p></div>
+      <div class="box warn"><div class="t">The operational cost nobody budgets</div>
+        <p>An alert has to be explained to whoever acts on it. &ldquo;Reconstruction error <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.42</mn></mrow><annotation encoding="application/x-tex">0.42</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0.42</span></span></span></span>&rdquo;
+        is not an explanation. A rule on two features is. If your detector feeds a human review queue,
+        interpretability is a functional requirement rather than a preference, and it is worth losing
+        some average precision for.</p></div>
+      <div class="box"><div class="t">The sizing question to ask first</div>
+        <p>How many labelled anomalies exist? Below a handful, you are in the unsupervised regime and
+        should stay classical. Above a few hundred, this is imbalanced classification and you should
+        train a classifier. Deep one-class methods live in the awkward middle, with plenty of clean
+        normal data and almost no labelled anomalies.</p></div>
+    </div>
+  </div>
+  <div class="notes"><p>Ruff and colleagues' unifying review of shallow and deep anomaly detection is the
+  best single entry point to this comparison, and it is notably even-handed about where deep methods do
+  not help.</p></div>
+</div>
+</section>
+
+<section class="slide s-purple" id="s7">
+<div class="inner">
+  <p class="kicker">Carried forward</p>
+  <h2>What to take to <span class="hl">the next page</span></h2>
+  <div class="grid g3">
+    <div class="card c-purple"><h3 class="purple">Check the ratio, not the loss</h3>
+      <p>A reconstruction model with a small training loss can have no discriminating power at all.
+      The number that matters is the anomalous error divided by the normal error, and you can compute
+      it on a handful of known cases.</p></div>
+    <div class="card c-orange"><h3 class="orange">The bottleneck is the assumption</h3>
+      <p>Choosing the code dimension is choosing the intrinsic dimension of normal data. Too wide and
+      you learn the identity; too narrow and normal points look anomalous. It is a modelling decision,
+      not a hyperparameter to tune on the test set.</p></div>
+    <div class="card c-pink"><h3 class="pink">Likelihood is not a score in high dimension</h3>
+      <p>For deep generative models, use ratios against a background model or typicality tests rather
+      than raw density. In low dimension with a fitted mixture, none of this applies.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="box"><div class="t">Measured on this page</div>
+      <table class="num">
+        <tr><th>Model</th><th>average precision</th><th>anomalous / normal error</th></tr>
+        <tr><td>PCA, one component</td><td>0.42</td><td>2.0</td></tr>
+        <tr><td>autoencoder, bottleneck 1</td><td>0.87</td><td>15.9</td></tr>
+        <tr><td>bottleneck 1, contaminated</td><td>0.85</td><td>11.4</td></tr>
+        <tr><td>autoencoder, bottleneck 2</td><td>0.98</td><td>10.0</td></tr>
+        <tr><td>bottleneck 2, contaminated</td><td>0.89</td><td>5.8</td></tr>
+      </table>
+      <p style="margin-top:8px;color:var(--muted)">The last two rows are the honest ones, and they
+      contradict the simple story. Widening the bottleneck does not reduce average precision here
+      &mdash; the <em>ranking</em> survives, and even improves &mdash; but the ratio falls steadily and
+      the absolute errors drop by a factor of six, so any threshold set on the narrow model is now
+      meaningless. Rank quality and threshold validity are different properties, and only one of them
+      appears in a benchmark table.</p></div>
+    <div class="box physics"><div class="t">Where next</div>
+      <p><a href="timeseries.html">Page 4</a> adds time. Most real anomaly work is temporal, the three
+      kinds of anomaly from the introduction become concretely different problems, and two of the
+      standard evaluation protocols turn out to be broken.</p></div>
+  </div>
+  <div class="notes"><p>The PCA error ratio of about two is the useful contrast: it is not that linear
+  PCA has no signal, it is that the signal is swamped by the legitimately large residuals at the ends of
+  the curved manifold.</p></div>
+</div>
+</section>
+
+</div>
+<div class="bar">
+  <div class="nav">
+    <button id="zoomOut" title="Smaller text">A&minus;</button>
+    <button id="zoomIn" title="Bigger text">A+</button>
+    <a class="homelink" href="index.html" title="Back to the introduction">&#8629; All pages</a>
+    <a id="home" class="homelink" href="#s1" title="Back to the title slide">&#8962; Contents</a>
+    <button id="prev" aria-label="Previous slide" title="Previous slide">&larr;</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide" title="Next slide">&rarr;</button>
+  </div>
+  <span class="hint">&larr; &rarr; or swipe to move &middot; N: notes &middot; A&minus;/A+: text size</span>
+  <button id="notesBtn" title="Show or hide the speaker notes">Notes</button>
+</div>
+<script src="assets/plot.js"></script>
+<script src="assets/anom.js"></script>
+<script src="assets/deck.js"></script>
+<script>
+
+/* =======================================================================
+   Autoencoder against PCA on a curved manifold, trained live
+   ======================================================================= */
+(function () {
+  var cv = document.getElementById('l1'); if (!cv) return;
+  var ctx = cv.getContext('2d'), C = PL.C;
+  var elK = document.getElementById('l1k'), elH = document.getElementById('l1h'), elC = document.getElementById('l1c');
+  var btn = document.getElementById('l1run');
+
+  var data = AD.arcManifold(200, 13);
+  var clean = [], i;
+  for (i = 0; i < data.X.length; i++) if (!data.y[i]) clean.push(data.X[i]);
+
+  var ae = null, epochs = 0, loss = 0, running = false, raf = null, pca = null;
+
+  function reset() {
+    running = false; btn.textContent = 'Train';
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    ae = new AD.AE(+elH.value, +elK.value, 7);
+    epochs = 0; loss = 0;
+    pca = AD.pca2(elC.value === 'dirty' ? data.X : clean);
+    draw();
+  }
+  function trainSet() { return elC.value === 'dirty' ? data.X : clean; }
+
+  function stats() {
+    var errs = [], j;
+    for (j = 0; j < data.X.length; j++) errs.push(ae.err(data.X[j]));
+    var en = 0, na = 0, ea = 0, nb = 0;
+    for (j = 0; j < errs.length; j++) { if (data.y[j]) { ea += errs[j]; nb++; } else { en += errs[j]; na++; } }
+    en /= Math.max(1, na); ea /= Math.max(1, nb);
+    return { errs: errs, en: en, ea: ea, ap: AD.pr(errs, data.y).ap };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    var s = stats(), j;
+    var pr = AD.pcaRecon(data.X, pca);
+    var pe = pr.map(function (o) { return o.e; });
+
+    /* ---------- left: the plane ---------- */
+    var a = new PL.Axes(ctx, 66, 46, 520, 268, { xlim: [-2.3, 2.3], ylim: [-1.7, 2.3],
+        title: 'the data, the learned curve, and every reconstruction', titleColor: C.ink2 });
+    /* PCA's single component, as a line through the cloud */
+    a.clip(function () {
+      ctx.save(); ctx.strokeStyle = C.muted; ctx.lineWidth = 2; ctx.setLineDash([9, 6]);
+      var t0 = -6, t1 = 6;
+      ctx.beginPath();
+      ctx.moveTo(a.X(pca.mu[0] + t0 * pca.dir[0]), a.Y(pca.mu[1] + t0 * pca.dir[1]));
+      ctx.lineTo(a.X(pca.mu[0] + t1 * pca.dir[0]), a.Y(pca.mu[1] + t1 * pca.dir[1]));
+      ctx.stroke(); ctx.restore();
+    });
+    /* the decoder's image: a curve for a 1-d code, a grid for a 2-d one */
+    var codes = [];
+    for (j = 0; j < data.X.length; j++) if (!data.y[j]) codes.push(ae.code(data.X[j]));
+    a.clip(function () {
+      ctx.save(); ctx.strokeStyle = C.purple; ctx.lineWidth = 3;
+      if (ae.K === 1) {
+        var lo = Infinity, hi = -Infinity;
+        for (j = 0; j < codes.length; j++) { if (codes[j][0] < lo) lo = codes[j][0]; if (codes[j][0] > hi) hi = codes[j][0]; }
+        var pad = 0.12 * (hi - lo);
+        ctx.beginPath();
+        for (j = 0; j <= 140; j++) {
+          var z = lo - pad + (hi - lo + 2 * pad) * j / 140, q = ae.decode([z]);
+          if (j === 0) ctx.moveTo(a.X(q[0]), a.Y(q[1])); else ctx.lineTo(a.X(q[0]), a.Y(q[1]));
+        }
+        ctx.stroke();
+      } else {
+        /* the image of a 2-d code grid: a sheet, which is the whole problem */
+        var l0 = Infinity, h0 = -Infinity, l1 = Infinity, h1 = -Infinity;
+        for (j = 0; j < codes.length; j++) {
+          if (codes[j][0] < l0) l0 = codes[j][0]; if (codes[j][0] > h0) h0 = codes[j][0];
+          if (codes[j][1] < l1) l1 = codes[j][1]; if (codes[j][1] > h1) h1 = codes[j][1];
+        }
+        ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(107,63,212,.55)';
+        var G = 9, u, v, q2;
+        for (u = 0; u <= G; u++) {
+          ctx.beginPath();
+          for (v = 0; v <= G; v++) {
+            q2 = ae.decode([l0 + (h0 - l0) * u / G, l1 + (h1 - l1) * v / G]);
+            if (v === 0) ctx.moveTo(a.X(q2[0]), a.Y(q2[1])); else ctx.lineTo(a.X(q2[0]), a.Y(q2[1]));
+          }
+          ctx.stroke();
+        }
+        for (v = 0; v <= G; v++) {
+          ctx.beginPath();
+          for (u = 0; u <= G; u++) {
+            q2 = ae.decode([l0 + (h0 - l0) * u / G, l1 + (h1 - l1) * v / G]);
+            if (u === 0) ctx.moveTo(a.X(q2[0]), a.Y(q2[1])); else ctx.lineTo(a.X(q2[0]), a.Y(q2[1]));
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    });
+    /* each point joined to its own reconstruction */
+    a.clip(function () {
+      for (j = 0; j < data.X.length; j++) {
+        var o = ae.forward(data.X[j]);
+        ctx.strokeStyle = data.y[j] ? 'rgba(180,83,10,.85)' : 'rgba(20,80,200,.35)';
+        ctx.lineWidth = data.y[j] ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(a.X(data.X[j][0]), a.Y(data.X[j][1]));
+        ctx.lineTo(a.X(o[0]), a.Y(o[1]));
+        ctx.stroke();
+      }
+      for (j = 0; j < data.X.length; j++) {
+        ctx.beginPath(); ctx.arc(a.X(data.X[j][0]), a.Y(data.X[j][1]), data.y[j] ? 4.2 : 2.8, 0, 7);
+        ctx.fillStyle = data.y[j] ? C.orange : '#8ea6cd'; ctx.fill();
+      }
+    });
+    a.ticks([-2, -1, 0, 1, 2], [-1, 0, 1, 2]);
+    (function () {
+      var items = [['autoencoder', C.purple], ['PCA, 1 component', C.muted], ['anomaly', C.orange]],
+          yy = a.y + 20, q;
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fillRect(a.x + 6, yy - 14, 150, 19 * items.length + 8);
+      for (q = 0; q < items.length; q++) {
+        ctx.fillStyle = items[q][1]; ctx.fillRect(a.x + 12, yy - 4, 18, 4);
+        ctx.fillStyle = C.ink2; ctx.fillText(items[q][0], a.x + 36, yy + 2);
+        yy += 19;
+      }
+    })();
+
+    /* ---------- right: sorted reconstruction errors ---------- */
+    var b = new PL.Axes(ctx, 690, 46, 415, 268, { xlim: [0, data.X.length], ylim: [3e-4, 3],
+        logy: true, title: 'reconstruction error, sorted', titleColor: C.ink2, xlabel: 'rank' });
+    var ordA = AD.rank(s.errs), ordP = AD.rank(pe);
+    b.clip(function () {
+      var q;
+      /* PCA first, in grey */
+      ctx.strokeStyle = C.muted; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath();
+      for (q = 0; q < ordP.length; q++) {
+        var yv = Math.max(3e-4, pe[ordP[q]]);
+        if (q === 0) ctx.moveTo(b.X(q), b.Y(yv)); else ctx.lineTo(b.X(q), b.Y(yv));
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+      /* then the autoencoder, coloured by the truth */
+      for (q = 0; q < ordA.length; q++) {
+        var e = Math.max(3e-4, s.errs[ordA[q]]);
+        ctx.fillStyle = data.y[ordA[q]] ? C.orange : '#5f7fc0';
+        ctx.beginPath(); ctx.arc(b.X(q), b.Y(e), data.y[ordA[q]] ? 4 : 2, 0, 7); ctx.fill();
+      }
+    });
+    b.ticks([0, 50, 100, 150, 200], [0.001, 0.01, 0.1, 1], function (v) {
+      return v >= 1 ? String(v) : v.toFixed(3).replace(/0+$/, '');
+    });
+    ctx.font = '13px sans-serif'; ctx.fillStyle = C.muted;
+    ctx.fillText('grey dashed: PCA, one component', b.x + 12, b.y + b.h - 14);
+
+    document.getElementById('l1stat').textContent =
+      epochs + ' epochs · loss ' + (epochs ? loss.toExponential(2) : '—') +
+      ' · mean error: normal ' + s.en.toFixed(3) + ', anomalous ' + s.ea.toFixed(3) +
+      ' (ratio ' + (s.ea / Math.max(1e-9, s.en)).toFixed(1) + ')' +
+      ' · AP ' + s.ap.toFixed(3) + ' against PCA ' + AD.pr(pe, data.y).ap.toFixed(3);
+  }
+
+  function step() {
+    if (!running) return;
+    var T = trainSet(), j;
+    for (j = 0; j < 14; j++) { loss = ae.step(T, 0.05, 0.92); epochs++; }
+    draw();
+    if (epochs >= 3000) { running = false; btn.textContent = 'Train'; return; }
+    raf = requestAnimationFrame(step);
+  }
+  btn.onclick = function () {
+    running = !running; this.textContent = running ? 'Pause' : 'Train';
+    if (running) raf = requestAnimationFrame(step); else if (raf) cancelAnimationFrame(raf);
+  };
+  document.getElementById('l1reset').onclick = reset;
+  elK.onchange = reset; elC.onchange = reset;
+  elH.oninput = function () { document.getElementById('l1hv').textContent = elH.value; reset(); };
+  reset();
+  window.addEventListener('slidechange', function () { if (!running) draw(); });
+})();
+
+</script>
+</body>
+</html>
